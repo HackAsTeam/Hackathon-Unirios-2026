@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TamaguiProvider } from 'tamagui';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import tamaguiConfig from '../tamagui.config';
 import { useAuthStore } from '../store/auth';
 
@@ -18,11 +19,13 @@ export default function RootLayout() {
   }, [hydrate]);
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-      <QueryClientProvider client={queryClient}>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
-      </QueryClientProvider>
-    </TamaguiProvider>
+    <SafeAreaProvider>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
+        </QueryClientProvider>
+      </TamaguiProvider>
+    </SafeAreaProvider>
   );
 }
