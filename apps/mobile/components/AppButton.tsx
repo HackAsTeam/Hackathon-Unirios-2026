@@ -2,7 +2,7 @@ import { Pressable, Text, ActivityIndicator, Animated } from 'react-native';
 import { useRef } from 'react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
-type Variant = 'primary' | 'danger';
+type Variant = 'primary' | 'danger' | 'outline';
 
 type Props = {
   label: string;
@@ -16,6 +16,19 @@ type Props = {
 const variantClass: Record<Variant, string> = {
   primary: 'bg-green-600',
   danger: 'bg-red-600',
+  outline: 'bg-white border border-green-600',
+};
+
+const labelClass: Record<Variant, string> = {
+  primary: 'text-white font-semibold text-base',
+  danger: 'text-white font-semibold text-base',
+  outline: 'text-green-700 font-semibold text-base',
+};
+
+const spinnerColor: Record<Variant, string> = {
+  primary: '#fff',
+  danger: '#fff',
+  outline: '#16a34a',
 };
 
 export function AppButton({
@@ -55,9 +68,9 @@ export function AppButton({
         accessibilityState={{ disabled: isDisabled, busy: loading }}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" size="small" />
+          <ActivityIndicator color={spinnerColor[variant]} size="small" />
         ) : (
-          <Text className="text-white font-semibold text-base">{label}</Text>
+          <Text className={labelClass[variant]}>{label}</Text>
         )}
       </Pressable>
     </Animated.View>

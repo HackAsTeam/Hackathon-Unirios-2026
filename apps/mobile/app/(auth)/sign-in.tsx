@@ -90,8 +90,34 @@ export default function SignInScreen() {
           </Text>
         ) : null}
 
-        <View className="mb-6">
+        <View className="mb-4">
           <AppButton label="Entrar" onPress={handleSignIn} loading={loading} />
+        </View>
+
+        {google.error ? (
+          <Text
+            className="text-red-600 text-sm mb-3 text-center"
+            accessibilityLiveRegion="polite"
+          >
+            {google.error}
+          </Text>
+        ) : null}
+
+        <View className="flex-row items-center mb-4">
+          <View className="flex-1 h-px bg-green-200" />
+          <Text className="text-gray-400 text-sm mx-3">ou</Text>
+          <View className="flex-1 h-px bg-green-200" />
+        </View>
+
+        <View className="mb-6">
+          <AppButton
+            label="Continuar com Google"
+            onPress={handleGoogleSignIn}
+            loading={google.loading}
+            disabled={!google.configured}
+            variant="outline"
+            accessibilityHint="Entrar usando sua conta Google"
+          />
         </View>
 
         <Link href="/(auth)/sign-up" className="text-center text-green-700">
