@@ -1,5 +1,6 @@
 import { useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 
@@ -8,7 +9,9 @@ import { useAuthStore } from "../store/auth";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const placeholderClientId = "000000000000-placeholder.apps.googleusercontent.com";
+const redirectUri =
+  process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI ||
+  makeRedirectUri({ scheme: "hackathon-app" });
 
 type AuthResponse = {
   userId: string;
@@ -26,18 +29,16 @@ export function useGoogleSignIn() {
     android: androidClientId,
     ios: iosClientId,
     default: webClientId,
-  });
+  }) || webClientId;
   const configured = Boolean(activeClientId);
 
   const [request, , promptAsync] = Google.useIdTokenAuthRequest(
     {
-      webClientId: webClientId || placeholderClientId,
-      androidClientId: androidClientId || placeholderClientId,
-      iosClientId: iosClientId || placeholderClientId,
+      webClientId: webClientId,
+      androidClientId: androidClientId || webClientId,
+      iosClientId: iosClientId || webClientId,
       selectAccount: true,
-    },
-    {
-      scheme: "hackathon-app",
+      redirectUri,
     },
   );
 
