@@ -23,5 +23,11 @@ apps/mobile/dist/
 apps/mobile/web-build/
 
 # .NET
-apps/api/bin/
-apps/api/obj/
+apps/backend/**/bin/
+apps/backend/**/obj/
+
+# Claude Code
+.claude/worktrees/
+
+# AI tools
+.claire/
