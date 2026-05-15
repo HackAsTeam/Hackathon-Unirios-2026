@@ -1,0 +1,27 @@
+node_modules/
+.expo/
+dist/
+build/
+*.tsbuildinfo
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Expo
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+
+# .NET
+apps/api/bin/
+apps/api/obj/
