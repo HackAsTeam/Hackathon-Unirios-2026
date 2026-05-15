@@ -5,9 +5,9 @@ using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Auth;
 
-public static class AuthEndpoints
+public sealed class AuthEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/auth")
             .WithTags("Auth");
@@ -28,8 +28,6 @@ public static class AuthEndpoints
             .Produces<AuthResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
-
-        return app;
     }
 
     private static async Task<IResult> RegisterAsync(

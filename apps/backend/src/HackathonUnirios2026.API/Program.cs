@@ -1,5 +1,5 @@
+using HackathonUnirios2026.API;
 using HackathonUnirios2026.Application;
-using HackathonUnirios2026.API.Features.Auth;
 using HackathonUnirios2026.Domain.Entities;
 using HackathonUnirios2026.Infra;
 using HackathonUnirios2026.Infra.Auth;
@@ -52,6 +52,7 @@ builder.Services
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddEndpoints(typeof(Program).Assembly);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Expo", policy =>
@@ -85,7 +86,7 @@ app.UseCors("Expo");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
+app.MapEndpoints();
 
 app.Run();
 
