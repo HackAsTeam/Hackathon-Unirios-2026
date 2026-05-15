@@ -6,8 +6,8 @@ export default function ProfileScreen() {
   const { signOut } = useAuthStore();
   const router = useRouter();
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
+    await signOut();
     router.replace("/(auth)/sign-in");
   }
 

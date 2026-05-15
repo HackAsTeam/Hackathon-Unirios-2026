@@ -1,0 +1,6 @@
+@HackathonUnirios2026_API_HostAddress = http://localhost:5099
+
+GET {{HackathonUnirios2026_API_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
