@@ -1,4 +1,4 @@
-using HackathonUnirios2026.Application.Features.Auth;
+using HackathonUnirios2026.Domain.Auth;
 using HackathonUnirios2026.Infra.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
