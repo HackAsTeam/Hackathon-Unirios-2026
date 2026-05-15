@@ -23,14 +23,9 @@ public sealed class GetMyClassroomsQueryHandler(AppDbContext db, IHttpContextAcc
             .Include(c => c.Teacher)
             .AsQueryable();
 
-        if (isTeacher)
-        {
-            queryable = queryable.Where(c => c.TeacherId == userId);
-        }
-        else
-        {
-            queryable = queryable.Where(c => c.Enrollments.Any(e => e.StudentId == userId));
-        }
+        queryable = isTeacher
+            ? queryable.Where(c => c.TeacherId == userId)
+            : queryable.Where(c => c.Enrollments.Any(e => e.StudentId == userId));
 
         return await queryable
             .Select(c => new ClassroomResponse(

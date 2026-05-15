@@ -21,8 +21,8 @@ public sealed class GetMyAttemptsQueryHandler(AppDbContext db, IHttpContextAcces
             .Where(a => a.StudentId == studentId)
             .AsQueryable();
 
-        if (query.ExamId.HasValue)
-            queryable = queryable.Where(a => a.ExamId == query.ExamId.Value);
+        if (query.ExamId is { } examId)
+            queryable = queryable.Where(a => a.ExamId == examId);
 
         return await queryable
             .Select(a => new AttemptResponse(
