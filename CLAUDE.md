@@ -62,15 +62,34 @@ The backend solution is `HackathonUnirios2026.sln` and contains four projects:
 - `src/HackathonUnirios2026.Domain` — domain entities, value objects, domain rules
 - `src/HackathonUnirios2026.Infra` — EF Core, Identity, database configuration, external infrastructure
 
-**Vertical Slice Architecture** — use cases live in `src/HackathonUnirios2026.Application/Features/<FeatureName>/`, with matching HTTP endpoint mapping in `src/HackathonUnirios2026.Api/Features/<FeatureName>/`. A typical Application slice file contains:
+**Vertical Slice Architecture** — features live under `src/HackathonUnirios2026.Application/Features/<FeatureName>/` with matching HTTP endpoint mapping in `src/HackathonUnirios2026.Api/Features/<FeatureName>/`.
+
+Each feature folder uses this subfolder layout:
+
+```
+Features/<FeatureName>/
+  Commands/
+    <Action>Command.cs          # IRequest<TResponse> record
+    <Action>CommandHandler.cs   # IRequestHandler<TCommand, TResponse> sealed class
+  Queries/                      # same pattern for read-only operations
+    <Action>Query.cs
+    <Action>QueryHandler.cs
+  DTOs/
+    <FeatureName>Response.cs    # shared response DTO(s) used by commands/queries
+  <FeatureName>Contracts.cs     # interfaces, domain-specific exceptions, value types
+```
+
+Example command pair:
 
 ```csharp
-// src/HackathonUnirios2026.Application/Features/SomeFeature/CreateSomething.cs
-public static class CreateSomething
+// Features/Auth/Commands/LoginCommand.cs
+public record LoginCommand(string Email, string Password) : IRequest<AuthResponse>;
+
+// Features/Auth/Commands/LoginCommandHandler.cs
+public sealed class LoginCommandHandler(UserManager<ApplicationUser> userManager, IJwtTokenIssuer jwtTokenIssuer)
+    : IRequestHandler<LoginCommand, AuthResponse>
 {
-    public record Request(...) : IRequest<Response>;
-    public record Response(...);
-    public sealed class Handler(AppDbContext db) : IRequestHandler<Request, Response> { ... }
+    public async Task<AuthResponse> Handle(LoginCommand cmd, CancellationToken ct) { ... }
 }
 ```
 

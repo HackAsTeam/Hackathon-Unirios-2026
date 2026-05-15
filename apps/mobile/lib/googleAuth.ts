@@ -1,67 +1,39 @@
 import { useState } from "react";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
-import { Platform } from "react-native";
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 
 import { apiFetch } from "./api";
 import { useAuthStore } from "../store/auth";
-
-WebBrowser.maybeCompleteAuthSession();
-
-const placeholderClientId = "000000000000-placeholder.apps.googleusercontent.com";
 
 type AuthResponse = {
   userId: string;
   token: string;
 };
 
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+});
+
 export function useGoogleSignIn() {
   const signIn = useAuthStore((state) => state.signIn);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  const activeClientId = Platform.select({
-    android: androidClientId,
-    ios: iosClientId,
-    default: webClientId,
-  });
-  const configured = Boolean(activeClientId);
 
-  const [request, , promptAsync] = Google.useIdTokenAuthRequest(
-    {
-      webClientId: webClientId || placeholderClientId,
-      androidClientId: androidClientId || placeholderClientId,
-      iosClientId: iosClientId || placeholderClientId,
-      selectAccount: true,
-    },
-    {
-      scheme: "hackathon-app",
-    },
-  );
+  const configured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 
   async function signInWithGoogle() {
     setError("");
-
-    if (!configured) {
-      setError("Configure o client ID do Google para esta plataforma.");
-      return null;
-    }
-
     setLoading(true);
 
     try {
-      const result = await promptAsync();
-      if (result.type !== "success") {
-        if (result.type === "error") {
-          setError(result.error?.message ?? "Erro ao entrar com Google");
-        }
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken;
 
-        return null;
-      }
-
-      const idToken = result.params.id_token;
       if (!idToken) {
         setError("Google não retornou um token de identidade.");
         return null;
@@ -75,6 +47,15 @@ export function useGoogleSignIn() {
       await signIn(data.userId, data.token);
       return data;
     } catch (err: unknown) {
+      if (isErrorWithCode(err)) {
+        if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+          return null;
+        }
+        if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          setError("Google Play Services não disponível.");
+          return null;
+        }
+      }
       const message = err instanceof Error ? err.message : "Erro ao entrar com Google";
       setError(message);
       return null;
@@ -84,7 +65,6 @@ export function useGoogleSignIn() {
   }
 
   return {
-    request,
     configured,
     loading,
     error,

@@ -80,7 +80,7 @@ export default function SignInScreen() {
       <TouchableOpacity
         className="border border-gray-300 rounded-lg py-4 items-center mb-4"
         onPress={handleGoogleSignIn}
-        disabled={!google.request || google.loading}
+        disabled={!google.configured || google.loading}
       >
         <Text className="text-black font-semibold text-base">
           {google.loading ? "Entrando com Google..." : "Continuar com Google"}
