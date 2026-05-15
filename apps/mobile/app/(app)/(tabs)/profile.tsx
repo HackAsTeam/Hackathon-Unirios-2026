@@ -1,87 +1,151 @@
-// import { useRouter } from "expo-router";
-// import { useAuthStore } from "../../../store/auth";
-import { ScrollView, View, Text, TouchableOpacity } from "react-native";
+import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { colors } from '../../../lib/colors';
+import { MOCK_STUDENT } from '../../../lib/mock-data';
+import { ScreenWrapper } from '../../../components/layout/ScreenWrapper';
+import { Card, CardHeader } from '../../../components/ui/Card';
+import { Button } from '../../../components/ui/Button';
+import { useAccessibilityStore } from '../../../store/accessibility';
 
-const MOCK_USER = {
-  name: "João Silva",
-  email: "joao.silva@email.com",
-  phone: "(84) 99999-8888",
-  createdAt: "Janeiro 2025",
-};
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="flex-row items-center justify-between py-3">
-      <Text className="text-gray-500 text-base">{label}</Text>
-      <Text className="text-black text-base font-medium">{value}</Text>
-    </View>
-  );
-}
+const menuItems: { icon: string; title: string; desc: string; route: string }[] = [
+  { icon: '♿', title: 'Acessibilidade', desc: 'Ajustes de fonte, contraste e mais', route: '/(app)/accessibility' },
+  { icon: '🔒', title: 'Privacidade e LGPD', desc: 'Seus dados, seu controle', route: '/(app)/privacy' },
+  { icon: '📊', title: 'Meu Progresso', desc: 'Histórico de atividades e conquistas', route: '#' },
+  { icon: '💬', title: 'Feedback', desc: 'Veja o que seus professores disseram', route: '#' },
+  { icon: '⚙️', title: 'Configurações', desc: 'Preferências do app', route: '#' },
+];
 
 export default function ProfileScreen() {
-  // const { signOut } = useAuthStore();
-  // const router = useRouter();
+  const router = useRouter();
+  const { fontSizeScale } = useAccessibilityStore();
+  const user = MOCK_STUDENT;
 
-  // async function handleSignOut() {
-  //   await signOut();
-  //   router.replace("/(auth)/sign-in");
-  // }
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="px-6 pt-12 pb-6 items-center border-b border-gray-100">
-        <View className="w-20 h-20 rounded-full bg-black items-center justify-center mb-3">
-          <Text className="text-white text-3xl font-bold">
-            {MOCK_USER.name.charAt(0)}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{
+          paddingTop: 60,
+          paddingHorizontal: 24,
+          paddingBottom: 24,
+          alignItems: 'center',
+          gap: 12,
+        }}>
+          <View style={{
+            width: 88,
+            height: 88,
+            borderRadius: 44,
+            backgroundColor: colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 3,
+            borderColor: colors.primaryLight + '40',
+          }}>
+            <Text style={{ fontSize: 36, fontWeight: '700', color: '#fff' }}>
+              {user.name.charAt(0)}
+            </Text>
+          </View>
+          <Text style={{
+            fontSize: Math.round(24 * fontSizeScale),
+            fontWeight: '700',
+            color: colors.text.primary,
+            letterSpacing: -0.5,
+          }}>
+            {user.name}
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.text.tertiary }}>
+            {user.email}
+          </Text>
+          <Text style={{
+            backgroundColor: colors.primary + '12',
+            borderRadius: 100,
+            paddingHorizontal: 14,
+            paddingVertical: 4,
+            fontSize: 13,
+            fontWeight: '600',
+            color: colors.primary,
+            overflow: 'hidden',
+          }}>
+            Membro desde {user.createdAt}
           </Text>
         </View>
-        <Text className="text-2xl font-bold">{MOCK_USER.name}</Text>
-        <Text className="text-gray-400 text-sm mt-1">
-          Membro desde {MOCK_USER.createdAt}
-        </Text>
-      </View>
 
-      <View className="px-6 py-6">
-        <Text className="text-lg font-semibold mb-2">Informações Pessoais</Text>
-        <View className="border border-gray-200 rounded-xl px-4">
-          <InfoRow label="Nome" value={MOCK_USER.name} />
-          <View className="h-px bg-gray-100" />
-          <InfoRow label="Email" value={MOCK_USER.email} />
-          <View className="h-px bg-gray-100" />
-          <InfoRow label="Telefone" value={MOCK_USER.phone} />
-          <View className="h-px bg-gray-100" />
+        <View style={{ paddingHorizontal: 24, gap: 16 }}>
+          <Card variant="elevated">
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 }}>
+              <View style={{ alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 24, fontWeight: '700', color: colors.primary }}>5</Text>
+                <Text style={{ fontSize: 13, color: colors.text.secondary }}>Atividades</Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: colors.divider }} />
+              <View style={{ alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 24, fontWeight: '700', color: colors.success }}>3</Text>
+                <Text style={{ fontSize: 13, color: colors.text.secondary }}>Completas</Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: colors.divider }} />
+              <View style={{ alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 24, fontWeight: '700', color: colors.formats.oral }}>4</Text>
+                <Text style={{ fontSize: 13, color: colors.text.secondary }}>Formatos</Text>
+              </View>
+            </View>
+          </Card>
+
+          <View style={{ gap: 8 }}>
+            <Text style={{
+              fontSize: Math.round(16 * fontSizeScale),
+              fontWeight: '700',
+              color: colors.text.primary,
+              letterSpacing: -0.3,
+            }}>
+              Seu Espaço
+            </Text>
+            <View style={{ gap: 8 }}>
+              {menuItems.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => item.route !== '#' ? (router.push as (s: string) => void)(item.route) : undefined}
+                  accessibilityLabel={item.title}
+                  accessibilityRole="button"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderRadius: 16,
+                    padding: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 14,
+                    borderWidth: 1,
+                    borderColor: colors.borderLight,
+                  }}
+                >
+                  <View style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    backgroundColor: colors.surfaceAlt,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Text style={{ fontSize: 20 }}>{item.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary }}>
+                      {item.title}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.text.tertiary, marginTop: 1 }}>
+                      {item.desc}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 18, color: colors.text.tertiary }}>→</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         </View>
-      </View>
-
-      <View className="px-6 py-4">
-        <Text className="text-lg font-semibold mb-2">Privacidade & LGPD</Text>
-        <View className="border border-gray-200 rounded-xl overflow-hidden">
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 active:opacity-60">
-            <Text className="text-base">Política de Privacidade</Text>
-            <Text className="text-gray-300 text-lg">›</Text>
-          </TouchableOpacity>
-          <View className="h-px bg-gray-100 mx-4" />
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 active:opacity-60">
-            <Text className="text-base">Termos de Uso</Text>
-            <Text className="text-gray-300 text-lg">›</Text>
-          </TouchableOpacity>
-          <View className="h-px bg-gray-100 mx-4" />
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 active:opacity-60">
-            <Text className="text-base">Consentimento de Dados</Text>
-            <Text className="text-gray-300 text-lg">›</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View className="px-6 py-4 pb-12">
-        <TouchableOpacity
-          className="border border-red-400 rounded-xl py-4 items-center active:opacity-60"
-          onPress={() => {}}
-        >
-          <Text className="text-red-500 font-semibold text-base">
-            Excluir Conta e Dados
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
