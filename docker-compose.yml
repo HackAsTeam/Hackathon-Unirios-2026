@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: hackathon
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "5099:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=db;Port=5432;Database=hackathon;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      Jwt__Issuer: HackathonUnirios2026
+      Jwt__Audience: HackathonUnirios2026.Mobile
+      Jwt__ExpiresMinutes: 120
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      Authentication__Google__WebClientId: ${GOOGLE_WEB_CLIENT_ID:-}
+      Authentication__Google__AndroidClientId: ${GOOGLE_ANDROID_CLIENT_ID:-}
+      Authentication__Google__IosClientId: ${GOOGLE_IOS_CLIENT_ID:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
