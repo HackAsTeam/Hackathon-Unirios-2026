@@ -1,4 +1,6 @@
 using HackathonUnirios2026.Application.Features.Auth;
+using HackathonUnirios2026.Application.Features.Auth.Commands;
+using HackathonUnirios2026.Application.Features.Auth.DTOs;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Auth;
@@ -12,18 +14,18 @@ public static class AuthEndpoints
 
         group.MapPost("/register", RegisterAsync)
             .WithName("Register")
-            .Produces<Register.Response>()
+            .Produces<AuthResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
 
         group.MapPost("/login", LoginAsync)
             .WithName("Login")
-            .Produces<Login.Response>()
+            .Produces<AuthResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/google", GoogleLoginAsync)
             .WithName("GoogleLogin")
-            .Produces<GoogleLogin.Response>()
+            .Produces<AuthResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
@@ -31,13 +33,13 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> RegisterAsync(
-        Register.Request request,
+        RegisterCommand command,
         ISender sender,
         CancellationToken ct)
     {
         try
         {
-            return Results.Ok(await sender.Send(request, ct));
+            return Results.Ok(await sender.Send(command, ct));
         }
         catch (AuthValidationException ex)
         {
@@ -46,13 +48,13 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> LoginAsync(
-        Login.Request request,
+        LoginCommand command,
         ISender sender,
         CancellationToken ct)
     {
         try
         {
-            return Results.Ok(await sender.Send(request, ct));
+            return Results.Ok(await sender.Send(command, ct));
         }
         catch (AuthValidationException ex)
         {
@@ -65,13 +67,13 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> GoogleLoginAsync(
-        GoogleLogin.Request request,
+        GoogleLoginCommand command,
         ISender sender,
         CancellationToken ct)
     {
         try
         {
-            return Results.Ok(await sender.Send(request, ct));
+            return Results.Ok(await sender.Send(command, ct));
         }
         catch (AuthValidationException ex)
         {
