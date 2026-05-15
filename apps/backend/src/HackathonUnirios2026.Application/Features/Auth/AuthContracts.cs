@@ -1,25 +1,7 @@
-using HackathonUnirios2026.Domain.Entities;
-
-namespace HackathonUnirios2026.Application.Features.Auth;
-
-public interface IJwtTokenIssuer
-{
-    string CreateToken(ApplicationUser user);
-}
-
-public interface IGoogleTokenValidator
-{
-    Task<GoogleAccount> ValidateAsync(string idToken, CancellationToken ct);
-}
-
-public sealed record GoogleAccount(
-    string Subject,
-    string Email,
-    bool EmailVerified,
-    string? Name,
-    string? Picture);
-
-public sealed class AuthValidationException(string message) : Exception(message);
-
-public sealed class AuthUnauthorizedException(string message, Exception? innerException = null)
-    : Exception(message, innerException);
+// Auth service contracts have been moved to HackathonUnirios2026.Domain.Auth.
+// These aliases keep existing code in Application compiling without changes.
+global using IJwtTokenIssuer = HackathonUnirios2026.Domain.Auth.IJwtTokenIssuer;
+global using IGoogleTokenValidator = HackathonUnirios2026.Domain.Auth.IGoogleTokenValidator;
+global using GoogleAccount = HackathonUnirios2026.Domain.Auth.GoogleAccount;
+global using AuthValidationException = HackathonUnirios2026.Domain.Auth.AuthValidationException;
+global using AuthUnauthorizedException = HackathonUnirios2026.Domain.Auth.AuthUnauthorizedException;

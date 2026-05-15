@@ -1,6 +1,6 @@
-using HackathonUnirios2026.Application.Features.Auth;
 using HackathonUnirios2026.Application.Features.Auth.Commands;
 using HackathonUnirios2026.Application.Features.Auth.DTOs;
+using HackathonUnirios2026.Domain.Auth;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Auth;

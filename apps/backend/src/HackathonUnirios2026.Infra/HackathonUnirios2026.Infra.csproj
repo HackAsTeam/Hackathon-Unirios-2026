@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HackathonUnirios2026.Application\HackathonUnirios2026.Application.csproj" />
     <ProjectReference Include="..\HackathonUnirios2026.Domain\HackathonUnirios2026.Domain.csproj" />
   </ItemGroup>
 

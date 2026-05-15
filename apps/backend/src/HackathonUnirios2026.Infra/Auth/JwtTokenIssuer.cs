@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using System.Text;
-using HackathonUnirios2026.Application.Features.Auth;
+using HackathonUnirios2026.Domain.Auth;
 using HackathonUnirios2026.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;

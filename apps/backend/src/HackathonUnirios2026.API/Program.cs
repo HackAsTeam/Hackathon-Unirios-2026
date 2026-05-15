@@ -1,5 +1,10 @@
 using HackathonUnirios2026.Application;
 using HackathonUnirios2026.API.Features.Auth;
+using HackathonUnirios2026.API.Features.Subjects;
+using HackathonUnirios2026.API.Features.Classrooms;
+using HackathonUnirios2026.API.Features.Invitations;
+using HackathonUnirios2026.API.Features.Exams;
+using HackathonUnirios2026.API.Features.Attempts;
 using HackathonUnirios2026.Domain.Entities;
 using HackathonUnirios2026.Infra;
 using HackathonUnirios2026.Infra.Auth;
@@ -29,6 +34,7 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 var jwtSigningKey = ResolveJwtSigningKey(jwtOptions, builder.Environment);
@@ -86,6 +92,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
+app.MapSubjectEndpoints();
+app.MapClassroomEndpoints();
+app.MapInvitationEndpoints();
+app.MapExamEndpoints();
+app.MapAttemptEndpoints();
 
 app.Run();
 

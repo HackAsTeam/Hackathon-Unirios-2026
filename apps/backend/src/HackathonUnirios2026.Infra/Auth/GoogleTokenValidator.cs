@@ -1,5 +1,5 @@
 using Google.Apis.Auth;
-using HackathonUnirios2026.Application.Features.Auth;
+using HackathonUnirios2026.Domain.Auth;
 using Microsoft.Extensions.Options;
 
 namespace HackathonUnirios2026.Infra.Auth;
