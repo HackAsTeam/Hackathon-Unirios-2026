@@ -1,5 +1,6 @@
 bin/
 obj/
 *.user
+*.lscache
 .vs/
 appsettings.Development.json

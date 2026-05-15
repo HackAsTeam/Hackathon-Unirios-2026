@@ -3,9 +3,11 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuthStore } from "../../store/auth";
 import { apiFetch } from "../../lib/api";
+import { useGoogleSignIn } from "../../lib/googleAuth";
 
 export default function SignUpScreen() {
   const { signIn } = useAuthStore();
+  const google = useGoogleSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,13 +25,20 @@ export default function SignUpScreen() {
           body: { email, password },
         },
       );
-      signIn(data.userId, data.token);
+      await signIn(data.userId, data.token);
       router.replace("/(app)/(tabs)");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    const data = await google.signInWithGoogle();
+    if (data) {
+      router.replace("/(app)/(tabs)");
     }
   }
 
@@ -67,6 +76,20 @@ export default function SignUpScreen() {
           {loading ? "Cadastrando..." : "Cadastrar"}
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        className="border border-gray-300 rounded-lg py-4 items-center mb-4"
+        onPress={handleGoogleSignIn}
+        disabled={!google.request || google.loading}
+      >
+        <Text className="text-black font-semibold text-base">
+          {google.loading ? "Entrando com Google..." : "Continuar com Google"}
+        </Text>
+      </TouchableOpacity>
+
+      {google.error ? (
+        <Text className="text-red-500 mb-4 text-sm">{google.error}</Text>
+      ) : null}
 
       <Link href="/(auth)/sign-in" className="text-center text-gray-500">
         Já tem conta? Entre
