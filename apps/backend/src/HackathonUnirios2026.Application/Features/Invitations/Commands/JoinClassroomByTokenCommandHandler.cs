@@ -45,8 +45,6 @@ public sealed class JoinClassroomByTokenCommandHandler(AppDbContext db, IHttpCon
         db.Enrollments.Add(enrollment);
 
         link.UseCount++;
-        if (link.MaxUses.HasValue && link.UseCount >= link.MaxUses.Value)
-            link.IsActive = false;
 
         await db.SaveChangesAsync(ct);
 

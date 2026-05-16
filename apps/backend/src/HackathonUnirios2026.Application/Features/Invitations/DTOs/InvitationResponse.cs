@@ -6,7 +6,6 @@ public record InvitationLinkResponse(
     string InviteUrl,
     Guid ClassroomId,
     DateTime? ExpiresAt,
-    int? MaxUses,
     int UseCount,
     bool IsActive,
     DateTime CreatedAt);

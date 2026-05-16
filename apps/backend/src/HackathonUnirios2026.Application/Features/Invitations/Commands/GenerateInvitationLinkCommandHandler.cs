@@ -29,7 +29,6 @@ public sealed class GenerateInvitationLinkCommandHandler(
             Token = Guid.NewGuid().ToString("N"),
             ClassroomId = cmd.ClassroomId,
             ExpiresAt = cmd.ExpiresAt,
-            MaxUses = cmd.MaxUses,
             UseCount = 0,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -47,7 +46,6 @@ public sealed class GenerateInvitationLinkCommandHandler(
             inviteUrl,
             link.ClassroomId,
             link.ExpiresAt,
-            link.MaxUses,
             link.UseCount,
             link.IsActive,
             link.CreatedAt);

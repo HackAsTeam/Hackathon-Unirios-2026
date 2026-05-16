@@ -3,4 +3,4 @@ using MediatR;
 
 namespace HackathonUnirios2026.Application.Features.Invitations.Commands;
 
-public record GenerateInvitationLinkCommand(Guid ClassroomId, DateTime? ExpiresAt, int? MaxUses) : IRequest<InvitationLinkResponse>;
+public record GenerateInvitationLinkCommand(Guid ClassroomId, DateTime? ExpiresAt) : IRequest<InvitationLinkResponse>;
