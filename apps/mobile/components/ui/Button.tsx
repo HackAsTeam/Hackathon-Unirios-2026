@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { colors } from '../../lib/colors';
 
 interface ButtonProps {

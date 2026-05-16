@@ -8,7 +8,6 @@ interface FormatIconProps {
 }
 
 export function FormatIcon({ format, size = 40 }: FormatIconProps) {
-  const color = colors.formats[format];
   const lightColor = colors.formatsLight[format];
   const icon = formatIcons[format];
 
