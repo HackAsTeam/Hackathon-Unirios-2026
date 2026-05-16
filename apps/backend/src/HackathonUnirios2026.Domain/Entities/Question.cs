@@ -8,4 +8,5 @@ public class Question
     public string Text { get; set; } = string.Empty;
     public string? ExpectedAnswer { get; set; }
     public Exam Exam { get; set; } = null!;
+    public ICollection<QuestionOption> Options { get; set; } = [];
 }

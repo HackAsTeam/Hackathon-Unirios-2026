@@ -41,6 +41,7 @@ public sealed class SubmitExamAttemptCommandHandler(AppDbContext db, IHttpContex
             attempt.SubmittedAt,
             attempt.Status.ToString(),
             attempt.Answers.Count,
-            attempt.Exam.Questions.Count);
+            attempt.Exam.Questions.Count,
+            attempt.Answers.Sum(a => a.Score ?? 0));
     }
 }

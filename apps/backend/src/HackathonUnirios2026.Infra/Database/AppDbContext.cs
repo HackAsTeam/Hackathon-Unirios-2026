@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAc
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Exam> Exams => Set<Exam>();
     public DbSet<Question> Questions => Set<Question>();
+    public DbSet<QuestionOption> QuestionOptions => Set<QuestionOption>();
     public DbSet<ClassroomExam> ClassroomExams => Set<ClassroomExam>();
     public DbSet<ExamAttempt> ExamAttempts => Set<ExamAttempt>();
     public DbSet<QuestionAnswer> QuestionAnswers => Set<QuestionAnswer>();

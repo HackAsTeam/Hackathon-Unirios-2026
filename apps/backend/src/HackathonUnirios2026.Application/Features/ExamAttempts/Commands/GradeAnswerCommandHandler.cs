@@ -54,6 +54,7 @@ public sealed class GradeAnswerCommandHandler(AppDbContext db, IHttpContextAcces
         return new QuestionAnswerResponse(
             answer.Id,
             answer.QuestionId,
+            answer.SelectedOptionId,
             answer.AnswerText,
             answer.Score,
             answer.Feedback,

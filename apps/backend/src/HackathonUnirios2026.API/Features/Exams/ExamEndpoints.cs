@@ -3,6 +3,7 @@ using HackathonUnirios2026.Application.Features.Exams.Commands;
 using HackathonUnirios2026.Application.Features.Exams.DTOs;
 using HackathonUnirios2026.Application.Features.Exams.Queries;
 using HackathonUnirios2026.Application.Features.Classrooms;
+using HackathonUnirios2026.Application.Features.Subjects;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Exams;
@@ -15,10 +16,20 @@ public sealed class ExamEndpoints : IEndpoint
             .WithTags("Exams")
             .RequireAuthorization();
 
+        var activitiesGroup = app.MapGroup("/activities")
+            .WithTags("Activities")
+            .RequireAuthorization();
+
+        var subjectActivitiesGroup = app.MapGroup("/subjects/{subjectId:guid}/activities")
+            .WithTags("Activities")
+            .RequireAuthorization();
+
         group.MapPost("/", CreateExamAsync)
             .WithName("CreateExam")
             .Produces<ExamDetailResponse>()
-            .Produces(StatusCodes.Status403Forbidden);
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/assign", AssignExamAsync)
             .WithName("AssignExam")
@@ -29,11 +40,31 @@ public sealed class ExamEndpoints : IEndpoint
         group.MapGet("/{id:guid}", GetExamByIdAsync)
             .WithName("GetExamById")
             .Produces<ExamDetailResponse>()
+            .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
 
         group.MapGet("/classroom/{classroomId:guid}", GetClassroomExamsAsync)
             .WithName("GetClassroomExams")
             .Produces<List<ExamResponse>>();
+
+        activitiesGroup.MapGet("/{id:guid}", GetExamByIdAsync)
+            .WithName("GetActivityById")
+            .Produces<ExamDetailResponse>()
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
+
+        subjectActivitiesGroup.MapPost("/", CreateSubjectActivityAsync)
+            .WithName("CreateSubjectActivity")
+            .Produces<ExamDetailResponse>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
+
+        subjectActivitiesGroup.MapGet("/", GetSubjectActivitiesAsync)
+            .WithName("GetSubjectActivities")
+            .Produces<List<ExamResponse>>()
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> CreateExamAsync(
@@ -49,6 +80,39 @@ public sealed class ExamEndpoints : IEndpoint
         catch (NotTeacherException)
         {
             return Results.Forbid();
+        }
+        catch (SubjectNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
+        catch (InvalidExamException ex)
+        {
+            return Results.BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    private static async Task<IResult> CreateSubjectActivityAsync(
+        Guid subjectId,
+        CreateSubjectActivityRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        try
+        {
+            var result = await sender.Send(new CreateExamCommand(subjectId, body.Title, body.Description, body.Questions), ct);
+            return Results.Ok(result);
+        }
+        catch (NotTeacherException)
+        {
+            return Results.Forbid();
+        }
+        catch (SubjectNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
+        catch (InvalidExamException ex)
+        {
+            return Results.BadRequest(new { Message = ex.Message });
         }
     }
 
@@ -69,6 +133,10 @@ public sealed class ExamEndpoints : IEndpoint
         catch (ExamNotFoundException ex)
         {
             return Results.NotFound(new { Message = ex.Message });
+        }
+        catch (ClassroomNotFoundException)
+        {
+            return Results.Forbid();
         }
     }
 
@@ -96,4 +164,26 @@ public sealed class ExamEndpoints : IEndpoint
         var result = await sender.Send(new GetClassroomExamsQuery(classroomId), ct);
         return Results.Ok(result);
     }
+
+    private static async Task<IResult> GetSubjectActivitiesAsync(
+        Guid subjectId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        try
+        {
+            var result = await sender.Send(new GetSubjectExamsQuery(subjectId), ct);
+            return Results.Ok(result);
+        }
+        catch (SubjectNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
+        catch (ClassroomNotFoundException)
+        {
+            return Results.Forbid();
+        }
+    }
+
+    private sealed record CreateSubjectActivityRequest(string Title, string? Description, List<CreateQuestionDto> Questions);
 }

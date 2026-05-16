@@ -6,4 +6,5 @@ public class Subject : AuditableEntity
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public Classroom Classroom { get; set; } = null!;
+    public ICollection<Exam> Exams { get; set; } = [];
 }

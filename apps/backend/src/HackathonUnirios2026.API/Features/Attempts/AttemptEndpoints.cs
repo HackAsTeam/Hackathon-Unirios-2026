@@ -26,6 +26,12 @@ public sealed class AttemptEndpoints : IEndpoint
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status400BadRequest);
 
+        group.MapPost("/{attemptId:guid}/submit-answers", SubmitAnswersAsync)
+            .WithName("SubmitAttemptAnswers")
+            .Produces<SubmitAnswersResponse>()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status400BadRequest);
+
         group.MapPost("/{attemptId:guid}/submit", SubmitAttemptAsync)
             .WithName("SubmitExamAttempt")
             .Produces<AttemptResponse>()
@@ -56,6 +62,33 @@ public sealed class AttemptEndpoints : IEndpoint
         catch (NotEnrolledException)
         {
             return Results.Forbid();
+        }
+    }
+
+    private static async Task<IResult> SubmitAnswersAsync(
+        Guid attemptId,
+        SubmitAnswersRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        try
+        {
+            var result = await sender.Send(new SubmitAttemptAnswersCommand(
+                attemptId,
+                body.Answers.Select(a => new SubmitAttemptAnswerDto(a.QuestionId, a.SelectedOptionId)).ToList()), ct);
+            return Results.Ok(result);
+        }
+        catch (AttemptNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
+        catch (AttemptNotInProgressException ex)
+        {
+            return Results.BadRequest(new { Message = ex.Message });
+        }
+        catch (InvalidAttemptAnswersException ex)
+        {
+            return Results.BadRequest(new { Message = ex.Message });
         }
     }
 
@@ -132,5 +165,7 @@ public sealed class AttemptEndpoints : IEndpoint
     }
 
     private sealed record SaveAnswerRequest(Guid QuestionId, string AnswerText);
+    private sealed record SubmitAnswersRequest(List<SubmitAnswerRequest> Answers);
+    private sealed record SubmitAnswerRequest(Guid QuestionId, Guid SelectedOptionId);
     private sealed record GradeAnswerRequest(decimal Score, string? Feedback);
 }
