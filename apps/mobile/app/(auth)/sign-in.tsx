@@ -7,8 +7,21 @@ import { useGoogleSignIn } from "../../lib/googleAuth";
 
 export default function SignInScreen() {
   const { signIn } = useAuthStore();
+  const pendingInviteToken = useAuthStore((s) => s.pendingInviteToken);
+  const setPendingInviteToken = useAuthStore((s) => s.setPendingInviteToken);
   const router = useRouter();
-  const google = useGoogleSignIn(() => router.replace("/(app)/(tabs)"));
+
+  function redirectAfterLogin() {
+    if (pendingInviteToken) {
+      const t = pendingInviteToken;
+      setPendingInviteToken(null);
+      router.replace(`/invite/${t}` as never);
+    } else {
+      router.replace("/(app)/(tabs)");
+    }
+  }
+
+  const google = useGoogleSignIn(redirectAfterLogin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +39,7 @@ export default function SignInScreen() {
         },
       );
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
-      router.replace("/(app)/(tabs)");
+      redirectAfterLogin();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao fazer login";
       setError(msg);
@@ -38,7 +51,7 @@ export default function SignInScreen() {
   async function handleGoogleSignIn() {
     const data = await google.signInWithGoogle();
     if (data) {
-      router.replace("/(app)/(tabs)");
+      redirectAfterLogin();
     }
   }
 

@@ -8,7 +8,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -32,6 +32,8 @@ services:
       Authentication__Google__WebClientId: ${GOOGLE_WEB_CLIENT_ID:-}
       Authentication__Google__AndroidClientId: ${GOOGLE_ANDROID_CLIENT_ID:-}
       Authentication__Google__IosClientId: ${GOOGLE_IOS_CLIENT_ID:-}
+      App__BaseUrl: ${APP_BASE_URL:-http://localhost:5099}
+      App__MobileScheme: ${APP_MOBILE_SCHEME:-hackathon-app}
     depends_on:
       db:
         condition: service_healthy

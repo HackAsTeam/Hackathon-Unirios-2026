@@ -26,9 +26,6 @@ public sealed class InvitationLinkConfiguration : IEntityTypeConfiguration<Invit
         builder.Property(i => i.ExpiresAt)
             .HasColumnType("timestamp with time zone");
 
-        builder.Property(i => i.MaxUses)
-            .HasColumnType("integer");
-
         builder.Property(i => i.UseCount)
             .HasColumnType("integer")
             .IsRequired();
