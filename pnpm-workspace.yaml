@@ -1,5 +1,7 @@
 packages:
   - 'apps/*'
+overrides:
+  postcss: "8.5.14"
 allowBuilds:
   '@clerk/shared': true
   browser-tabs-lock: true
