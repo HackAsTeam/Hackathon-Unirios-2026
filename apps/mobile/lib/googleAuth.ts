@@ -11,6 +11,8 @@ import {
 import { apiFetch } from "./api";
 import { useAuthStore } from "../store/auth";
 
+const placeholderClientId = "000000000000-placeholder.apps.googleusercontent.com";
+
 type AuthResponse = {
   userId: string;
   email: string | null;
@@ -40,9 +42,9 @@ export function useGoogleSignIn(onSuccess?: () => void) {
   // useIdTokenAuthRequest requests ResponseType.IdToken on web (implicit flow)
   // so the token arrives in response.params.id_token without a backend exchange.
   const [, webResponse, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || placeholderClientId,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || placeholderClientId,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || placeholderClientId,
   });
 
   useEffect(() => {
