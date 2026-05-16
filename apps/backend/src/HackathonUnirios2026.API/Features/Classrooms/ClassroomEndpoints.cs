@@ -33,15 +33,8 @@ public sealed class ClassroomEndpoints : IEndpoint
         ISender sender,
         CancellationToken ct)
     {
-        try
-        {
-            var result = await sender.Send(command, ct);
-            return Results.Ok(result);
-        }
-        catch (SubjectNotFoundException ex)
-        {
-            return Results.NotFound(new { Message = ex.Message });
-        }
+        var result = await sender.Send(command, ct);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetMyClassroomsAsync(

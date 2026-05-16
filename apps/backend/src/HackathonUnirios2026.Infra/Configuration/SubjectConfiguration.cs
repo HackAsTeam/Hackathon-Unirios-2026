@@ -10,11 +10,11 @@ public sealed class SubjectConfiguration : IEntityTypeConfiguration<Subject>
     {
         builder.ToTable("subjects");
 
-        builder.HasKey(s => s.Id);
+        builder.ConfigureAuditableEntity();
 
-        builder.Property(s => s.Id)
+        builder.Property(s => s.ClassroomId)
             .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+            .IsRequired();
 
         builder.Property(s => s.Name)
             .HasColumnType("varchar(256)")
@@ -24,8 +24,9 @@ public sealed class SubjectConfiguration : IEntityTypeConfiguration<Subject>
         builder.Property(s => s.Description)
             .HasColumnType("text");
 
-        builder.Property(s => s.CreatedAt)
-            .HasColumnType("timestamp with time zone")
-            .IsRequired();
+        builder.HasOne(s => s.Classroom)
+            .WithMany(c => c.Subjects)
+            .HasForeignKey(s => s.ClassroomId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

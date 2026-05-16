@@ -3,4 +3,4 @@ using MediatR;
 
 namespace HackathonUnirios2026.Application.Features.Subjects.Queries;
 
-public record GetSubjectsQuery() : IRequest<List<SubjectResponse>>;
+public record GetSubjectsQuery(Guid ClassroomId) : IRequest<List<SubjectResponse>>;

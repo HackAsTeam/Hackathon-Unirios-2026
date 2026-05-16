@@ -10,11 +10,7 @@ public sealed class QuestionAnswerConfiguration : IEntityTypeConfiguration<Quest
     {
         builder.ToTable("question_answers");
 
-        builder.HasKey(qa => qa.Id);
-
-        builder.Property(qa => qa.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(qa => qa.AttemptId)
             .HasColumnType("uuid")

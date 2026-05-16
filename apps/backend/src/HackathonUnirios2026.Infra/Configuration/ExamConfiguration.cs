@@ -10,11 +10,7 @@ public sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
     {
         builder.ToTable("exams");
 
-        builder.HasKey(e => e.Id);
-
-        builder.Property(e => e.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(e => e.ClassroomId)
             .HasColumnType("uuid")
@@ -27,10 +23,6 @@ public sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
 
         builder.Property(e => e.Description)
             .HasColumnType("text");
-
-        builder.Property(e => e.CreatedAt)
-            .HasColumnType("timestamp with time zone")
-            .IsRequired();
 
         builder.HasOne(e => e.Classroom)
             .WithMany()

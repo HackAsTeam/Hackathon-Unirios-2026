@@ -11,11 +11,7 @@ public sealed class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAtte
     {
         builder.ToTable("exam_attempts");
 
-        builder.HasKey(a => a.Id);
-
-        builder.Property(a => a.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(a => a.ExamId)
             .HasColumnType("uuid")
