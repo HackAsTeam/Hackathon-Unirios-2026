@@ -3,6 +3,7 @@ using HackathonUnirios2026.Application.Features.Invitations;
 using HackathonUnirios2026.Application.Features.Invitations.Commands;
 using HackathonUnirios2026.Application.Features.Invitations.DTOs;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 
 namespace HackathonUnirios2026.API.Features.Invitations;
 
@@ -10,6 +11,11 @@ public sealed class InvitationEndpoints : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        app.MapGet("/i/{token}", OpenInviteLinkAsync)
+            .WithName("OpenInviteDeepLink")
+            .WithTags("Invitations")
+            .AllowAnonymous();
+
         var group = app.MapGroup("/invitations")
             .WithTags("Invitations")
             .RequireAuthorization();
@@ -93,5 +99,26 @@ public sealed class InvitationEndpoints : IEndpoint
         {
             return Results.Forbid();
         }
+    }
+
+    private static IResult OpenInviteLinkAsync(string token, IConfiguration config)
+    {
+        var scheme = config["App:MobileScheme"] ?? "hackathon-app";
+        var deepLink = $"{scheme}://invite/{token}";
+        var html = $$"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Entrar na sala</title>
+              <meta http-equiv="refresh" content="0;url={{deepLink}}">
+            </head>
+            <body>
+              <p>Abrindo o app... <a href="{{deepLink}}">Clique aqui</a> se não abrir automaticamente.</p>
+              <script>window.location.href = "{{deepLink}}";</script>
+            </body>
+            </html>
+            """;
+        return Results.Content(html, "text/html");
     }
 }

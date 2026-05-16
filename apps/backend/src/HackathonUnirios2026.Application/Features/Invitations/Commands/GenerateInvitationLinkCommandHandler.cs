@@ -6,10 +6,14 @@ using HackathonUnirios2026.Infra.Database;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace HackathonUnirios2026.Application.Features.Invitations.Commands;
 
-public sealed class GenerateInvitationLinkCommandHandler(AppDbContext db, IHttpContextAccessor httpContextAccessor)
+public sealed class GenerateInvitationLinkCommandHandler(
+    AppDbContext db,
+    IHttpContextAccessor httpContextAccessor,
+    IConfiguration configuration)
     : IRequestHandler<GenerateInvitationLinkCommand, InvitationLinkResponse>
 {
     public async Task<InvitationLinkResponse> Handle(GenerateInvitationLinkCommand cmd, CancellationToken ct)
@@ -34,9 +38,13 @@ public sealed class GenerateInvitationLinkCommandHandler(AppDbContext db, IHttpC
         db.InvitationLinks.Add(link);
         await db.SaveChangesAsync(ct);
 
+        var baseUrl = configuration["App:BaseUrl"] ?? "http://localhost:5099";
+        var inviteUrl = $"{baseUrl}/i/{link.Token}";
+
         return new InvitationLinkResponse(
             link.Id,
             link.Token,
+            inviteUrl,
             link.ClassroomId,
             link.ExpiresAt,
             link.MaxUses,

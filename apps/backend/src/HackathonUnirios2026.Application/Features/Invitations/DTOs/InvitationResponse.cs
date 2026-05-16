@@ -3,6 +3,7 @@ namespace HackathonUnirios2026.Application.Features.Invitations.DTOs;
 public record InvitationLinkResponse(
     Guid Id,
     string Token,
+    string InviteUrl,
     Guid ClassroomId,
     DateTime? ExpiresAt,
     int? MaxUses,
