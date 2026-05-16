@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Platform } from "react-native";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -13,18 +16,67 @@ type AuthResponse = {
   token: string;
 };
 
-GoogleSignin.configure({
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-});
+// Required for the web OAuth redirect to close the popup automatically.
+WebBrowser.maybeCompleteAuthSession();
 
-export function useGoogleSignIn() {
+// Native-only configuration (no-op on web).
+if (Platform.OS !== "web") {
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  });
+}
+
+export function useGoogleSignIn(onSuccess?: () => void) {
   const signIn = useAuthStore((state) => state.signIn);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const configured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 
-  async function signInWithGoogle() {
+  // ── Web flow ─────────────────────────────────────────────────────────────
+  // useIdTokenAuthRequest requests ResponseType.IdToken on web (implicit flow)
+  // so the token arrives in response.params.id_token without a backend exchange.
+  const [, webResponse, promptAsync] = Google.useIdTokenAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (webResponse?.type !== "success") return;
+
+    const idToken =
+      // Implicit IdToken flow on web puts the token in params.id_token
+      (webResponse.params as Record<string, string>)["id_token"] ??
+      webResponse.authentication?.idToken ??
+      null;
+
+    if (!idToken) {
+      setError("Google não retornou um token de identidade.");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    apiFetch<AuthResponse>("/auth/google", {
+      method: "POST",
+      body: { idToken },
+    })
+      .then(async (data) => {
+        await signIn(data.userId, data.token);
+        onSuccess?.();
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : "Erro ao entrar com Google";
+        setError(message);
+      })
+      .finally(() => setLoading(false));
+  }, [webResponse]);
+
+  // ── Native flow ──────────────────────────────────────────────────────────
+  async function signInWithGoogleNative(): Promise<AuthResponse | null> {
     setError("");
     setLoading(true);
 
@@ -55,12 +107,25 @@ export function useGoogleSignIn() {
           return null;
         }
       }
-      const message = err instanceof Error ? err.message : "Erro ao entrar com Google";
+      const message =
+        err instanceof Error ? err.message : "Erro ao entrar com Google";
       setError(message);
       return null;
     } finally {
       setLoading(false);
     }
+  }
+
+  // ── Unified entry point ──────────────────────────────────────────────────
+  // On web: triggers promptAsync (the response is handled in the useEffect above).
+  // On native: runs the GoogleSignin flow end-to-end and returns the result.
+  async function signInWithGoogle(): Promise<AuthResponse | null> {
+    setError("");
+    if (Platform.OS === "web") {
+      await promptAsync();
+      return null; // result delivered via useEffect / onSuccess callback
+    }
+    return signInWithGoogleNative();
   }
 
   return {

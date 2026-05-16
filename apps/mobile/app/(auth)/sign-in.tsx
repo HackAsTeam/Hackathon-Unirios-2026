@@ -7,8 +7,8 @@ import { useGoogleSignIn } from "../../lib/googleAuth";
 
 export default function SignInScreen() {
   const { signIn } = useAuthStore();
-  const google = useGoogleSignIn();
   const router = useRouter();
+  const google = useGoogleSignIn(() => router.replace("/(app)/(tabs)"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
