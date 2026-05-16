@@ -2,13 +2,17 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuthStore } from "../../store/auth";
+import { useOnboardingStore } from "../../store/onboarding";
 import { apiFetch } from "../../lib/api";
 import { useGoogleSignIn } from "../../lib/googleAuth";
 
 export default function SignInScreen() {
   const { signIn } = useAuthStore();
   const router = useRouter();
-  const google = useGoogleSignIn(() => router.replace("/(app)/(tabs)"));
+  const google = useGoogleSignIn(() => {
+    const { completed } = useOnboardingStore.getState();
+    router.replace(completed ? "/(app)/(tabs)" : "/onboarding");
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +30,8 @@ export default function SignInScreen() {
         },
       );
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
-      router.replace("/(app)/(tabs)");
+      const { completed } = useOnboardingStore.getState();
+      router.replace(completed ? "/(app)/(tabs)" : "/onboarding");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao fazer login";
       setError(msg);
@@ -38,7 +43,8 @@ export default function SignInScreen() {
   async function handleGoogleSignIn() {
     const data = await google.signInWithGoogle();
     if (data) {
-      router.replace("/(app)/(tabs)");
+      const { completed } = useOnboardingStore.getState();
+      router.replace(completed ? "/(app)/(tabs)" : "/onboarding");
     }
   }
 
