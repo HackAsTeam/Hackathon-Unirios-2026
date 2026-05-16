@@ -7,16 +7,22 @@ const AUTH_STORAGE_KEY = "hackathon.auth";
 interface AuthState {
   userId: string | null;
   token: string | null;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
   isSignedIn: boolean;
   hydrated: boolean;
   hydrate: () => Promise<void>;
-  signIn: (userId: string, token: string) => Promise<void>;
+  signIn: (userId: string, token: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 type PersistedAuthState = {
   userId: string;
   token: string;
+  email?: string | null;
+  displayName?: string | null;
+  avatarUrl?: string | null;
 };
 
 async function getStoredAuth() {
@@ -49,6 +55,9 @@ async function deleteStoredAuth() {
 export const useAuthStore = create<AuthState>((set) => ({
   userId: null,
   token: null,
+  email: null,
+  displayName: null,
+  avatarUrl: null,
   isSignedIn: false,
   hydrated: false,
   hydrate: async () => {
@@ -63,20 +72,23 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({
         userId: auth.userId,
         token: auth.token,
+        email: auth.email ?? null,
+        displayName: auth.displayName ?? null,
+        avatarUrl: auth.avatarUrl ?? null,
         isSignedIn: Boolean(auth.userId && auth.token),
         hydrated: true,
       });
     } catch {
       await deleteStoredAuth();
-      set({ userId: null, token: null, isSignedIn: false, hydrated: true });
+      set({ userId: null, token: null, email: null, displayName: null, avatarUrl: null, isSignedIn: false, hydrated: true });
     }
   },
-  signIn: async (userId, token) => {
-    await setStoredAuth({ userId, token });
-    set({ userId, token, isSignedIn: true, hydrated: true });
+  signIn: async (userId, token, email, displayName, avatarUrl) => {
+    await setStoredAuth({ userId, token, email, displayName, avatarUrl });
+    set({ userId, token, email: email ?? null, displayName: displayName ?? null, avatarUrl: avatarUrl ?? null, isSignedIn: true, hydrated: true });
   },
   signOut: async () => {
     await deleteStoredAuth();
-    set({ userId: null, token: null, isSignedIn: false, hydrated: true });
+    set({ userId: null, token: null, email: null, displayName: null, avatarUrl: null, isSignedIn: false, hydrated: true });
   },
 }));

@@ -13,6 +13,9 @@ import { useAuthStore } from "../store/auth";
 
 type AuthResponse = {
   userId: string;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
   token: string;
 };
 
@@ -64,7 +67,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
       body: { idToken },
     })
       .then(async (data) => {
-        await signIn(data.userId, data.token);
+        await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
         onSuccess?.();
       })
       .catch((err: unknown) => {
@@ -95,7 +98,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
         body: { idToken },
       });
 
-      await signIn(data.userId, data.token);
+      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
       return data;
     } catch (err: unknown) {
       if (isErrorWithCode(err)) {

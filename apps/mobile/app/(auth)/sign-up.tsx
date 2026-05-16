@@ -11,6 +11,7 @@ export default function SignUpScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,14 +19,14 @@ export default function SignUpScreen() {
     setError("");
     setLoading(true);
     try {
-      const data = await apiFetch<{ userId: string; token: string }>(
+      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string }>(
         "/auth/register",
         {
           method: "POST",
-          body: { email, password },
+          body: { email, password, displayName },
         },
       );
-      await signIn(data.userId, data.token);
+      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
       router.replace("/(app)/(tabs)");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
@@ -45,6 +46,15 @@ export default function SignUpScreen() {
   return (
     <View className="flex-1 justify-center px-6 bg-white">
       <Text className="text-2xl font-bold mb-8 text-center">Cadastre-se</Text>
+
+      <TextInput
+        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
+        placeholder="Nome"
+        value={displayName}
+        onChangeText={setDisplayName}
+        autoCapitalize="none"
+        keyboardType="default"
+      />
 
       <TextInput
         className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"

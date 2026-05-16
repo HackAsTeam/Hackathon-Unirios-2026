@@ -18,14 +18,14 @@ export default function SignInScreen() {
     setError("");
     setLoading(true);
     try {
-      const data = await apiFetch<{ userId: string; token: string }>(
+      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string }>(
         "/auth/login",
         {
           method: "POST",
           body: { email, password },
         },
       );
-      await signIn(data.userId, data.token);
+      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
       router.replace("/(app)/(tabs)");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao fazer login";
