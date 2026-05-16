@@ -12,9 +12,11 @@ interface AuthState {
   avatarUrl: string | null;
   isSignedIn: boolean;
   hydrated: boolean;
+  pendingInviteToken: string | null;
   hydrate: () => Promise<void>;
   signIn: (userId: string, token: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null) => Promise<void>;
   signOut: () => Promise<void>;
+  setPendingInviteToken: (token: string | null) => void;
 }
 
 type PersistedAuthState = {
@@ -60,6 +62,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   avatarUrl: null,
   isSignedIn: false,
   hydrated: false,
+  pendingInviteToken: null,
+  setPendingInviteToken: (token) => set({ pendingInviteToken: token }),
   hydrate: async () => {
     try {
       const raw = await getStoredAuth();
