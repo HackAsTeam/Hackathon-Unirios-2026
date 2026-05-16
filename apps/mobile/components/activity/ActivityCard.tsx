@@ -2,7 +2,6 @@ import { TouchableOpacity, View, Text } from 'react-native';
 import { Activity, ResponseFormat } from '../../types/activity';
 import { colors } from '../../lib/colors';
 import { Chip } from '../ui/Chip';
-import { ProgressBar } from '../ui/ProgressBar';
 
 interface ActivityCardProps {
   activity: Activity;

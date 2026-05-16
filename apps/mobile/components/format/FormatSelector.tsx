@@ -1,7 +1,7 @@
 import { View, Text, ScrollView } from 'react-native';
 import { ResponseFormat } from '../../types/activity';
 import { FormatCard } from './FormatCard';
-import { colors, formatIcons } from '../../lib/colors';
+import { colors } from '../../lib/colors';
 
 interface FormatSelectorProps {
   formats: ResponseFormat[];
