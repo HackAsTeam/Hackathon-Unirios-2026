@@ -7,9 +7,9 @@ using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Exams;
 
-public static class ExamEndpoints
+public sealed class ExamEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapExamEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/exams")
             .WithTags("Exams")
@@ -34,8 +34,6 @@ public static class ExamEndpoints
         group.MapGet("/classroom/{classroomId:guid}", GetClassroomExamsAsync)
             .WithName("GetClassroomExams")
             .Produces<List<ExamResponse>>();
-
-        return app;
     }
 
     private static async Task<IResult> CreateExamAsync(

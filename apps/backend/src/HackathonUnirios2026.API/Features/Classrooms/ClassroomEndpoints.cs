@@ -6,9 +6,9 @@ using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Classrooms;
 
-public static class ClassroomEndpoints
+public sealed class ClassroomEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapClassroomEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/classrooms")
             .WithTags("Classrooms")
@@ -26,8 +26,6 @@ public static class ClassroomEndpoints
             .WithName("GetClassroomById")
             .Produces<ClassroomDetailResponse>()
             .Produces(StatusCodes.Status404NotFound);
-
-        return app;
     }
 
     private static async Task<IResult> CreateClassroomAsync(

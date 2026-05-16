@@ -1,5 +1,4 @@
 using HackathonUnirios2026.Domain.Entities;
-using HackathonUnirios2026.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,10 +16,5 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
 
         builder.Property(user => user.AvatarUrl)
             .HasColumnType("text");
-
-        builder.Property(u => u.Role)
-            .HasConversion<string>()
-            .HasMaxLength(20)
-            .HasDefaultValue(UserRole.Student);
     }
 }

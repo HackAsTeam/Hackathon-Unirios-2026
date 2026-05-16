@@ -52,6 +52,7 @@ builder.Services
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 builder.Services.AddCors(options =>
 {
