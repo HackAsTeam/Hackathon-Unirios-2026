@@ -1,3 +1,4 @@
+using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Subjects.Commands;
 using HackathonUnirios2026.Application.Features.Subjects.DTOs;
 using HackathonUnirios2026.Application.Features.Subjects.Queries;
@@ -5,39 +6,62 @@ using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Subjects;
 
-public static class SubjectEndpoints
+public sealed class SubjectEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapSubjectEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/subjects")
+        var group = app.MapGroup("/classrooms/{classroomId:guid}/subjects")
             .WithTags("Subjects")
             .RequireAuthorization();
 
         group.MapPost("/", CreateSubjectAsync)
             .WithName("CreateSubject")
-            .Produces<SubjectResponse>(StatusCodes.Status200OK);
+            .Produces<SubjectResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapGet("/", GetSubjectsAsync)
             .WithName("GetSubjects")
-            .Produces<List<SubjectResponse>>();
-
-        return app;
+            .Produces<List<SubjectResponse>>()
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> CreateSubjectAsync(
-        CreateSubjectCommand command,
+        Guid classroomId,
+        CreateSubjectRequest body,
         ISender sender,
         CancellationToken ct)
     {
-        var result = await sender.Send(command, ct);
-        return Results.Ok(result);
+        try
+        {
+            var result = await sender.Send(new CreateSubjectCommand(classroomId, body.Name, body.Description), ct);
+            return Results.Ok(result);
+        }
+        catch (ClassroomNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
+        catch (NotTeacherException)
+        {
+            return Results.Forbid();
+        }
     }
 
     private static async Task<IResult> GetSubjectsAsync(
+        Guid classroomId,
         ISender sender,
         CancellationToken ct)
     {
-        var result = await sender.Send(new GetSubjectsQuery(), ct);
-        return Results.Ok(result);
+        try
+        {
+            var result = await sender.Send(new GetSubjectsQuery(classroomId), ct);
+            return Results.Ok(result);
+        }
+        catch (ClassroomNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
     }
+
+    private sealed record CreateSubjectRequest(string Name, string? Description);
 }

@@ -10,11 +10,7 @@ public sealed class ClassroomExamConfiguration : IEntityTypeConfiguration<Classr
     {
         builder.ToTable("classroom_exams");
 
-        builder.HasKey(ce => ce.Id);
-
-        builder.Property(ce => ce.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(ce => ce.ClassroomId)
             .HasColumnType("uuid")

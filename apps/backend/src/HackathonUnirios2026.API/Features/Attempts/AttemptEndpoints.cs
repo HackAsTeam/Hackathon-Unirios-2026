@@ -2,14 +2,14 @@ using HackathonUnirios2026.Application.Features.ExamAttempts;
 using HackathonUnirios2026.Application.Features.ExamAttempts.Commands;
 using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
 using HackathonUnirios2026.Application.Features.ExamAttempts.Queries;
-using HackathonUnirios2026.Application.Features.Invitations;
+using HackathonUnirios2026.Application.Features.Classrooms;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Attempts;
 
-public static class AttemptEndpoints
+public sealed class AttemptEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapAttemptEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/attempts")
             .WithTags("ExamAttempts")
@@ -41,8 +41,6 @@ public static class AttemptEndpoints
             .Produces<QuestionAnswerResponse>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
-
-        return app;
     }
 
     private static async Task<IResult> StartAttemptAsync(

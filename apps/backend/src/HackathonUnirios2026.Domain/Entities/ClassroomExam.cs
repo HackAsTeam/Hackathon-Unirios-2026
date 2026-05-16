@@ -1,8 +1,7 @@
 namespace HackathonUnirios2026.Domain.Entities;
 
-public class ClassroomExam
+public class ClassroomExam : AuditableEntity
 {
-    public Guid Id { get; set; }
     public Guid ClassroomId { get; set; }
     public Guid ExamId { get; set; }
     public DateTime AssignedAt { get; set; }

@@ -1,8 +1,7 @@
 namespace HackathonUnirios2026.Domain.Entities;
 
-public class Enrollment
+public class Enrollment : AuditableEntity
 {
-    public Guid Id { get; set; }
     public Guid ClassroomId { get; set; }
     public string StudentId { get; set; } = string.Empty;
     public DateTime JoinedAt { get; set; }

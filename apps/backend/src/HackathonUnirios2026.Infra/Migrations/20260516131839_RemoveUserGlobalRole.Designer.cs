@@ -3,6 +3,7 @@ using System;
 using HackathonUnirios2026.Infra.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HackathonUnirios2026.Infra.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516131839_RemoveUserGlobalRole")]
+    partial class RemoveUserGlobalRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -103,18 +106,11 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("TeacherId")
                         .IsRequired()
@@ -125,13 +121,9 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
 
                     b.HasIndex("TeacherId");
 
@@ -151,30 +143,11 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<Guid>("ClassroomId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("DueAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("ExamId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -196,30 +169,11 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<Guid>("ClassroomId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("StudentId")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -245,16 +199,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -262,12 +206,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -282,19 +220,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("ExamId")
                         .HasColumnType("uuid");
@@ -315,12 +240,6 @@ namespace HackathonUnirios2026.Infra.Migrations
 
                     b.Property<DateTime?>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -344,16 +263,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -367,12 +276,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
 
                     b.Property<int>("UseCount")
                         .HasColumnType("integer");
@@ -431,19 +334,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<Guid>("AttemptId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
                     b.Property<string>("Feedback")
                         .HasColumnType("text");
 
@@ -452,12 +342,6 @@ namespace HackathonUnirios2026.Infra.Migrations
 
                     b.Property<decimal?>("Score")
                         .HasColumnType("numeric(5,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -476,21 +360,8 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<Guid>("ClassroomId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -500,15 +371,7 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ClassroomId");
 
                     b.ToTable("subjects", (string)null);
                 });
@@ -647,11 +510,19 @@ namespace HackathonUnirios2026.Infra.Migrations
 
             modelBuilder.Entity("HackathonUnirios2026.Domain.Entities.Classroom", b =>
                 {
+                    b.HasOne("HackathonUnirios2026.Domain.Entities.Subject", "Subject")
+                        .WithMany("Classrooms")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("HackathonUnirios2026.Domain.Entities.ApplicationUser", "Teacher")
                         .WithMany()
                         .HasForeignKey("TeacherId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Subject");
 
                     b.Navigation("Teacher");
                 });
@@ -765,17 +636,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("HackathonUnirios2026.Domain.Entities.Subject", b =>
-                {
-                    b.HasOne("HackathonUnirios2026.Domain.Entities.Classroom", "Classroom")
-                        .WithMany("Subjects")
-                        .HasForeignKey("ClassroomId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Classroom");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -834,8 +694,6 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Navigation("Enrollments");
 
                     b.Navigation("InvitationLinks");
-
-                    b.Navigation("Subjects");
                 });
 
             modelBuilder.Entity("HackathonUnirios2026.Domain.Entities.Exam", b =>
@@ -848,6 +706,11 @@ namespace HackathonUnirios2026.Infra.Migrations
             modelBuilder.Entity("HackathonUnirios2026.Domain.Entities.ExamAttempt", b =>
                 {
                     b.Navigation("Answers");
+                });
+
+            modelBuilder.Entity("HackathonUnirios2026.Domain.Entities.Subject", b =>
+                {
+                    b.Navigation("Classrooms");
                 });
 #pragma warning restore 612, 618
         }

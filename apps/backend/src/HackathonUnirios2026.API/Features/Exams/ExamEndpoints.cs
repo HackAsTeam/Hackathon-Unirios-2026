@@ -2,14 +2,14 @@ using HackathonUnirios2026.Application.Features.Exams;
 using HackathonUnirios2026.Application.Features.Exams.Commands;
 using HackathonUnirios2026.Application.Features.Exams.DTOs;
 using HackathonUnirios2026.Application.Features.Exams.Queries;
-using HackathonUnirios2026.Application.Features.Invitations;
+using HackathonUnirios2026.Application.Features.Classrooms;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Exams;
 
-public static class ExamEndpoints
+public sealed class ExamEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapExamEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/exams")
             .WithTags("Exams")
@@ -34,8 +34,6 @@ public static class ExamEndpoints
         group.MapGet("/classroom/{classroomId:guid}", GetClassroomExamsAsync)
             .WithName("GetClassroomExams")
             .Produces<List<ExamResponse>>();
-
-        return app;
     }
 
     private static async Task<IResult> CreateExamAsync(

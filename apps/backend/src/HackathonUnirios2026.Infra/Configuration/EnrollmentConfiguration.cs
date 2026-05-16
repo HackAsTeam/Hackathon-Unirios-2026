@@ -10,11 +10,7 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
     {
         builder.ToTable("enrollments");
 
-        builder.HasKey(e => e.Id);
-
-        builder.Property(e => e.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(e => e.ClassroomId)
             .HasColumnType("uuid")

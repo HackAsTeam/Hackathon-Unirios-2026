@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
 using HackathonUnirios2026.Application.Features.ExamAttempts;
-using HackathonUnirios2026.Application.Features.Invitations;
+using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Domain.Enums;
 using HackathonUnirios2026.Infra.Database;
 using MediatR;

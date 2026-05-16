@@ -1,3 +1,4 @@
+using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Invitations;
 using HackathonUnirios2026.Application.Features.Invitations.Commands;
 using HackathonUnirios2026.Application.Features.Invitations.DTOs;
@@ -5,9 +6,9 @@ using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Invitations;
 
-public static class InvitationEndpoints
+public sealed class InvitationEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapInvitationEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/invitations")
             .WithTags("Invitations")
@@ -28,8 +29,6 @@ public static class InvitationEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
-
-        return app;
     }
 
     private static async Task<IResult> GenerateInvitationAsync(
@@ -67,6 +66,10 @@ public static class InvitationEndpoints
             return Results.BadRequest(new { Message = ex.Message });
         }
         catch (AlreadyEnrolledException ex)
+        {
+            return Results.BadRequest(new { Message = ex.Message });
+        }
+        catch (AlreadyClassroomTeacherException ex)
         {
             return Results.BadRequest(new { Message = ex.Message });
         }

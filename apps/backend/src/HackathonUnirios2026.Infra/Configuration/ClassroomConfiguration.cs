@@ -10,11 +10,7 @@ public sealed class ClassroomConfiguration : IEntityTypeConfiguration<Classroom>
     {
         builder.ToTable("classrooms");
 
-        builder.HasKey(c => c.Id);
-
-        builder.Property(c => c.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(c => c.Title)
             .HasColumnType("varchar(256)")
@@ -24,22 +20,9 @@ public sealed class ClassroomConfiguration : IEntityTypeConfiguration<Classroom>
         builder.Property(c => c.Description)
             .HasColumnType("text");
 
-        builder.Property(c => c.SubjectId)
-            .HasColumnType("uuid")
-            .IsRequired();
-
         builder.Property(c => c.TeacherId)
             .HasColumnType("text")
             .IsRequired();
-
-        builder.Property(c => c.CreatedAt)
-            .HasColumnType("timestamp with time zone")
-            .IsRequired();
-
-        builder.HasOne(c => c.Subject)
-            .WithMany(s => s.Classrooms)
-            .HasForeignKey(c => c.SubjectId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(c => c.Teacher)
             .WithMany()

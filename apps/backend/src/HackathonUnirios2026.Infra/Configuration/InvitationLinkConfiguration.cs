@@ -10,11 +10,7 @@ public sealed class InvitationLinkConfiguration : IEntityTypeConfiguration<Invit
     {
         builder.ToTable("invitation_links");
 
-        builder.HasKey(i => i.Id);
-
-        builder.Property(i => i.Id)
-            .HasColumnType("uuid")
-            .HasDefaultValueSql("gen_random_uuid()");
+        builder.ConfigureAuditableEntity();
 
         builder.Property(i => i.Token)
             .HasColumnType("varchar(64)")
@@ -39,10 +35,6 @@ public sealed class InvitationLinkConfiguration : IEntityTypeConfiguration<Invit
 
         builder.Property(i => i.IsActive)
             .HasColumnType("boolean")
-            .IsRequired();
-
-        builder.Property(i => i.CreatedAt)
-            .HasColumnType("timestamp with time zone")
             .IsRequired();
 
         builder.HasOne(i => i.Classroom)

@@ -2,9 +2,8 @@ using HackathonUnirios2026.Domain.Enums;
 
 namespace HackathonUnirios2026.Domain.Entities;
 
-public class ExamAttempt
+public class ExamAttempt : AuditableEntity
 {
-    public Guid Id { get; set; }
     public Guid ExamId { get; set; }
     public string StudentId { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
