@@ -20,9 +20,11 @@ public sealed class QuestionAnswerConfiguration : IEntityTypeConfiguration<Quest
             .HasColumnType("uuid")
             .IsRequired();
 
+        builder.Property(qa => qa.SelectedOptionId)
+            .HasColumnType("uuid");
+
         builder.Property(qa => qa.AnswerText)
-            .HasColumnType("text")
-            .IsRequired();
+            .HasColumnType("text");
 
         builder.Property(qa => qa.Score)
             .HasColumnType("numeric(5,2)");
@@ -44,6 +46,11 @@ public sealed class QuestionAnswerConfiguration : IEntityTypeConfiguration<Quest
         builder.HasOne(qa => qa.Question)
             .WithMany()
             .HasForeignKey(qa => qa.QuestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(qa => qa.SelectedOption)
+            .WithMany()
+            .HasForeignKey(qa => qa.SelectedOptionId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

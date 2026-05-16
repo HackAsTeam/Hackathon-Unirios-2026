@@ -16,6 +16,7 @@ public sealed class GetClassroomExamsQueryHandler(AppDbContext db)
                 .ThenInclude(e => e.Questions)
             .Select(ce => new ExamResponse(
                 ce.Exam.Id,
+                ce.Exam.SubjectId,
                 ce.Exam.ClassroomId,
                 ce.Exam.Title,
                 ce.Exam.Description,

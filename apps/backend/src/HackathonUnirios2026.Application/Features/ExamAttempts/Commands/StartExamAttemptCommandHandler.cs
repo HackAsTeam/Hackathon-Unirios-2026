@@ -25,7 +25,7 @@ public sealed class StartExamAttemptCommandHandler(AppDbContext db, IHttpContext
         if (exam is null)
             throw new NotEnrolledException();
 
-        var classroomIds = exam.ClassroomExams.Select(ce => ce.ClassroomId).ToList();
+        var classroomIds = exam.ClassroomExams.Select(ce => ce.ClassroomId).Append(exam.ClassroomId).Distinct().ToList();
 
         var isEnrolled = await db.Enrollments
             .AnyAsync(e => classroomIds.Contains(e.ClassroomId) && e.StudentId == studentId, ct);
@@ -44,10 +44,11 @@ public sealed class StartExamAttemptCommandHandler(AppDbContext db, IHttpContext
                 existing.ExamId,
                 existing.StudentId,
                 existing.StartedAt,
-                existing.SubmittedAt,
-                existing.Status.ToString(),
-                existing.Answers.Count,
-                exam.Questions.Count);
+                    existing.SubmittedAt,
+                    existing.Status.ToString(),
+                    existing.Answers.Count,
+                    exam.Questions.Count,
+                    existing.Answers.Sum(a => a.Score ?? 0));
         }
 
         var attempt = new ExamAttempt
@@ -69,6 +70,7 @@ public sealed class StartExamAttemptCommandHandler(AppDbContext db, IHttpContext
             attempt.SubmittedAt,
             attempt.Status.ToString(),
             0,
-            exam.Questions.Count);
+            exam.Questions.Count,
+            0);
     }
 }

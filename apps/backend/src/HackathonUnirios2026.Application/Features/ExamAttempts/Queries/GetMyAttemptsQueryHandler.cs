@@ -33,7 +33,8 @@ public sealed class GetMyAttemptsQueryHandler(AppDbContext db, IHttpContextAcces
                 a.SubmittedAt,
                 a.Status.ToString(),
                 a.Answers.Count,
-                a.Exam.Questions.Count))
+                a.Exam.Questions.Count,
+                a.Answers.Sum(answer => answer.Score ?? 0)))
             .ToListAsync(ct);
     }
 }

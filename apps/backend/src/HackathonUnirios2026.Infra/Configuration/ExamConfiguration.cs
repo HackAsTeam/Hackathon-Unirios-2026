@@ -16,6 +16,9 @@ public sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
             .HasColumnType("uuid")
             .IsRequired();
 
+        builder.Property(e => e.SubjectId)
+            .HasColumnType("uuid");
+
         builder.Property(e => e.Title)
             .HasColumnType("varchar(256)")
             .HasMaxLength(256)
@@ -27,6 +30,11 @@ public sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
         builder.HasOne(e => e.Classroom)
             .WithMany()
             .HasForeignKey(e => e.ClassroomId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.Subject)
+            .WithMany(s => s.Exams)
+            .HasForeignKey(e => e.SubjectId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
