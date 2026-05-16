@@ -7,7 +7,7 @@ import { useGoogleSignIn } from "../../lib/googleAuth";
 
 export default function SignUpScreen() {
   const { signIn } = useAuthStore();
-  const google = useGoogleSignIn();
+  const google = useGoogleSignIn(() => router.replace("/onboarding"));
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +27,7 @@ export default function SignUpScreen() {
         },
       );
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
-      router.replace("/(app)/(tabs)");
+      router.replace("/onboarding");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
       setError(msg);
@@ -39,7 +39,7 @@ export default function SignUpScreen() {
   async function handleGoogleSignIn() {
     const data = await google.signInWithGoogle();
     if (data) {
-      router.replace("/(app)/(tabs)");
+      router.replace("/onboarding");
     }
   }
 

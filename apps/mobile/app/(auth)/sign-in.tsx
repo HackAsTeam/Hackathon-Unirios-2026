@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuthStore } from "../../store/auth";
+import { useOnboardingStore } from "../../store/onboarding";
 import { apiFetch } from "../../lib/api";
 import { useGoogleSignIn } from "../../lib/googleAuth";
 
@@ -17,7 +18,8 @@ export default function SignInScreen() {
       setPendingInviteToken(null);
       router.replace(`/invite/${t}` as never);
     } else {
-      router.replace("/(app)/(tabs)");
+      const { completed } = useOnboardingStore.getState();
+      router.replace(completed ? "/(app)/(tabs)" : "/onboarding");
     }
   }
 
