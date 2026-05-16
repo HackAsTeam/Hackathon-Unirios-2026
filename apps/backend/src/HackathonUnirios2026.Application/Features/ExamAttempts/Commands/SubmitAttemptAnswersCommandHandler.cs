@@ -78,11 +78,13 @@ public sealed class SubmitAttemptAnswersCommandHandler(AppDbContext db, IHttpCon
 
     private static void ValidateAnswers(ExamAttempt attempt, List<SubmitAttemptAnswerDto> answers)
     {
+        ArgumentNullException.ThrowIfNull(answers);
+
         var questions = attempt.Exam.Questions.ToList();
         var questionIds = questions.Select(q => q.Id).ToHashSet();
         var submittedQuestionIds = answers.Select(a => a.QuestionId).ToList();
 
-        if (answers is null || answers.Count != questions.Count)
+        if (answers.Count != questions.Count)
             throw new InvalidAttemptAnswersException("Submit exactly one answer for each activity question.");
 
         if (submittedQuestionIds.Distinct().Count() != submittedQuestionIds.Count)
