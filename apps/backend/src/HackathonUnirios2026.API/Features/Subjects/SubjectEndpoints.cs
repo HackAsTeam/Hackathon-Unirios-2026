@@ -1,5 +1,4 @@
 using HackathonUnirios2026.Application.Features.Classrooms;
-using HackathonUnirios2026.Application.Features.Invitations;
 using HackathonUnirios2026.Application.Features.Subjects.Commands;
 using HackathonUnirios2026.Application.Features.Subjects.DTOs;
 using HackathonUnirios2026.Application.Features.Subjects.Queries;
@@ -18,7 +17,8 @@ public sealed class SubjectEndpoints : IEndpoint
         group.MapPost("/", CreateSubjectAsync)
             .WithName("CreateSubject")
             .Produces<SubjectResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status403Forbidden);
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapGet("/", GetSubjectsAsync)
             .WithName("GetSubjects")
@@ -36,6 +36,10 @@ public sealed class SubjectEndpoints : IEndpoint
         {
             var result = await sender.Send(new CreateSubjectCommand(classroomId, body.Name, body.Description), ct);
             return Results.Ok(result);
+        }
+        catch (ClassroomNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
         }
         catch (NotTeacherException)
         {

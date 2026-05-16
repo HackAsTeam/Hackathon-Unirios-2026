@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using HackathonUnirios2026.Application.Features.Invitations;
+using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Subjects.DTOs;
 using HackathonUnirios2026.Domain.Entities;
 using HackathonUnirios2026.Infra.Database;
@@ -17,7 +17,9 @@ public sealed class CreateSubjectCommandHandler(AppDbContext db, IHttpContextAcc
         var teacherId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
         var classroom = await db.Classrooms.FirstOrDefaultAsync(c => c.Id == cmd.ClassroomId, ct);
-        if (classroom is null || classroom.TeacherId != teacherId)
+        if (classroom is null)
+            throw new ClassroomNotFoundException();
+        if (classroom.TeacherId != teacherId)
             throw new NotTeacherException();
 
         var subject = new Subject

@@ -1,3 +1,4 @@
+using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Invitations;
 using HackathonUnirios2026.Application.Features.Invitations.Commands;
 using HackathonUnirios2026.Application.Features.Invitations.DTOs;

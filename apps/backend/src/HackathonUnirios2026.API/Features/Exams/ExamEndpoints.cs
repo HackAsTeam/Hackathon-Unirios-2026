@@ -2,7 +2,7 @@ using HackathonUnirios2026.Application.Features.Exams;
 using HackathonUnirios2026.Application.Features.Exams.Commands;
 using HackathonUnirios2026.Application.Features.Exams.DTOs;
 using HackathonUnirios2026.Application.Features.Exams.Queries;
-using HackathonUnirios2026.Application.Features.Invitations;
+using HackathonUnirios2026.Application.Features.Classrooms;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Exams;
