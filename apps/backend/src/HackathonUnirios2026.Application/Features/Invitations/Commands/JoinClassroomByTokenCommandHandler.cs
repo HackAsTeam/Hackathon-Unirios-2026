@@ -26,6 +26,9 @@ public sealed class JoinClassroomByTokenCommandHandler(AppDbContext db, IHttpCon
         if (link.ExpiresAt.HasValue && DateTime.UtcNow > link.ExpiresAt.Value)
             throw new InvitationExpiredException();
 
+        if (link.Classroom.TeacherId == studentId)
+            throw new AlreadyClassroomTeacherException();
+
         var alreadyEnrolled = await db.Enrollments
             .AnyAsync(e => e.ClassroomId == link.ClassroomId && e.StudentId == studentId, ct);
 

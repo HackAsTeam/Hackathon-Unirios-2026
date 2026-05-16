@@ -5,9 +5,9 @@ using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Subjects;
 
-public static class SubjectEndpoints
+public sealed class SubjectEndpoints : IEndpoint
 {
-    public static IEndpointRouteBuilder MapSubjectEndpoints(this IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/subjects")
             .WithTags("Subjects")
@@ -20,8 +20,6 @@ public static class SubjectEndpoints
         group.MapGet("/", GetSubjectsAsync)
             .WithName("GetSubjects")
             .Produces<List<SubjectResponse>>();
-
-        return app;
     }
 
     private static async Task<IResult> CreateSubjectAsync(
