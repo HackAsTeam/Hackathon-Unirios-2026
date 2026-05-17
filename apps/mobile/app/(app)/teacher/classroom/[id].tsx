@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
+import { useScreenContext } from '@/hooks/useScreenContext';
 import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
@@ -55,9 +57,11 @@ function Input({
 
 export default function ClassroomDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useScreenContext({ screen: 'teacher-classroom', classroomId: id, role: 'teacher' });
   const router = useRouter();
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const c = useColors();
   const scale = useScale();
 
@@ -111,11 +115,11 @@ export default function ClassroomDetailScreen() {
   }
 
   const createSubject = useMutation({
-    mutationFn: () =>
+    mutationFn: ({ name, desc }: { name: string; desc?: string }) =>
       apiFetch(`/classrooms/${id}/subjects`, {
         method: 'POST',
         token: token!,
-        body: { name: subjectName, description: subjectDesc || undefined },
+        body: { name, description: desc || undefined },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['classroom', id] });
@@ -125,6 +129,19 @@ export default function ClassroomDetailScreen() {
       setSubjectDesc('');
     },
   });
+
+  useEffect(() => {
+    if (!lastCommand) return;
+    if (lastCommand.command === 'CREATE_SUBJECT' && lastCommand.payload?.name) {
+      const name = lastCommand.payload.name as string;
+      const desc = lastCommand.payload.description as string | undefined;
+      createSubject.mutate({ name, desc });
+    } else if (lastCommand.command === 'GENERATE_INVITE_LINK') {
+      generateInvite.mutate();
+    } else if (lastCommand.command === 'OPEN_CREATE_SUBJECT_MODAL') {
+      setShowCreate(true);
+    }
+  }, [lastCommand]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -525,7 +542,7 @@ export default function ClassroomDetailScreen() {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => subjectName.trim() && createSubject.mutate()}
+                onPress={() => subjectName.trim() && createSubject.mutate({ name: subjectName, desc: subjectDesc })}
                 disabled={createSubject.isPending || !subjectName.trim()}
                 style={{
                   flex: 1,

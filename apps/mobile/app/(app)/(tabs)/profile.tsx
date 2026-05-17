@@ -3,6 +3,7 @@ import { useAuthStore } from "../../../store/auth";
 import { useOnboardingStore } from "../../../store/onboarding";
 import { signOutFromGoogle } from "../../../lib/googleAuth";
 import { useAccessibilityStore, type DefaultResponseFormat } from "../../../store/acessibility";
+import { useScreenContext } from "../../../hooks/useScreenContext";
 import { Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
 import { useColors } from "../../../hooks/useColors";
 import { useScale } from "../../../hooks/useScale";
@@ -46,7 +47,8 @@ const FONT_OPTIONS: { value: number; label: string }[] = [
 ];
 
 export default function ProfileScreen() {
-  const { userId, email, displayName, avatarUrl, signOut } = useAuthStore();
+  const { userId, email, displayName, avatarUrl, signOut, role } = useAuthStore();
+  useScreenContext({ screen: 'profile', role: role as 'teacher' | 'student' | undefined });
   const {
     defaultResponseFormat,
     setDefaultResponseFormat,
@@ -56,6 +58,8 @@ export default function ProfileScreen() {
     setHighContrast,
     reducedMotion,
     setReducedMotion,
+    wakeWordEnabled,
+    setWakeWordEnabled,
   } = useAccessibilityStore();
   const router = useRouter();
   const c = useColors();
@@ -180,6 +184,25 @@ export default function ProfileScreen() {
               accessibilityLabel="Reduzir animações"
             />
           </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.text.primary }}>
+                Assistente "Hey Dillo"
+              </Text>
+              <Text style={{ fontSize: scale(12), color: c.text.secondary, marginTop: 2 }}>
+                Fique ouvindo o comando de voz em todo o app
+              </Text>
+            </View>
+            <Switch
+              value={wakeWordEnabled}
+              onValueChange={setWakeWordEnabled}
+              trackColor={{ true: c.primary, false: c.border }}
+              thumbColor="#fff"
+              accessibilityLabel='Assistente de voz Hey Dillo sempre ativo'
+              accessibilityHint='Quando ativo, diga Hey Dillo a qualquer momento para abrir o assistente'
+            />
+          </View>
         </View>
       </View>
 
@@ -188,6 +211,8 @@ export default function ProfileScreen() {
         <View style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, overflow: 'hidden' }}>
           <TouchableOpacity
             activeOpacity={0.6}
+            accessibilityLabel="Política de Privacidade"
+            accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
           >
             <Text style={{ fontSize: scale(16), color: c.text.primary }}>Política de Privacidade</Text>
@@ -196,6 +221,8 @@ export default function ProfileScreen() {
           <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
           <TouchableOpacity
             activeOpacity={0.6}
+            accessibilityLabel="Termos de Uso"
+            accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
           >
             <Text style={{ fontSize: scale(16), color: c.text.primary }}>Termos de Uso</Text>
@@ -204,6 +231,8 @@ export default function ProfileScreen() {
           <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
           <TouchableOpacity
             activeOpacity={0.6}
+            accessibilityLabel="Consentimento de Dados"
+            accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
           >
             <Text style={{ fontSize: scale(16), color: c.text.primary }}>Consentimento de Dados</Text>
@@ -216,6 +245,8 @@ export default function ProfileScreen() {
         <TouchableOpacity
           activeOpacity={0.6}
           onPress={handleSignOut}
+          accessibilityLabel="Sair da conta"
+          accessibilityRole="button"
           style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
         >
           <Text style={{ color: c.text.secondary, fontWeight: '600', fontSize: scale(16) }}>Sair</Text>
@@ -223,6 +254,9 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           disabled={true}
+          accessibilityLabel="Excluir conta e dados, em breve"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: true }}
           style={{ borderWidth: 1, borderColor: c.error, borderRadius: 12, paddingVertical: 16, alignItems: 'center', opacity: 0.5 }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

@@ -5,10 +5,12 @@ import { useAttemptDetail } from '../../../hooks/useAttemptDetail';
 import { AttemptStatusBadge } from '../../../components/student/AttemptStatusBadge';
 import { useColors } from '../../../hooks/useColors';
 import { useScale } from '../../../hooks/useScale';
+import { useScreenContext } from '../../../hooks/useScreenContext';
 import type { AnswerDetail } from '../../../types/attempt';
 
 export default function AttemptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useScreenContext({ screen: 'attempt-detail', attemptId: id, role: 'student' });
   const router = useRouter();
   const c = useColors();
   const scale = useScale();

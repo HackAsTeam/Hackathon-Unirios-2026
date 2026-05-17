@@ -14,14 +14,17 @@ import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
 import { useMyAttempts } from '@/hooks/useMyAttempts';
 import { AttemptStatusBadge } from '@/components/student/AttemptStatusBadge';
+import { useScreenContext } from '@/hooks/useScreenContext';
 import type { Exam } from '@/types/classroom';
 
 export default function StudentSubjectScreen() {
-  const { id, name, classroomTitle } = useLocalSearchParams<{
+  const { id, name, classroomTitle, classroomId } = useLocalSearchParams<{
     id: string;
     name: string;
     classroomTitle: string;
+    classroomId?: string;
   }>();
+  useScreenContext({ screen: 'student-subject', subjectId: id, classroomId: classroomId, role: 'student' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const c = useColors();

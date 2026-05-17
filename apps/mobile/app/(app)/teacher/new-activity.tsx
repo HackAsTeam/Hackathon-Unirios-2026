@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
+import { useScreenContext } from '@/hooks/useScreenContext';
 import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
@@ -270,6 +271,7 @@ function validate(title: string, questions: LocalQuestion[]): string | null {
 
 export default function NewActivityScreen() {
   const { subjectId, classroomId, name } = useLocalSearchParams<{ subjectId: string; classroomId: string; name: string }>();
+  useScreenContext({ screen: 'teacher-new-activity', subjectId, classroomId, role: 'teacher' });
   const router = useRouter();
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
