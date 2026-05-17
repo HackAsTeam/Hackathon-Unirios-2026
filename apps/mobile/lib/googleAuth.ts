@@ -126,8 +126,12 @@ export function useGoogleSignIn(onSuccess?: () => void) {
       if (err instanceof ApiError && err.status === 403) {
         const body = err.body as { error?: string; restoreUntil?: string };
         if (body?.error === "ACCOUNT_PENDING_DELETION" && body.restoreUntil) {
-          const idToken = (await GoogleSignin.getTokens().catch(() => null))?.idToken ?? "";
-          setPendingDeletion({ restoreUntil: body.restoreUntil, idToken });
+          const freshIdToken = (await GoogleSignin.getTokens().catch(() => null))?.idToken;
+          if (freshIdToken) {
+            setPendingDeletion({ restoreUntil: body.restoreUntil, idToken: freshIdToken });
+          } else {
+            setError("Não foi possível obter o token do Google. Tente novamente.");
+          }
           return null;
         }
       }
