@@ -16,11 +16,11 @@ type WakeCallback = () => void;
 let _active = false;
 let _onDetected: WakeCallback | null = null;
 let _restartTimer: ReturnType<typeof setTimeout> | null = null;
-const _unsubs: (() => void)[] = [];
+const _subs: { remove: () => void }[] = [];
 
 function _cleanup() {
-  _unsubs.forEach((u) => u());
-  _unsubs.length = 0;
+  _subs.forEach((s) => s.remove());
+  _subs.length = 0;
   if (_restartTimer) { clearTimeout(_restartTimer); _restartTimer = null; }
 }
 
@@ -36,7 +36,7 @@ function _loop() {
     maxAlternatives: 1,
   });
 
-  _unsubs.push(
+  _subs.push(
     ExpoSpeechRecognitionModule.addListener('result', (e) => {
       const text = e.results?.[0]?.transcript ?? '';
       if (matchesWakeWord(text)) {
@@ -49,14 +49,14 @@ function _loop() {
     }),
   );
 
-  _unsubs.push(
+  _subs.push(
     ExpoSpeechRecognitionModule.addListener('end', () => {
       _cleanup();
       if (_active) _restartTimer = setTimeout(_loop, 300);
     }),
   );
 
-  _unsubs.push(
+  _subs.push(
     ExpoSpeechRecognitionModule.addListener('error', (e) => {
       _cleanup();
       if (_active && e.error !== 'aborted') {

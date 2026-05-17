@@ -25,32 +25,32 @@ export function startListening(
     continuous: false,
   });
 
-  const unsubs: (() => void)[] = [];
+  const subs: { remove: () => void }[] = [];
 
-  unsubs.push(
+  subs.push(
     ExpoSpeechRecognitionModule.addListener('result', (e) => {
       const text = e.results?.[0]?.transcript ?? '';
       onResult({ transcript: text, isFinal: e.isFinal });
     }),
   );
 
-  unsubs.push(
+  subs.push(
     ExpoSpeechRecognitionModule.addListener('end', () => {
-      unsubs.forEach((u) => u());
+      subs.forEach((s) => s.remove());
       onEnd();
     }),
   );
 
-  unsubs.push(
+  subs.push(
     ExpoSpeechRecognitionModule.addListener('error', (e) => {
-      unsubs.forEach((u) => u());
+      subs.forEach((s) => s.remove());
       onError?.(e.error ?? 'unknown');
     }),
   );
 
   return () => {
     ExpoSpeechRecognitionModule.stop();
-    unsubs.forEach((u) => u());
+    subs.forEach((s) => s.remove());
   };
 }
 
