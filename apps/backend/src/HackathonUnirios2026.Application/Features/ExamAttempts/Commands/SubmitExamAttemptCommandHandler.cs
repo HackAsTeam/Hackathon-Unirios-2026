@@ -20,6 +20,8 @@ public sealed class SubmitExamAttemptCommandHandler(AppDbContext db, IHttpContex
             .Include(a => a.Answers)
             .Include(a => a.Exam)
                 .ThenInclude(e => e.Questions)
+            .Include(a => a.Exam)
+                .ThenInclude(e => e.Classroom)
             .FirstOrDefaultAsync(a => a.Id == cmd.AttemptId && a.StudentId == studentId, ct);
 
         if (attempt is null)
@@ -36,6 +38,8 @@ public sealed class SubmitExamAttemptCommandHandler(AppDbContext db, IHttpContex
         return new AttemptResponse(
             attempt.Id,
             attempt.ExamId,
+            attempt.Exam.Title,
+            attempt.Exam.Classroom.Title,
             attempt.StudentId,
             attempt.StartedAt,
             attempt.SubmittedAt,

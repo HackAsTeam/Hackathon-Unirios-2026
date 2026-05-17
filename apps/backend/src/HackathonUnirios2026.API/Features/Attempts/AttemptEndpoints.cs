@@ -43,6 +43,11 @@ public sealed class AttemptEndpoints : IEndpoint
             .WithName("GetMyAttempts")
             .Produces<List<AttemptResponse>>();
 
+        group.MapGet("/{id:guid}", GetAttemptDetailAsync)
+            .WithName("GetAttemptDetail")
+            .Produces<AttemptDetailResponse>()
+            .Produces(StatusCodes.Status404NotFound);
+
         group.MapPost("/{attemptId:guid}/answers/{answerId:guid}/grade", GradeAnswerAsync)
             .WithName("GradeAnswer")
             .Produces<QuestionAnswerResponse>()
@@ -132,6 +137,15 @@ public sealed class AttemptEndpoints : IEndpoint
         {
             return Results.BadRequest(new { Message = ex.Message });
         }
+    }
+
+    private static async Task<IResult> GetAttemptDetailAsync(
+        Guid id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAttemptDetailQuery(id), ct);
+        return result is null ? Results.NotFound() : Results.Ok(result);
     }
 
     private static async Task<IResult> GetMyAttemptsAsync(

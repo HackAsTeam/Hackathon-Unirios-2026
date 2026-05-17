@@ -2,36 +2,24 @@ using HackathonUnirios2026.Domain.Enums;
 
 namespace HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
 
-public record AttemptResponse(
+public record AttemptDetailResponse(
     Guid Id,
     Guid ExamId,
     string ExamTitle,
     string ClassroomName,
-    string StudentId,
     DateTime StartedAt,
     DateTime? SubmittedAt,
     string Status,
-    int AnsweredCount,
-    int TotalQuestions,
-    decimal? Score);
+    decimal? Score,
+    List<AnswerDetailResponse> Answers);
 
-public record QuestionAnswerResponse(
+public record AnswerDetailResponse(
     Guid Id,
     Guid QuestionId,
-    Guid? SelectedOptionId,
+    string QuestionText,
     string? AnswerText,
     ResponseFormat? Format,
+    Guid? SelectedOptionId,
     decimal? Score,
     string? Feedback,
     DateTime AnsweredAt);
-
-public record SubmitAnswersResponse(
-    Guid Id,
-    Guid ExamId,
-    string StudentId,
-    DateTime StartedAt,
-    DateTime? SubmittedAt,
-    string Status,
-    int AnsweredCount,
-    int TotalQuestions,
-    decimal Score);

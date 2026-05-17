@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  withDelay,
   FadeInDown,
 } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,8 +23,10 @@ import { useAccessibilityStore } from '../../../store/acessibility';
 import { apiFetch } from '../../../lib/api';
 import { colors, formatLabels, formatDescriptions, formatMotivations } from '../../../lib/colors';
 import { AccessibilityPanel } from '../../../components/accessibility/AccessibilityPanel';
+import { AttemptStatusBadge } from '../../../components/student/AttemptStatusBadge';
 import type { ExamDetail } from '../../../types/classroom';
 import type { ResponseFormat } from '../../../types/activity';
+import type { AttemptSummary } from '../../../types/attempt';
 
 type AvailableFormat = 'text' | 'audio' | 'oral';
 const AVAILABLE_FORMATS: AvailableFormat[] = ['text', 'audio', 'oral'];
@@ -47,7 +47,7 @@ export default function ActivityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
-  const { highContrast, reducedMotion } = useAccessibilityStore();
+  const { highContrast, reducedMotion, defaultResponseFormat } = useAccessibilityStore();
   const [showFormats, setShowFormats] = useState(false);
 
   const { data: exam, isLoading, isError } = useQuery({
@@ -55,6 +55,16 @@ export default function ActivityScreen() {
     queryFn: () => apiFetch<ExamDetail>(`/exams/${id}`, { token: token! }),
     enabled: !!id && !!token,
   });
+
+  const { data: attemptList, isLoading: attemptLoading } = useQuery<AttemptSummary[]>({
+    queryKey: ['attempt-status', id],
+    queryFn: () => apiFetch<AttemptSummary[]>(`/attempts?examId=${id}`, { token: token! }),
+    enabled: !!id && !!token,
+  });
+
+  const attempt = attemptList?.[0] ?? null;
+  const hasAttempt = attempt !== null;
+  const isAudioFormat = defaultResponseFormat === 'audio';
 
   const bg = highContrast ? '#000' : colors.background;
   const textPrimary = highContrast ? '#fff' : colors.text.primary;
@@ -77,6 +87,97 @@ export default function ActivityScreen() {
         </Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 24 }}>
           <Text style={{ color: colors.primary, fontWeight: '600' }}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  function renderCTA() {
+    if (attemptLoading) {
+      return (
+        <ActivityIndicator size="small" color={colors.primary} />
+      );
+    }
+
+    if (!hasAttempt || attempt?.status === undefined) {
+      return (
+        <TouchableOpacity
+          onPress={() => setShowFormats(true)}
+          activeOpacity={0.85}
+          accessibilityLabel="Iniciar Atividade"
+          accessibilityRole="button"
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 18,
+            paddingVertical: 18,
+            alignItems: 'center',
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 8,
+          }}
+        >
+          <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.2 }}>
+            Iniciar Atividade
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    if (attempt.status === 'InProgress') {
+      return (
+        <View style={{ gap: 10 }}>
+          <Text style={{ fontSize: 13, color: textSecondary, textAlign: 'center' }}>
+            {attempt.answeredCount} de {attempt.totalQuestions} questões respondidas
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowFormats(true)}
+            activeOpacity={0.85}
+            accessibilityLabel="Continuar atividade"
+            accessibilityRole="button"
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 18,
+              paddingVertical: 18,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff' }}>
+              Continuar
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={{ gap: 12 }}>
+        <View style={{ alignItems: 'center' }}>
+          <AttemptStatusBadge status={attempt.status} score={attempt.score} />
+        </View>
+        {attempt.status === 'Submitted' && (
+          <Text style={{ fontSize: 13, color: textSecondary, textAlign: 'center' }}>
+            Aguardando avaliação do professor
+          </Text>
+        )}
+        <TouchableOpacity
+          onPress={() => router.push(`/attempt/${attempt.id}`)}
+          activeOpacity={0.85}
+          accessibilityLabel={attempt.status === 'Graded' ? 'Ver resultado' : 'Ver detalhes'}
+          accessibilityRole="button"
+          style={{
+            backgroundColor: colors.surfaceAlt,
+            borderRadius: 18,
+            paddingVertical: 16,
+            alignItems: 'center',
+            borderWidth: 2,
+            borderColor: colors.primary,
+          }}
+        >
+          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.primary }}>
+            {attempt.status === 'Graded' ? 'Ver resultado' : 'Ver detalhes'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -134,6 +235,7 @@ export default function ActivityScreen() {
                     padding: 16,
                     borderWidth: 1,
                     borderColor: colors.borderLight,
+                    gap: 10,
                   }}
                 >
                   <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600', marginBottom: 4 }}>
@@ -142,8 +244,31 @@ export default function ActivityScreen() {
                   <Text style={{ fontSize: 15, color: textPrimary, lineHeight: 22 }}>
                     {q.text}
                   </Text>
+                  {isAudioFormat && (
+                    <TouchableOpacity
+                      disabled
+                      accessibilityLabel="Leitura em voz alta — em breve"
+                      accessibilityHint="Este recurso estará disponível em breve"
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                        paddingVertical: 8,
+                        paddingHorizontal: 14,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        backgroundColor: colors.borderLight,
+                        opacity: 0.5,
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      <Ionicons name="play-circle-outline" size={18} color={colors.text.tertiary} />
+                      <Text style={{ fontSize: 13, color: colors.text.tertiary }}>Ouvir questão</Text>
+                    </TouchableOpacity>
+                  )}
                   {q.options.length > 0 && (
-                    <View style={{ marginTop: 10, gap: 6 }}>
+                    <View style={{ marginTop: 4, gap: 6 }}>
                       {q.options.map((opt) => (
                         <View
                           key={opt.id}
@@ -178,29 +303,12 @@ export default function ActivityScreen() {
         borderTopWidth: 1,
         borderTopColor: colors.borderLight,
       }}>
-        <TouchableOpacity
-          onPress={() => setShowFormats(true)}
-          activeOpacity={0.85}
-          style={{
-            backgroundColor: colors.primary,
-            borderRadius: 18,
-            paddingVertical: 18,
-            alignItems: 'center',
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 8,
-          }}
-        >
-          <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.2 }}>
-            Responder
-          </Text>
-        </TouchableOpacity>
+        {renderCTA()}
       </View>
 
       <FormatModal
         visible={showFormats}
+        defaultFormat={defaultResponseFormat as AvailableFormat}
         onClose={() => setShowFormats(false)}
         onSelect={(fmt) => {
           setShowFormats(false);
@@ -217,12 +325,14 @@ export default function ActivityScreen() {
 
 function FormatModal({
   visible,
+  defaultFormat,
   onClose,
   onSelect,
   reducedMotion,
   highContrast,
 }: {
   visible: boolean;
+  defaultFormat: AvailableFormat;
   onClose: () => void;
   onSelect: (format: AvailableFormat) => void;
   reducedMotion: boolean;
@@ -261,6 +371,7 @@ function FormatModal({
                 key={fmt}
                 format={fmt}
                 index={i}
+                isDefault={fmt === defaultFormat}
                 onSelect={onSelect}
                 reducedMotion={reducedMotion}
                 highContrast={highContrast}
@@ -276,12 +387,14 @@ function FormatModal({
 function FormatCard({
   format,
   index,
+  isDefault,
   onSelect,
   reducedMotion,
   highContrast,
 }: {
   format: AvailableFormat;
   index: number;
+  isDefault: boolean;
   onSelect: (f: AvailableFormat) => void;
   reducedMotion: boolean;
   highContrast: boolean;
@@ -312,7 +425,7 @@ function FormatCard({
       <TouchableOpacity
         onPress={handlePress}
         activeOpacity={0.85}
-        accessibilityLabel={`${formatLabels[format]}: ${formatDescriptions[format]}`}
+        accessibilityLabel={`${formatLabels[format]}: ${formatDescriptions[format]}${isDefault ? ' (preferência padrão)' : ''}`}
         accessibilityRole="button"
         style={{
           backgroundColor: lightColor,
@@ -321,8 +434,8 @@ function FormatCard({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 16,
-          borderWidth: 1.5,
-          borderColor: color + '35',
+          borderWidth: isDefault ? 2.5 : 1.5,
+          borderColor: isDefault ? color : color + '35',
         }}
       >
         <View style={{
@@ -336,9 +449,16 @@ function FormatCard({
           <Ionicons name={FORMAT_ICONS[format]} size={26} color={color} />
         </View>
         <View style={{ flex: 1, gap: 3 }}>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: textPrimary, letterSpacing: -0.2 }}>
-            {formatLabels[format]}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: textPrimary, letterSpacing: -0.2 }}>
+              {formatLabels[format]}
+            </Text>
+            {isDefault && (
+              <View style={{ backgroundColor: color + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color }}>Padrão</Text>
+              </View>
+            )}
+          </View>
           <Text style={{ fontSize: 13, color, fontWeight: '500' }}>
             {formatMotivations[format]}
           </Text>
