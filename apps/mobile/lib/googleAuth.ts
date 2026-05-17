@@ -19,6 +19,7 @@ type AuthResponse = {
   displayName: string | null;
   avatarUrl: string | null;
   token: string;
+  role?: string | null;
 };
 
 // Required for the web OAuth redirect to close the popup automatically.
