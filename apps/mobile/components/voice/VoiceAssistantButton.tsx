@@ -1,18 +1,23 @@
-import { useState } from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { TouchableOpacity, StyleSheet, View, AppState } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withSequence,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
 import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voiceCommand';
 import { useAccessibilityStore } from '../../store/acessibility';
+import { startWakeWordDetection, stopWakeWordDetection } from '../../lib/wakeWord';
+import { speak } from '../../lib/tts';
 import { colors } from '../../lib/colors';
 
 const ACCENT = colors.formats.oral;
+const DOT_COLOR = '#22c55e'; // green-500
 
 interface Props {
   onScreenAction?: (cmd: VoiceCommandResponse) => void;
@@ -20,12 +25,87 @@ interface Props {
 
 export function VoiceAssistantButton({ onScreenAction }: Props) {
   const [overlayVisible, setOverlayVisible] = useState(false);
+  const [wakeWordActive, setWakeWordActive] = useState(false);
+
   const status = useVoiceCommandStore((s) => s.status);
-  const { reducedMotion } = useAccessibilityStore();
+  const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
 
   const pulse = useSharedValue(1);
+  const dotOpacity = useSharedValue(0);
+  const dotScale = useSharedValue(1);
 
+  // ─── Wake word dot animation ──────────────────────────────────────────────
+  useEffect(() => {
+    if (wakeWordActive && !reducedMotion) {
+      dotOpacity.value = 1;
+      dotScale.value = withRepeat(
+        withSequence(withTiming(1.4, { duration: 900 }), withTiming(1, { duration: 900 })),
+        -1,
+        false,
+      );
+    } else {
+      cancelAnimation(dotScale);
+      dotOpacity.value = withTiming(wakeWordActive ? 1 : 0, { duration: 300 });
+      dotScale.value = 1;
+    }
+  }, [wakeWordActive, reducedMotion]);
+
+  // ─── Start/stop wake word based on setting + overlay state ───────────────
+  const handleWakeWordDetected = useCallback(() => {
+    setWakeWordActive(false);
+    speak('Sim?');
+    // Small delay so TTS has time to start before overlay STT kicks in
+    setTimeout(() => setOverlayVisible(true), 400);
+  }, []);
+
+  const resumeWakeWord = useCallback(async () => {
+    if (!wakeWordEnabled) return;
+    const ok = await startWakeWordDetection(handleWakeWordDetected);
+    setWakeWordActive(ok);
+  }, [wakeWordEnabled, handleWakeWordDetected]);
+
+  // React to wakeWordEnabled setting change
+  useEffect(() => {
+    if (overlayVisible) return;
+    if (wakeWordEnabled) {
+      resumeWakeWord();
+    } else {
+      stopWakeWordDetection();
+      setWakeWordActive(false);
+    }
+    return () => {
+      stopWakeWordDetection();
+      setWakeWordActive(false);
+    };
+  }, [wakeWordEnabled]);
+
+  // Pause wake word when overlay opens; restart when it closes
+  useEffect(() => {
+    if (overlayVisible) {
+      stopWakeWordDetection();
+      setWakeWordActive(false);
+    } else {
+      resumeWakeWord();
+    }
+  }, [overlayVisible]);
+
+  // Pause when app goes to background
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        if (wakeWordEnabled && !overlayVisible) resumeWakeWord();
+      } else {
+        stopWakeWordDetection();
+        setWakeWordActive(false);
+      }
+    });
+    return () => sub.remove();
+  }, [wakeWordEnabled, overlayVisible]);
+
+  // ─── Manual tap ──────────────────────────────────────────────────────────
   function openOverlay() {
+    stopWakeWordDetection();
+    setWakeWordActive(false);
     setOverlayVisible(true);
     if (!reducedMotion) {
       pulse.value = withRepeat(withTiming(1.12, { duration: 900 }), -1, true);
@@ -34,21 +114,28 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
 
   function closeOverlay() {
     setOverlayVisible(false);
+    cancelAnimation(pulse);
     pulse.value = withTiming(1);
   }
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: dotOpacity.value,
+    transform: [{ scale: dotScale.value }],
   }));
 
   const isActive = overlayVisible || status === 'listening' || status === 'processing';
+
+  const a11yLabel = wakeWordActive
+    ? 'Assistente de voz ativo — diga Hey Dillo para ativar'
+    : 'Assistente de voz';
 
   return (
     <>
       <Animated.View style={[styles.fab, pulseStyle]}>
         <TouchableOpacity
           onPress={openOverlay}
-          accessibilityLabel="Assistente de voz"
+          accessibilityLabel={a11yLabel}
           accessibilityRole="button"
           accessibilityHint="Toque para dar um comando por voz"
           style={[
@@ -62,6 +149,11 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
             color={isActive ? '#fff' : ACCENT}
           />
         </TouchableOpacity>
+
+        {/* Wake word active indicator dot */}
+        <Animated.View style={[styles.dot, dotStyle]}>
+          <View style={[styles.dotInner, { backgroundColor: DOT_COLOR }]} />
+        </Animated.View>
       </Animated.View>
 
       <VoiceAssistantOverlay
@@ -92,5 +184,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
+  },
+  dot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });

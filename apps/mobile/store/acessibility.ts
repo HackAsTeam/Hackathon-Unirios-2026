@@ -9,12 +9,14 @@ export type DefaultResponseFormat = 'text' | 'audio' | 'oral';
 
 interface AccessibilityState extends AccessibilityPreferences {
   defaultResponseFormat: DefaultResponseFormat;
+  wakeWordEnabled: boolean;
   setHighContrast: (value: boolean) => void;
   setFontSizeScale: (value: number) => void;
   setReducedMotion: (value: boolean) => void;
   setPrefersAudio: (value: boolean) => void;
   setPrefersVisual: (value: boolean) => void;
   setDefaultResponseFormat: (format: DefaultResponseFormat) => void;
+  setWakeWordEnabled: (value: boolean) => void;
   toggleHighContrast: () => void;
   increaseFontSize: () => void;
   decreaseFontSize: () => void;
@@ -30,6 +32,7 @@ const defaults = {
   prefersVisual: false,
   screenReader: false,
   defaultResponseFormat: 'text' as DefaultResponseFormat,
+  wakeWordEnabled: false,
 };
 
 type PersistedFields = typeof defaults;
@@ -62,6 +65,7 @@ function extractPersisted(s: AccessibilityState): PersistedFields {
     prefersVisual: s.prefersVisual,
     screenReader: s.screenReader,
     defaultResponseFormat: s.defaultResponseFormat,
+    wakeWordEnabled: s.wakeWordEnabled,
   };
 }
 
@@ -101,6 +105,10 @@ export const useAccessibilityStore = create<AccessibilityState>((set, get) => ({
   },
   setDefaultResponseFormat: (format) => {
     set({ defaultResponseFormat: format });
+    writeStorage(JSON.stringify(extractPersisted(get())));
+  },
+  setWakeWordEnabled: (value) => {
+    set({ wakeWordEnabled: value });
     writeStorage(JSON.stringify(extractPersisted(get())));
   },
   toggleHighContrast: () => {

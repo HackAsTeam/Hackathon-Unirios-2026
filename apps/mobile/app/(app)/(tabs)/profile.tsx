@@ -56,6 +56,8 @@ export default function ProfileScreen() {
     setHighContrast,
     reducedMotion,
     setReducedMotion,
+    wakeWordEnabled,
+    setWakeWordEnabled,
   } = useAccessibilityStore();
   const router = useRouter();
   const c = useColors();
@@ -178,6 +180,25 @@ export default function ProfileScreen() {
               trackColor={{ true: c.primary, false: c.border }}
               thumbColor="#fff"
               accessibilityLabel="Reduzir animações"
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary }}>
+                Assistente "Hey Dillo"
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.text.secondary, marginTop: 2 }}>
+                Fique ouvindo o comando de voz em todo o app
+              </Text>
+            </View>
+            <Switch
+              value={wakeWordEnabled}
+              onValueChange={setWakeWordEnabled}
+              trackColor={{ true: colors.primary, false: colors.border }}
+              thumbColor="#fff"
+              accessibilityLabel='Assistente de voz Hey Dillo sempre ativo'
+              accessibilityHint='Quando ativo, diga Hey Dillo a qualquer momento para abrir o assistente'
             />
           </View>
         </View>
