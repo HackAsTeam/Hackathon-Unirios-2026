@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  Share,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
 import { colors } from '@/lib/colors';
-import type { Classroom } from '@/types/classroom';
+import type { Classroom, InvitationLinkResponse } from '@/types/classroom';
 
 function Input({
   value,
@@ -64,6 +65,37 @@ export default function ClassroomDetailScreen() {
   const [showCreate, setShowCreate] = useState(false);
   const [subjectName, setSubjectName] = useState('');
   const [subjectDesc, setSubjectDesc] = useState('');
+
+  const [activeInvite, setActiveInvite] = useState<InvitationLinkResponse | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  const generateInvite = useMutation({
+    mutationFn: () =>
+      apiFetch<InvitationLinkResponse>('/invitations', {
+        method: 'POST',
+        token: token!,
+        body: { classroomId: id, expiresAt: null },
+      }),
+    onSuccess: (data) => {
+      setActiveInvite(data);
+      setInviteError(null);
+    },
+    onError: () => setInviteError('Não foi possível gerar o link. Tente novamente.'),
+  });
+
+  const revokeInvite = useMutation({
+    mutationFn: (inviteId: string) =>
+      apiFetch(`/invitations/${inviteId}`, { method: 'DELETE', token: token! }),
+    onSuccess: () => setActiveInvite(null),
+    onError: () => setInviteError('Não foi possível revogar o convite.'),
+  });
+
+  async function handleShare() {
+    if (!activeInvite) return;
+    try {
+      await Share.share({ message: activeInvite.inviteUrl });
+    } catch {}
+  }
 
   const createSubject = useMutation({
     mutationFn: () =>
@@ -196,6 +228,7 @@ export default function ClassroomDetailScreen() {
                   `/teacher/classroom/${id}/subject/${s.id}?name=${encodeURIComponent(s.name)}`
                 )
               }
+
               style={{
                 backgroundColor: colors.surface,
                 borderRadius: 16,
@@ -235,6 +268,134 @@ export default function ClassroomDetailScreen() {
               <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
             </TouchableOpacity>
           ))}
+
+          {/* Invite section */}
+          <View style={{ marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary }}>
+                Convite de Alunos
+              </Text>
+              <TouchableOpacity
+                onPress={() => generateInvite.mutate()}
+                disabled={generateInvite.isPending}
+                accessibilityLabel="Gerar link de convite"
+                accessibilityRole="button"
+                style={{
+                  backgroundColor: colors.surfaceAlt,
+                  borderRadius: 12,
+                  paddingVertical: 8,
+                  paddingHorizontal: 14,
+                  borderWidth: 1,
+                  borderColor: colors.primaryLight,
+                  opacity: generateInvite.isPending ? 0.6 : 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                {generateInvite.isPending ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="link-outline" size={16} color={colors.primary} />
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                      Gerar Link
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {inviteError && (
+              <Text style={{ fontSize: 13, color: colors.error, marginBottom: 8 }}>
+                {inviteError}
+              </Text>
+            )}
+
+            {activeInvite && (
+              <View style={{
+                backgroundColor: colors.surfaceAlt,
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: colors.primaryLight,
+                gap: 10,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="link" size={16} color={colors.primary} />
+                  <Text
+                    style={{ fontSize: 13, color: colors.text.secondary, flex: 1 }}
+                    numberOfLines={1}
+                  >
+                    {activeInvite.inviteUrl}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 12, color: colors.text.tertiary }}>
+                  Usado {activeInvite.useCount} vez{activeInvite.useCount !== 1 ? 'es' : ''}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                  <TouchableOpacity
+                    onPress={handleShare}
+                    accessibilityLabel="Compartilhar link de convite"
+                    accessibilityRole="button"
+                    style={{
+                      flex: 1,
+                      backgroundColor: colors.primary,
+                      borderRadius: 12,
+                      paddingVertical: 12,
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Ionicons name="share-social-outline" size={16} color="#fff" />
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>
+                      Compartilhar
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => revokeInvite.mutate(activeInvite.id)}
+                    disabled={revokeInvite.isPending}
+                    accessibilityLabel="Revogar convite"
+                    accessibilityRole="button"
+                    style={{
+                      flex: 1,
+                      borderRadius: 12,
+                      paddingVertical: 12,
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: colors.error,
+                      opacity: revokeInvite.isPending ? 0.6 : 1,
+                    }}
+                  >
+                    {revokeInvite.isPending ? (
+                      <ActivityIndicator size="small" color={colors.error} />
+                    ) : (
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.error }}>
+                        Revogar
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {!activeInvite && !generateInvite.isPending && !inviteError && (
+              <View style={{
+                backgroundColor: colors.borderLight,
+                borderRadius: 16,
+                padding: 20,
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <Ionicons name="people-outline" size={28} color={colors.text.tertiary} />
+                <Text style={{ fontSize: 14, color: colors.text.tertiary, textAlign: 'center' }}>
+                  Gere um link para convidar alunos para esta turma
+                </Text>
+              </View>
+            )}
+          </View>
         </ScrollView>
       )}
 
