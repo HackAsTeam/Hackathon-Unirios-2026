@@ -28,6 +28,16 @@ public sealed class GoogleLoginCommandHandler(
         var user = await userManager.FindByLoginAsync(LoginProvider, googleAccount.Subject)
             ?? await FindOrCreateUserAsync(googleAccount);
 
+        if (user.Status == UserStatus.PendingDeletion)
+        {
+            throw new AccountPendingDeletionException(user.PurgeAfter!.Value);
+        }
+
+        if (user.Status != UserStatus.Active)
+        {
+            throw new AuthUnauthorizedException("This account is not accessible.");
+        }
+
         await EnsureGoogleLoginLinkedAsync(user, googleAccount.Subject);
         await UpdateGoogleProfileAsync(user, googleAccount);
 

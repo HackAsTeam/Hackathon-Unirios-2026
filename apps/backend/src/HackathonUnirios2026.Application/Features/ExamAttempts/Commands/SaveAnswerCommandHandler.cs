@@ -41,10 +41,11 @@ public sealed class SaveAnswerCommandHandler(AppDbContext db, IHttpContextAccess
 
         if (cmd.SelectedOptionId.HasValue)
         {
+            var selectedOptionId = cmd.SelectedOptionId.Value;
             var question = await db.Questions
                 .Include(q => q.Options)
                 .FirstOrDefaultAsync(q => q.Id == cmd.QuestionId, ct);
-            var option = question?.Options.FirstOrDefault(o => o.Id == cmd.SelectedOptionId.Value);
+            var option = question?.Options.FirstOrDefault(o => o.Id == selectedOptionId);
             if (option is not null)
             {
                 answer.SelectedOptionId = option.Id;

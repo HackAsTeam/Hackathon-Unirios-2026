@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../../store/auth';
 import { useAccessibilityStore } from '../../../store/acessibility';
+import { useVoiceCommandStore } from '../../../store/voiceCommand';
+import { useScreenContext } from '../../../hooks/useScreenContext';
 import { apiFetch } from '../../../lib/api';
 import { colors, formatLabels, formatDescriptions, formatMotivations } from '../../../lib/colors';
 import { useColors } from '../../../hooks/useColors';
@@ -47,12 +49,20 @@ const FORMAT_ICONS: Record<ResponseFormat, keyof typeof Ionicons.glyphMap> = {
 
 export default function ActivityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useScreenContext({ screen: 'student-activity', activityId: id, role: 'student' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const { reducedMotion, defaultResponseFormat } = useAccessibilityStore();
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const c = useColors();
   const scale = useScale();
   const [showFormats, setShowFormats] = useState(false);
+
+  useEffect(() => {
+    if (lastCommand?.command === 'START_ACTIVITY') {
+      setShowFormats(true);
+    }
+  }, [lastCommand]);
 
   const { data: exam, isLoading, isError } = useQuery({
     queryKey: ['exam', id],

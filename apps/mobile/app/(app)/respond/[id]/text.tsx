@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
+import { useVoiceCommandStore } from '../../../../store/voiceCommand';
+import { useScreenContext } from '../../../../hooks/useScreenContext';
 import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
 import { useScale } from '../../../../hooks/useScale';
@@ -24,9 +26,11 @@ import type { AttemptResponse, ExamDetail } from '../../../../types/classroom';
 
 export default function TextResponseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useScreenContext({ screen: 'respond-text', activityId: id, role: 'student' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const { reducedMotion } = useAccessibilityStore();
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const c = useColors();
   const scale = useScale();
 
@@ -70,6 +74,13 @@ export default function TextResponseScreen() {
     onSuccess: () => setDone(true),
     onError: () => Alert.alert('Erro', 'Não foi possível enviar.'),
   });
+
+  useEffect(() => {
+    if (lastCommand?.command === 'SUBMIT_ANSWER' && !done && !submitMutation.isPending) {
+      const allAnswered = exam?.questions.every((q) => answers[q.id]?.trim());
+      if (allAnswered) submitMutation.mutate();
+    }
+  }, [lastCommand]);
 
   const accentColor = c.formats.text;
   const textFs = scale(15);

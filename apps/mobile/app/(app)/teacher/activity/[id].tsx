@@ -9,6 +9,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
+import { useScreenContext } from '@/hooks/useScreenContext';
 import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
@@ -18,6 +19,7 @@ import { AttemptStatusBadge } from '@/components/student/AttemptStatusBadge';
 
 export default function TeacherActivityDetailScreen() {
   const { id, subjectId, classroomId, name } = useLocalSearchParams<{ id: string; subjectId: string; classroomId: string; name: string }>();
+  useScreenContext({ screen: 'teacher-activity', activityId: id, subjectId, classroomId, role: 'teacher' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const c = useColors();

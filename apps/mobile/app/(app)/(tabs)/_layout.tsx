@@ -23,15 +23,21 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: "Home", tabBarLabel: "Home", tabBarIcon: ({ color, size }) => (
-          <MaterialIcons name="home" size={size} color={color} />
-        ) }}
+        options={{
+          title: "Home",
+          tabBarLabel: "Home",
+          tabBarAccessibilityLabel: "Início",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="home" size={size} color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="results"
         options={{
           title: "Resultados",
           tabBarLabel: "Resultados",
+          tabBarAccessibilityLabel: "Meus resultados",
           href: role === 'student' ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-done-circle-outline" size={size} color={color} />
@@ -40,9 +46,14 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: "Perfil", tabBarLabel: "Perfil", tabBarIcon: ({ color, size }) => (
-          <MaterialIcons name="person" size={size} color={color} />
-        ) }}
+        options={{
+          title: "Perfil",
+          tabBarLabel: "Perfil",
+          tabBarAccessibilityLabel: "Meu perfil",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="person" size={size} color={color} />
+          ),
+        }}
       />
     </Tabs>
   );

@@ -5,3 +5,4 @@ global using IGoogleTokenValidator = HackathonUnirios2026.Domain.Auth.IGoogleTok
 global using GoogleAccount = HackathonUnirios2026.Domain.Auth.GoogleAccount;
 global using AuthValidationException = HackathonUnirios2026.Domain.Auth.AuthValidationException;
 global using AuthUnauthorizedException = HackathonUnirios2026.Domain.Auth.AuthUnauthorizedException;
+global using AccountPendingDeletionException = HackathonUnirios2026.Domain.Auth.AccountPendingDeletionException;

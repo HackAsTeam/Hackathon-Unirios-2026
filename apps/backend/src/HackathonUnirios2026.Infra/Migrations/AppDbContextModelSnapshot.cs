@@ -37,6 +37,9 @@ namespace HackathonUnirios2026.Infra.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
                     b.Property<string>("DisplayName")
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
@@ -71,6 +74,9 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("PurgeAfter")
+                        .HasColumnType("timestamptz");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -80,6 +86,13 @@ namespace HackathonUnirios2026.Infra.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Active");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
