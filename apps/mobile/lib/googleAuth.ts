@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
+import { Prompt } from "expo-auth-session";
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -30,6 +31,15 @@ if (Platform.OS !== "web") {
   GoogleSignin.configure({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
   });
+}
+
+export async function signOutFromGoogle(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // ignore — the app session is already cleared
+  }
 }
 
 export function useGoogleSignIn(onSuccess?: () => void) {
@@ -128,7 +138,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
   async function signInWithGoogle(): Promise<AuthResponse | null> {
     setError("");
     if (Platform.OS === "web") {
-      await promptAsync();
+      await promptAsync({ prompt: Prompt.SelectAccount });
       return null; // result delivered via useEffect / onSuccess callback
     }
     return signInWithGoogleNative();

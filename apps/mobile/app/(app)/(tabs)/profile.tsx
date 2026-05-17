@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
 import { useAuthStore } from "../../../store/auth";
+import { useOnboardingStore } from "../../../store/onboarding";
+import { signOutFromGoogle } from "../../../lib/googleAuth";
 import { useAccessibilityStore, type DefaultResponseFormat } from "../../../store/acessibility";
 import { Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
 import { colors } from "../../../lib/colors";
@@ -54,7 +56,7 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut();
+    await Promise.all([signOut(), useOnboardingStore.getState().reset(), signOutFromGoogle()]);
     router.replace("/(auth)/sign-in");
   }
 
