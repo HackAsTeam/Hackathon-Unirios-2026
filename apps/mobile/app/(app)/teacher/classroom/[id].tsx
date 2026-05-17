@@ -16,7 +16,7 @@ import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
-import type { Classroom, InvitationLinkResponse } from '@/types/classroom';
+import type { Classroom, InvitationLinkResponse, ClassroomMember } from '@/types/classroom';
 
 function Input({
   value,
@@ -66,6 +66,14 @@ export default function ClassroomDetailScreen() {
     queryFn: () => apiFetch<Classroom>(`/classrooms/${id}`, { token: token! }),
     enabled: !!id && !!token,
   });
+
+  const { data: members, isLoading: membersLoading } = useQuery({
+    queryKey: ['classroom', id, 'members'],
+    queryFn: () => apiFetch<ClassroomMember[]>(`/classrooms/${id}/members`, { token: token! }),
+    enabled: !!id && !!token,
+  });
+
+  const students = members?.filter((m) => m.role === 'student') ?? [];
 
   const [showCreate, setShowCreate] = useState(false);
   const [subjectName, setSubjectName] = useState('');
@@ -392,6 +400,64 @@ export default function ClassroomDetailScreen() {
                 </Text>
               </View>
             )}
+          </View>
+
+          <View style={{ marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
+                Alunos Matriculados{!membersLoading ? ` (${students.length})` : ''}
+              </Text>
+            </View>
+
+            {membersLoading && <ActivityIndicator color={c.primary} size="small" style={{ alignSelf: 'flex-start', marginLeft: 4 }} />}
+
+            {!membersLoading && students.length === 0 && (
+              <View style={{
+                backgroundColor: c.borderLight,
+                borderRadius: 16,
+                padding: 20,
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <Ionicons name="people-outline" size={28} color={c.text.tertiary} />
+                <Text style={{ fontSize: scale(14), color: c.text.tertiary, textAlign: 'center' }}>
+                  Nenhum aluno matriculado ainda.
+                </Text>
+              </View>
+            )}
+
+            {!membersLoading && students.map((student) => (
+              <View
+                key={student.userId}
+                style={{
+                  backgroundColor: c.surface,
+                  borderRadius: 16,
+                  padding: 16,
+                  borderWidth: 1,
+                  borderColor: c.borderLight,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 14,
+                  marginBottom: 8,
+                }}
+              >
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: c.primary + '15',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.primary }}>
+                    {(student.displayName ?? 'A')[0].toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: scale(15), fontWeight: '500', color: c.text.primary, flex: 1 }}>
+                  {student.displayName ?? 'Aluno'}
+                </Text>
+              </View>
+            ))}
           </View>
         </ScrollView>
       )}

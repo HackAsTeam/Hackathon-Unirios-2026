@@ -69,4 +69,11 @@ interface InvitationLinkResponse {
   createdAt: string;
 }
 
-export type { Classroom, Subject, Exam, ExamDetail, Question, QuestionOption, AttemptResponse, InvitationLinkResponse };
+interface ClassroomMember {
+  userId: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  role: 'teacher' | 'student';
+}
+
+export type { Classroom, Subject, Exam, ExamDetail, Question, QuestionOption, AttemptResponse, InvitationLinkResponse, ClassroomMember };
