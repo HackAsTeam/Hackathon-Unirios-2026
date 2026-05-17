@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
-import { colors } from '@/lib/colors';
+import { useColors } from '@/hooks/useColors';
+import { useScale } from '@/hooks/useScale';
 
 // ─── Local form types ─────────────────────────────────────────────────────────
 
@@ -53,21 +53,23 @@ function Field({
   multiline?: boolean;
   required?: boolean;
 }) {
+  const c = useColors();
+  const scale = useScale();
   return (
     <TextInput
       value={value}
       onChangeText={onChangeText}
       placeholder={`${placeholder}${required ? ' *' : ''}`}
       multiline={multiline}
-      placeholderTextColor={colors.text.tertiary}
+      placeholderTextColor={c.text.tertiary}
       style={{
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: c.border,
         borderRadius: 12,
         padding: 14,
-        fontSize: 16,
-        color: colors.text.primary,
-        backgroundColor: colors.surface,
+        fontSize: scale(16),
+        color: c.text.primary,
+        backgroundColor: c.surface,
         minHeight: multiline ? 72 : undefined,
         textAlignVertical: multiline ? 'top' : undefined,
       }}
@@ -98,30 +100,31 @@ function QuestionCard({
   onRemove: () => void;
   canRemove: boolean;
 }) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View
       style={{
-        backgroundColor: colors.surface,
+        backgroundColor: c.surface,
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
-        borderColor: colors.borderLight,
+        borderColor: c.borderLight,
         gap: 12,
       }}
     >
-      {/* Question header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text.tertiary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: scale(13), fontWeight: '700', color: c.text.tertiary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
           Questão {index + 1}
         </Text>
         {canRemove && (
           <TouchableOpacity onPress={onRemove} hitSlop={8}>
-            <Ionicons name="trash-outline" size={18} color={colors.text.tertiary} />
+            <Ionicons name="trash-outline" size={18} color={c.text.tertiary} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Question text */}
       <Field
         value={question.text}
         onChangeText={onChangeText}
@@ -130,7 +133,6 @@ function QuestionCard({
         required
       />
 
-      {/* Type toggle */}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TouchableOpacity
           onPress={() => !question.isMultipleChoice || onToggleType()}
@@ -139,12 +141,12 @@ function QuestionCard({
             paddingVertical: 10,
             borderRadius: 10,
             alignItems: 'center',
-            backgroundColor: !question.isMultipleChoice ? colors.primary : colors.surfaceAlt,
+            backgroundColor: !question.isMultipleChoice ? c.primary : c.surfaceAlt,
             borderWidth: 1,
-            borderColor: !question.isMultipleChoice ? colors.primary : colors.borderLight,
+            borderColor: !question.isMultipleChoice ? c.primary : c.borderLight,
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: !question.isMultipleChoice ? colors.text.inverse : colors.text.secondary }}>
+          <Text style={{ fontSize: scale(13), fontWeight: '600', color: !question.isMultipleChoice ? c.text.inverse : c.text.secondary }}>
             Discursiva
           </Text>
         </TouchableOpacity>
@@ -155,21 +157,20 @@ function QuestionCard({
             paddingVertical: 10,
             borderRadius: 10,
             alignItems: 'center',
-            backgroundColor: question.isMultipleChoice ? colors.primary : colors.surfaceAlt,
+            backgroundColor: question.isMultipleChoice ? c.primary : c.surfaceAlt,
             borderWidth: 1,
-            borderColor: question.isMultipleChoice ? colors.primary : colors.borderLight,
+            borderColor: question.isMultipleChoice ? c.primary : c.borderLight,
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: question.isMultipleChoice ? colors.text.inverse : colors.text.secondary }}>
+          <Text style={{ fontSize: scale(13), fontWeight: '600', color: question.isMultipleChoice ? c.text.inverse : c.text.secondary }}>
             Múltipla escolha
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Options (multiple choice only) */}
       {question.isMultipleChoice && (
         <View style={{ gap: 8, marginTop: 4 }}>
-          <Text style={{ fontSize: 12, color: colors.text.tertiary }}>
+          <Text style={{ fontSize: scale(12), color: c.text.tertiary }}>
             Toque no círculo para marcar a resposta correta.
           </Text>
 
@@ -180,14 +181,13 @@ function QuestionCard({
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 10,
-                backgroundColor: opt.isCorrect ? colors.primary + '10' : colors.surfaceAlt,
+                backgroundColor: opt.isCorrect ? c.primary + '10' : c.surfaceAlt,
                 borderRadius: 12,
                 padding: 10,
                 borderWidth: 1,
-                borderColor: opt.isCorrect ? colors.primary + '40' : 'transparent',
+                borderColor: opt.isCorrect ? c.primary + '40' : 'transparent',
               }}
             >
-              {/* Correct radio */}
               <TouchableOpacity onPress={() => onMarkCorrect(opt.key)} hitSlop={8}>
                 <View
                   style={{
@@ -195,7 +195,7 @@ function QuestionCard({
                     height: 22,
                     borderRadius: 11,
                     borderWidth: 2,
-                    borderColor: opt.isCorrect ? colors.primary : colors.border,
+                    borderColor: opt.isCorrect ? c.primary : c.border,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -206,25 +206,23 @@ function QuestionCard({
                         width: 10,
                         height: 10,
                         borderRadius: 5,
-                        backgroundColor: colors.primary,
+                        backgroundColor: c.primary,
                       }}
                     />
                   )}
                 </View>
               </TouchableOpacity>
 
-              {/* Option text */}
               <TextInput
                 value={opt.text}
                 onChangeText={(t) => onChangeOption(opt.key, t)}
                 placeholder={`Opção ${i + 1}`}
-                placeholderTextColor={colors.text.tertiary}
-                style={{ flex: 1, fontSize: 15, color: colors.text.primary, padding: 0 }}
+                placeholderTextColor={c.text.tertiary}
+                style={{ flex: 1, fontSize: scale(15), color: c.text.primary, padding: 0 }}
               />
 
-              {/* Remove option */}
               <TouchableOpacity onPress={() => onRemoveOption(opt.key)} hitSlop={8}>
-                <Ionicons name="close-circle-outline" size={18} color={colors.text.tertiary} />
+                <Ionicons name="close-circle-outline" size={18} color={c.text.tertiary} />
               </TouchableOpacity>
             </View>
           ))}
@@ -233,14 +231,14 @@ function QuestionCard({
             onPress={onAddOption}
             style={{
               borderWidth: 1.5,
-              borderColor: colors.primaryLight,
+              borderColor: c.primaryLight,
               borderStyle: 'dashed',
               borderRadius: 12,
               paddingVertical: 10,
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 14, color: colors.primary, fontWeight: '600' }}>
+            <Text style={{ fontSize: scale(14), color: c.primary, fontWeight: '600' }}>
               + Adicionar opção
             </Text>
           </TouchableOpacity>
@@ -275,6 +273,8 @@ export default function NewActivityScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+  const c = useColors();
+  const scale = useScale();
 
   function goBack() {
     router.replace(`/teacher/classroom/${classroomId}/subject/${subjectId}?name=${encodeURIComponent(name ?? '')}`);
@@ -284,8 +284,6 @@ export default function NewActivityScreen() {
   const [desc, setDesc] = useState('');
   const [questions, setQuestions] = useState<LocalQuestion[]>([emptyQuestion()]);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // ── Question mutations ────────────────────────────────────────────────────
 
   const addQuestion = useCallback(() => {
     setQuestions((prev) => [...prev, emptyQuestion()]);
@@ -343,8 +341,6 @@ export default function NewActivityScreen() {
     );
   }, []);
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
-
   const createActivity = useMutation({
     mutationFn: () => {
       const body = {
@@ -380,65 +376,59 @@ export default function NewActivityScreen() {
     createActivity.mutate();
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   if (!subjectId) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary, textAlign: 'center', marginBottom: 8 }}>
+      <View style={{ flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary, textAlign: 'center', marginBottom: 8 }}>
           Erro de navegação
         </Text>
-        <Text style={{ fontSize: 14, color: colors.text.secondary, textAlign: 'center', marginBottom: 24 }}>
+        <Text style={{ fontSize: scale(14), color: c.text.secondary, textAlign: 'center', marginBottom: 24 }}>
           Parâmetro de matéria ausente. Volte e tente novamente.
         </Text>
-        <TouchableOpacity onPress={() => goBack()} style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 28 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.inverse }}>Voltar</Text>
+        <TouchableOpacity onPress={() => goBack()} style={{ backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 28 }}>
+          <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.inverse }}>Voltar</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <View
         style={{
           paddingTop: 56,
           paddingBottom: 16,
           paddingHorizontal: 20,
-          backgroundColor: colors.surface,
+          backgroundColor: c.surface,
           borderBottomWidth: 1,
-          borderBottomColor: colors.borderLight,
+          borderBottomColor: c.borderLight,
         }}
       >
         <TouchableOpacity
           onPress={() => goBack()}
           style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
-          <Ionicons name="chevron-back" size={20} color={colors.primary} />
-          <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '500' }}>
+          <Ionicons name="chevron-back" size={20} color={c.primary} />
+          <Text style={{ fontSize: scale(15), color: c.primary, fontWeight: '500' }}>
             {decodeURIComponent(name ?? 'Matéria')}
           </Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text.primary }}>
+        <Text style={{ fontSize: scale(24), fontWeight: '700', color: c.text.primary }}>
           Nova Atividade
         </Text>
       </View>
 
-      {/* Form */}
       <ScrollView
         contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Title + Description */}
         <View style={{ gap: 12 }}>
           <Field value={title} onChangeText={setTitle} placeholder="Título da atividade" required />
           <Field value={desc} onChangeText={setDesc} placeholder="Descrição (opcional)" multiline />
         </View>
 
-        {/* Questions */}
         <View style={{ gap: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text.primary, marginBottom: 4 }}>
+          <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.text.primary, marginBottom: 4 }}>
             Questões
           </Text>
 
@@ -462,37 +452,36 @@ export default function NewActivityScreen() {
             onPress={addQuestion}
             style={{
               borderWidth: 1.5,
-              borderColor: colors.primaryLight,
+              borderColor: c.primaryLight,
               borderStyle: 'dashed',
               borderRadius: 16,
               paddingVertical: 14,
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '600' }}>
+            <Text style={{ fontSize: scale(15), color: c.primary, fontWeight: '600' }}>
               + Adicionar questão
             </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Footer actions */}
       <View
         style={{
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: colors.surface,
+          backgroundColor: c.surface,
           borderTopWidth: 1,
-          borderTopColor: colors.borderLight,
+          borderTopColor: c.borderLight,
           padding: 20,
           paddingBottom: 32,
           gap: 10,
         }}
       >
         {submitError && (
-          <Text style={{ fontSize: 13, color: colors.error, textAlign: 'center' }}>
+          <Text style={{ fontSize: scale(13), color: c.error, textAlign: 'center' }}>
             {submitError}
           </Text>
         )}
@@ -505,11 +494,11 @@ export default function NewActivityScreen() {
               paddingVertical: 14,
               borderRadius: 14,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: c.border,
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.secondary }}>
+            <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.secondary }}>
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -520,15 +509,15 @@ export default function NewActivityScreen() {
               flex: 2,
               paddingVertical: 14,
               borderRadius: 14,
-              backgroundColor: colors.primary,
+              backgroundColor: c.primary,
               alignItems: 'center',
               opacity: createActivity.isPending ? 0.7 : 1,
             }}
           >
             {createActivity.isPending ? (
-              <ActivityIndicator color={colors.text.inverse} size="small" />
+              <ActivityIndicator color={c.text.inverse} size="small" />
             ) : (
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.inverse }}>
+              <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.inverse }}>
                 Criar Atividade
               </Text>
             )}

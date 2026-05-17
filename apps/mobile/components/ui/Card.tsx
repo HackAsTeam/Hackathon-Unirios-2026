@@ -1,5 +1,6 @@
 import { TouchableOpacity, View, Text } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 
 interface CardProps {
   children: React.ReactNode;
@@ -11,11 +12,6 @@ interface CardProps {
   accessibilityLabel?: string;
 }
 
-const baseStyle = {
-  borderRadius: 20,
-  padding: 20,
-};
-
 export function Card({
   children,
   onPress,
@@ -25,27 +21,29 @@ export function Card({
   colorLight,
   accessibilityLabel,
 }: CardProps) {
+  const c = useColors();
+
   const variantStyle = {
     default: {
-      backgroundColor: colors.surface,
+      backgroundColor: c.surface,
       borderWidth: 1,
-      borderColor: colors.borderLight,
+      borderColor: c.borderLight,
     },
     elevated: {
-      backgroundColor: colors.surface,
-      shadowColor: colors.cardShadow,
+      backgroundColor: c.surface,
+      shadowColor: c.cardShadow,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 1,
       shadowRadius: 12,
       elevation: 4,
     },
     outlined: {
-      backgroundColor: colors.surface,
+      backgroundColor: c.surface,
       borderWidth: 1.5,
-      borderColor: color || colors.border,
+      borderColor: color || c.border,
     },
     colored: {
-      backgroundColor: colorLight || colors.surfaceAlt,
+      backgroundColor: colorLight || c.surfaceAlt,
       borderWidth: 1,
       borderColor: color || 'transparent',
     },
@@ -54,7 +52,8 @@ export function Card({
   const content = (
     <View
       style={{
-        ...baseStyle,
+        borderRadius: 20,
+        padding: 20,
         ...variantStyle[variant],
         ...style,
       }}
@@ -80,13 +79,16 @@ export function Card({
 }
 
 export function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary, letterSpacing: -0.3 }}>
+      <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary, letterSpacing: -0.3 }}>
         {title}
       </Text>
       {subtitle && (
-        <Text style={{ fontSize: 14, color: colors.text.secondary, marginTop: 4 }}>
+        <Text style={{ fontSize: scale(14), color: c.text.secondary, marginTop: 4 }}>
           {subtitle}
         </Text>
       )}

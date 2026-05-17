@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.ExamAttempts;
 using HackathonUnirios2026.Application.Features.ExamAttempts.Commands;
 using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
@@ -53,6 +54,13 @@ public sealed class AttemptEndpoints : IEndpoint
             .Produces<QuestionAnswerResponse>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
+
+        group.MapGet("/{id:guid}/teacher-view", GetAttemptDetailAsTeacherAsync)
+            .WithName("GetAttemptDetailAsTeacher")
+            .RequireAuthorization()
+            .Produces<AttemptDetailResponse>()
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> StartAttemptAsync(
@@ -106,7 +114,7 @@ public sealed class AttemptEndpoints : IEndpoint
     {
         try
         {
-            var result = await sender.Send(new SaveAnswerCommand(attemptId, body.QuestionId, body.AnswerText, body.Format), ct);
+            var result = await sender.Send(new SaveAnswerCommand(attemptId, body.QuestionId, body.SelectedOptionId, body.AnswerText, body.Format), ct);
             return Results.Ok(result);
         }
         catch (AttemptNotFoundException ex)
@@ -179,8 +187,30 @@ public sealed class AttemptEndpoints : IEndpoint
         }
     }
 
-    private sealed record SaveAnswerRequest(Guid QuestionId, string AnswerText, ResponseFormat? Format);
+    private static async Task<IResult> GetAttemptDetailAsTeacherAsync(
+        Guid id,
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var teacherId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        try
+        {
+            var result = await sender.Send(new GetAttemptDetailAsTeacherQuery(id, teacherId), ct);
+            return Results.Ok(result);
+        }
+        catch (NotTeacherException)
+        {
+            return Results.Forbid();
+        }
+        catch (AttemptNotFoundException)
+        {
+            return Results.NotFound();
+        }
+    }
+
+    private sealed record SaveAnswerRequest(Guid QuestionId, Guid? SelectedOptionId, string? AnswerText, ResponseFormat? Format);
     private sealed record SubmitAnswersRequest(List<SubmitAnswerRequest> Answers);
     private sealed record SubmitAnswerRequest(Guid QuestionId, Guid SelectedOptionId);
-    private sealed record GradeAnswerRequest(decimal Score, string? Feedback);
+    private sealed record GradeAnswerRequest(decimal? Score, string? Feedback);
 }

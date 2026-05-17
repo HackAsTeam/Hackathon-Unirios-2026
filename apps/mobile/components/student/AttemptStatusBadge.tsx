@@ -1,13 +1,7 @@
 import { View, Text } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 import type { AttemptStatus } from '../../types/attempt';
-
-const badgeConfig: Record<string, { label: string; color: string; bg: string }> = {
-  null: { label: 'Pendente', color: colors.text.tertiary, bg: colors.borderLight },
-  InProgress: { label: 'Em andamento', color: '#d97706', bg: '#fef3c7' },
-  Submitted: { label: 'Enviado ✓', color: colors.info, bg: colors.infoLight },
-  Graded: { label: '', color: colors.primary, bg: colors.successLight },
-};
 
 export function AttemptStatusBadge({
   status,
@@ -16,9 +10,19 @@ export function AttemptStatusBadge({
   status: AttemptStatus | null;
   score?: number | null;
 }) {
+  const c = useColors();
+  const scale = useScale();
+
+  const config: Record<string, { label: string; color: string; bg: string }> = {
+    null: { label: 'Pendente', color: c.text.tertiary, bg: c.borderLight },
+    InProgress: { label: 'Em andamento', color: c.warning, bg: c.warningLight },
+    Submitted: { label: 'Enviado ✓', color: c.info, bg: c.infoLight },
+    Graded: { label: '', color: c.primary, bg: c.successLight },
+  };
+
   const key = status ?? 'null';
-  const c = badgeConfig[key];
-  const label = status === 'Graded' ? `★ ${score ?? '—'}` : c.label;
+  const badge = config[key];
+  const label = status === 'Graded' ? `★ ${score ?? '—'}` : badge.label;
 
   return (
     <View
@@ -26,12 +30,12 @@ export function AttemptStatusBadge({
         borderRadius: 12,
         paddingHorizontal: 10,
         paddingVertical: 4,
-        backgroundColor: c.bg,
+        backgroundColor: badge.bg,
         alignSelf: 'flex-start',
       }}
       accessibilityLabel={`Status: ${label}`}
     >
-      <Text style={{ fontSize: 12, fontWeight: '600', color: c.color }}>{label}</Text>
+      <Text style={{ fontSize: scale(12), fontWeight: '600', color: badge.color }}>{label}</Text>
     </View>
   );
 }

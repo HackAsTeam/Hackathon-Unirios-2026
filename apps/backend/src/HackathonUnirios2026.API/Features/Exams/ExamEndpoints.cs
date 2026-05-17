@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.Exams;
 using HackathonUnirios2026.Application.Features.Exams.Commands;
 using HackathonUnirios2026.Application.Features.Exams.DTOs;
 using HackathonUnirios2026.Application.Features.Exams.Queries;
 using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Subjects;
+using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
+using HackathonUnirios2026.Application.Features.ExamAttempts.Queries;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Exams;
@@ -65,6 +68,12 @@ public sealed class ExamEndpoints : IEndpoint
             .Produces<List<ExamResponse>>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
+
+        activitiesGroup.MapGet("/{id:guid}/attempts", GetActivityAttemptsAsync)
+            .WithName("GetActivityAttempts")
+            .RequireAuthorization()
+            .Produces<List<ActivityAttemptSummaryResponse>>()
+            .Produces(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<IResult> CreateExamAsync(
@@ -180,6 +189,24 @@ public sealed class ExamEndpoints : IEndpoint
             return Results.NotFound(new { Message = ex.Message });
         }
         catch (ClassroomNotFoundException)
+        {
+            return Results.Forbid();
+        }
+    }
+
+    private static async Task<IResult> GetActivityAttemptsAsync(
+        Guid id,
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var teacherId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        try
+        {
+            var result = await sender.Send(new GetActivityAttemptsQuery(id, teacherId), ct);
+            return Results.Ok(result);
+        }
+        catch (NotTeacherException)
         {
             return Results.Forbid();
         }

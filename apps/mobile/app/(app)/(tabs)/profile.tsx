@@ -4,25 +4,29 @@ import { useOnboardingStore } from "../../../store/onboarding";
 import { signOutFromGoogle } from "../../../lib/googleAuth";
 import { useAccessibilityStore, type DefaultResponseFormat } from "../../../store/acessibility";
 import { Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
-import { colors } from "../../../lib/colors";
+import { useColors } from "../../../hooks/useColors";
+import { useScale } from "../../../hooks/useScale";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
+  const c = useColors();
+  const scale = useScale();
   return (
-    <View className="flex-row items-center justify-between py-3">
-      <Text className="text-gray-500 text-base">{label}</Text>
-      <Text className="text-black text-base font-medium">{value}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 }}>
+      <Text style={{ color: c.text.secondary, fontSize: scale(16) }}>{label}</Text>
+      <Text style={{ color: c.text.primary, fontSize: scale(16), fontWeight: '500' }}>{value}</Text>
     </View>
   );
 }
 
 function Avatar({ displayName, avatarUrl }: { displayName: string | null; avatarUrl: string | null }) {
+  const c = useColors();
   if (avatarUrl) {
-    return <Image source={{ uri: avatarUrl }} className="w-20 h-20 rounded-full mb-3" style={{ objectFit: "cover" }} />;
+    return <Image source={{ uri: avatarUrl }} style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 12, objectFit: 'cover' }} />;
   }
   return (
-    <View className="w-20 h-20 rounded-full bg-black items-center justify-center mb-3">
-      <Text className="text-white text-3xl font-bold">
-        {(displayName ?? "U").charAt(0).toUpperCase()}
+    <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+      <Text style={{ color: '#fff', fontSize: 30, fontWeight: '700' }}>
+        {(displayName ?? 'U').charAt(0).toUpperCase()}
       </Text>
     </View>
   );
@@ -54,6 +58,8 @@ export default function ProfileScreen() {
     setReducedMotion,
   } = useAccessibilityStore();
   const router = useRouter();
+  const c = useColors();
+  const scale = useScale();
 
   async function handleSignOut() {
     await Promise.all([signOut(), useOnboardingStore.getState().reset(), signOutFromGoogle()]);
@@ -61,27 +67,34 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="px-6 pt-12 pb-6 items-center border-b border-gray-100">
+    <ScrollView style={{ flex: 1, backgroundColor: c.background }}>
+      <View style={{
+        paddingHorizontal: 24,
+        paddingTop: 48,
+        paddingBottom: 24,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: c.borderLight,
+      }}>
         <Avatar displayName={displayName} avatarUrl={avatarUrl} />
-        <Text className="text-2xl font-bold">{displayName ?? "Usuário"}</Text>
+        <Text style={{ fontSize: scale(24), fontWeight: '700', color: c.text.primary }}>{displayName ?? 'Usuário'}</Text>
       </View>
 
-      <View className="px-6 py-6">
-        <Text className="text-lg font-semibold mb-2">Informações Pessoais</Text>
-        <View className="border border-gray-200 rounded-xl px-4">
-          <InfoRow label="Nome" value={displayName ?? "—"} />
-          <View className="h-px bg-gray-100" />
-          <InfoRow label="Email" value={email ?? "—"} />
+      <View style={{ paddingHorizontal: 24, paddingVertical: 24 }}>
+        <Text style={{ fontSize: scale(18), fontWeight: '600', color: c.text.primary, marginBottom: 8 }}>Informações Pessoais</Text>
+        <View style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 16 }}>
+          <InfoRow label="Nome" value={displayName ?? '—'} />
+          <View style={{ height: 1, backgroundColor: c.borderLight }} />
+          <InfoRow label="Email" value={email ?? '—'} />
         </View>
       </View>
 
-      <View className="px-6 py-4">
-        <Text className="text-lg font-semibold mb-3">Acessibilidade</Text>
-        <View className="border border-gray-200 rounded-xl px-4 py-4 gap-5">
+      <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
+        <Text style={{ fontSize: scale(18), fontWeight: '600', color: c.text.primary, marginBottom: 12 }}>Acessibilidade</Text>
+        <View style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 16, gap: 20 }}>
 
           <View style={{ gap: 8 }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.text.primary }}>
               Formato padrão de resposta
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -99,12 +112,12 @@ export default function ProfileScreen() {
                       paddingVertical: 10,
                       borderRadius: 12,
                       borderWidth: 2,
-                      borderColor: isActive ? colors.primary : colors.border,
-                      backgroundColor: isActive ? colors.surfaceAlt : colors.surface,
+                      borderColor: isActive ? c.primary : c.border,
+                      backgroundColor: isActive ? c.surfaceAlt : c.surface,
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: isActive ? colors.primary : colors.text.secondary }}>
+                    <Text style={{ fontSize: scale(13), fontWeight: '700', color: isActive ? c.primary : c.text.secondary }}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
@@ -114,7 +127,7 @@ export default function ProfileScreen() {
           </View>
 
           <View style={{ gap: 8 }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.text.primary }}>
               Tamanho da fonte
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -132,12 +145,12 @@ export default function ProfileScreen() {
                       paddingVertical: 10,
                       borderRadius: 12,
                       borderWidth: 2,
-                      borderColor: isActive ? colors.primary : colors.border,
-                      backgroundColor: isActive ? colors.surfaceAlt : colors.surface,
+                      borderColor: isActive ? c.primary : c.border,
+                      backgroundColor: isActive ? c.surfaceAlt : c.surface,
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ fontSize: opt.value * 14, fontWeight: '700', color: isActive ? colors.primary : colors.text.secondary }}>
+                    <Text style={{ fontSize: opt.value * 14, fontWeight: '700', color: isActive ? c.primary : c.text.secondary }}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
@@ -147,22 +160,22 @@ export default function ProfileScreen() {
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary }}>Alto contraste</Text>
+            <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.text.primary }}>Alto contraste</Text>
             <Switch
               value={highContrast}
               onValueChange={setHighContrast}
-              trackColor={{ true: colors.primary, false: colors.border }}
+              trackColor={{ true: c.primary, false: c.border }}
               thumbColor="#fff"
               accessibilityLabel="Alto contraste"
             />
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary }}>Reduzir animações</Text>
+            <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.text.primary }}>Reduzir animações</Text>
             <Switch
               value={reducedMotion}
               onValueChange={setReducedMotion}
-              trackColor={{ true: colors.primary, false: colors.border }}
+              trackColor={{ true: c.primary, false: c.border }}
               thumbColor="#fff"
               accessibilityLabel="Reduzir animações"
             />
@@ -170,41 +183,51 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View className="px-6 py-4">
-        <Text className="text-lg font-semibold mb-2">Privacidade & LGPD</Text>
-        <View className="border border-gray-200 rounded-xl overflow-hidden">
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 active:opacity-60">
-            <Text className="text-base">Política de Privacidade</Text>
-            <Text className="text-gray-300 text-lg">›</Text>
+      <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
+        <Text style={{ fontSize: scale(18), fontWeight: '600', color: c.text.primary, marginBottom: 8 }}>Privacidade & LGPD</Text>
+        <View style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, overflow: 'hidden' }}>
+          <TouchableOpacity
+            activeOpacity={0.6}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
+          >
+            <Text style={{ fontSize: scale(16), color: c.text.primary }}>Política de Privacidade</Text>
+            <Text style={{ color: c.text.tertiary, fontSize: scale(18) }}>›</Text>
           </TouchableOpacity>
-          <View className="h-px bg-gray-100 mx-4" />
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 active:opacity-60">
-            <Text className="text-base">Termos de Uso</Text>
-            <Text className="text-gray-300 text-lg">›</Text>
+          <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
+          <TouchableOpacity
+            activeOpacity={0.6}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
+          >
+            <Text style={{ fontSize: scale(16), color: c.text.primary }}>Termos de Uso</Text>
+            <Text style={{ color: c.text.tertiary, fontSize: scale(18) }}>›</Text>
           </TouchableOpacity>
-          <View className="h-px bg-gray-100 mx-4" />
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 active:opacity-60">
-            <Text className="text-base">Consentimento de Dados</Text>
-            <Text className="text-gray-300 text-lg">›</Text>
+          <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
+          <TouchableOpacity
+            activeOpacity={0.6}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
+          >
+            <Text style={{ fontSize: scale(16), color: c.text.primary }}>Consentimento de Dados</Text>
+            <Text style={{ color: c.text.tertiary, fontSize: scale(18) }}>›</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View className="px-6 py-4 pb-12 gap-3">
+      <View style={{ paddingHorizontal: 24, paddingVertical: 16, paddingBottom: 48, gap: 12 }}>
         <TouchableOpacity
-          className="border border-gray-300 rounded-xl py-4 items-center active:opacity-60"
+          activeOpacity={0.6}
           onPress={handleSignOut}
+          style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
         >
-          <Text className="text-gray-700 font-semibold text-base">Sair</Text>
+          <Text style={{ color: c.text.secondary, fontWeight: '600', fontSize: scale(16) }}>Sair</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="border border-red-400 rounded-xl py-4 items-center opacity-50"
           disabled={true}
+          style={{ borderWidth: 1, borderColor: c.error, borderRadius: 12, paddingVertical: 16, alignItems: 'center', opacity: 0.5 }}
         >
-          <View className="flex-row items-center gap-2">
-            <Text className="text-red-500 font-semibold text-base">Excluir Conta e Dados</Text>
-            <Text className="text-red-400 text-xs font-medium">Em breve</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ color: c.error, fontWeight: '600', fontSize: scale(16) }}>Excluir Conta e Dados</Text>
+            <Text style={{ color: c.error, fontSize: scale(12), fontWeight: '500' }}>Em breve</Text>
           </View>
         </TouchableOpacity>
       </View>

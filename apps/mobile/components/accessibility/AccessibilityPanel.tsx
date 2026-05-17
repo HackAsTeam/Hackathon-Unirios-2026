@@ -12,17 +12,17 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { useAccessibilityStore } from '../../store/acessibility';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 
 export function AccessibilityPanel() {
   const [open, setOpen] = useState(false);
-  const scale = useSharedValue(1);
+  const animScale = useSharedValue(1);
 
   const {
-    highContrast,
     fontSizeScale,
     reducedMotion,
     prefersAudio,
@@ -33,20 +33,19 @@ export function AccessibilityPanel() {
     decreaseFontSize,
   } = useAccessibilityStore();
 
+  const c = useColors();
+  const scale = useScale();
+
   const btnStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: animScale.value }],
   }));
 
   function toggle() {
-    scale.value = withSpring(0.9, {}, () => {
-      scale.value = withSpring(1);
+    animScale.value = withSpring(0.9, {}, () => {
+      animScale.value = withSpring(1);
     });
     setOpen((o) => !o);
   }
-
-  const bg = highContrast ? '#000' : colors.surface;
-  const textColor = highContrast ? '#fff' : colors.text.primary;
-  const secondaryText = highContrast ? '#aaa' : colors.text.secondary;
 
   return (
     <>
@@ -59,17 +58,17 @@ export function AccessibilityPanel() {
             width: 48,
             height: 48,
             borderRadius: 24,
-            backgroundColor: colors.info,
+            backgroundColor: c.primary,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: colors.info,
+            shadowColor: c.primaryDark,
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.35,
+            shadowOpacity: 0.3,
             shadowRadius: 8,
             elevation: 6,
           }}
         >
-          <Text style={{ fontSize: 22 }}>♿</Text>
+          <Ionicons name="accessibility" size={22} color="#fff" />
         </TouchableOpacity>
       </Animated.View>
 
@@ -86,7 +85,7 @@ export function AccessibilityPanel() {
           <Pressable onPress={() => {}}>
             <View
               style={{
-                backgroundColor: bg,
+                backgroundColor: c.surface,
                 borderTopLeftRadius: 28,
                 borderTopRightRadius: 28,
                 padding: 24,
@@ -95,44 +94,41 @@ export function AccessibilityPanel() {
               }}
             >
               <View style={{ alignItems: 'center', marginBottom: 4 }}>
-                <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+                <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: c.border }} />
               </View>
 
-              <Text style={{ fontSize: 18, fontWeight: '700', color: textColor }}>
+              <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
                 Acessibilidade
               </Text>
 
               <Row
                 label="Alto contraste"
-                icon="🌗"
-                value={highContrast}
+                iconName="contrast-outline"
+                value={useAccessibilityStore.getState().highContrast}
                 onToggle={toggleHighContrast}
-                highContrast={highContrast}
               />
 
               <Row
                 label="Movimento reduzido"
-                icon="🫧"
+                iconName="pulse-outline"
                 value={reducedMotion}
                 onToggle={() => setReducedMotion(!reducedMotion)}
-                highContrast={highContrast}
               />
 
               <Row
                 label="Preferência por áudio"
-                icon="🔊"
+                iconName="volume-high-outline"
                 value={prefersAudio}
                 onToggle={() => setPrefersAudio(!prefersAudio)}
-                highContrast={highContrast}
               />
 
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <Text style={{ fontSize: 20 }}>🔤</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: textColor, flex: 1 }}>
+                  <Ionicons name="text-outline" size={20} color={c.text.primary} />
+                  <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary, flex: 1 }}>
                     Tamanho da fonte
                   </Text>
-                  <Text style={{ fontSize: 13, color: secondaryText }}>
+                  <Text style={{ fontSize: scale(13), color: c.text.secondary }}>
                     {Math.round(fontSizeScale * 100)}%
                   </Text>
                 </View>
@@ -144,13 +140,13 @@ export function AccessibilityPanel() {
                       flex: 1,
                       paddingVertical: 12,
                       borderRadius: 14,
-                      backgroundColor: highContrast ? '#222' : colors.surfaceAlt,
+                      backgroundColor: c.surfaceAlt,
                       alignItems: 'center',
                       borderWidth: 1,
-                      borderColor: colors.border,
+                      borderColor: c.border,
                     }}
                   >
-                    <Text style={{ fontSize: 20, color: textColor }}>A−</Text>
+                    <Text style={{ fontSize: scale(20), color: c.text.primary }}>A−</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={increaseFontSize}
@@ -159,13 +155,13 @@ export function AccessibilityPanel() {
                       flex: 1,
                       paddingVertical: 12,
                       borderRadius: 14,
-                      backgroundColor: highContrast ? '#222' : colors.surfaceAlt,
+                      backgroundColor: c.surfaceAlt,
                       alignItems: 'center',
                       borderWidth: 1,
-                      borderColor: colors.border,
+                      borderColor: c.border,
                     }}
                   >
-                    <Text style={{ fontSize: 20, color: textColor }}>A+</Text>
+                    <Text style={{ fontSize: scale(20), color: c.text.primary }}>A+</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -175,12 +171,12 @@ export function AccessibilityPanel() {
                 style={{
                   paddingVertical: 14,
                   borderRadius: 16,
-                  backgroundColor: colors.primary,
+                  backgroundColor: c.primary,
                   alignItems: 'center',
                   marginTop: 4,
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>Fechar</Text>
+                <Text style={{ fontSize: scale(16), fontWeight: '700', color: '#fff' }}>Fechar</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -192,26 +188,26 @@ export function AccessibilityPanel() {
 
 function Row({
   label,
-  icon,
+  iconName,
   value,
   onToggle,
-  highContrast,
 }: {
   label: string;
-  icon: string;
+  iconName: string;
   value: boolean;
   onToggle: () => void;
-  highContrast: boolean;
 }) {
-  const textColor = highContrast ? '#fff' : colors.text.primary;
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Text style={{ fontSize: 20 }}>{icon}</Text>
-      <Text style={{ fontSize: 15, fontWeight: '600', color: textColor, flex: 1 }}>{label}</Text>
+      <Ionicons name={iconName as any} size={20} color={c.text.primary} />
+      <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary, flex: 1 }}>{label}</Text>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ true: colors.primary, false: colors.border }}
+        trackColor={{ true: c.primary, false: c.border }}
         thumbColor="#fff"
       />
     </View>

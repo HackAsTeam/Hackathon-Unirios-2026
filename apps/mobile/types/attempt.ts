@@ -28,3 +28,13 @@ export interface AnswerDetail {
   feedback: string | null;
   answeredAt: string;
 }
+
+export interface ActivityAttemptSummary {
+  id: string;
+  studentId: string;
+  studentName: string | null;
+  avatarUrl: string | null;
+  status: AttemptStatus;
+  startedAt: string;
+  submittedAt: string | null;
+}

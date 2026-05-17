@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '../../lib/colors';
-import { useAccessibilityStore } from '@/store/acessibility';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '@/hooks/useColors';
+import { useScale } from '@/hooks/useScale';
 
 interface HeaderProps {
   title: string;
@@ -13,7 +14,8 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, showBack = false, rightAction, accessibilityLabel }: HeaderProps) {
   const router = useRouter();
-  const { fontSizeScale } = useAccessibilityStore();
+  const c = useColors();
+  const scale = useScale();
 
   return (
     <View
@@ -21,7 +23,9 @@ export function Header({ title, subtitle, showBack = false, rightAction, accessi
         paddingTop: 56,
         paddingBottom: 16,
         paddingHorizontal: 24,
-        backgroundColor: colors.background,
+        backgroundColor: c.background,
+        borderBottomWidth: 1,
+        borderBottomColor: c.borderLight,
       }}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityRole="header"
@@ -38,22 +42,22 @@ export function Header({ title, subtitle, showBack = false, rightAction, accessi
                 width: 40,
                 height: 40,
                 borderRadius: 12,
-                backgroundColor: colors.surface,
+                backgroundColor: c.surface,
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderWidth: 1,
-                borderColor: colors.borderLight,
+                borderColor: c.borderLight,
               }}
             >
-              <Text style={{ fontSize: 20, color: colors.text.primary }}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={c.text.primary} />
             </TouchableOpacity>
           )}
           <View style={{ flex: 1 }}>
             <Text
               style={{
-                fontSize: Math.round(24 * fontSizeScale),
+                fontSize: scale(24),
                 fontWeight: '700',
-                color: colors.text.primary,
+                color: c.text.primary,
                 letterSpacing: -0.5,
               }}
               accessibilityRole="header"
@@ -63,8 +67,8 @@ export function Header({ title, subtitle, showBack = false, rightAction, accessi
             {subtitle && (
               <Text
                 style={{
-                  fontSize: Math.round(14 * fontSizeScale),
-                  color: colors.text.secondary,
+                  fontSize: scale(14),
+                  color: c.text.secondary,
                   marginTop: 2,
                 }}
               >

@@ -22,6 +22,8 @@ import { useAuthStore } from '../../../store/auth';
 import { useAccessibilityStore } from '../../../store/acessibility';
 import { apiFetch } from '../../../lib/api';
 import { colors, formatLabels, formatDescriptions, formatMotivations } from '../../../lib/colors';
+import { useColors } from '../../../hooks/useColors';
+import { useScale } from '../../../hooks/useScale';
 import { AccessibilityPanel } from '../../../components/accessibility/AccessibilityPanel';
 import { AttemptStatusBadge } from '../../../components/student/AttemptStatusBadge';
 import type { ExamDetail } from '../../../types/classroom';
@@ -47,7 +49,9 @@ export default function ActivityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
-  const { highContrast, reducedMotion, defaultResponseFormat } = useAccessibilityStore();
+  const { reducedMotion, defaultResponseFormat } = useAccessibilityStore();
+  const c = useColors();
+  const scale = useScale();
   const [showFormats, setShowFormats] = useState(false);
 
   const { data: exam, isLoading, isError } = useQuery({
@@ -66,27 +70,23 @@ export default function ActivityScreen() {
   const hasAttempt = attempt !== null;
   const isAudioFormat = defaultResponseFormat === 'audio';
 
-  const bg = highContrast ? '#000' : colors.background;
-  const textPrimary = highContrast ? '#fff' : colors.text.primary;
-  const textSecondary = highContrast ? '#aaa' : colors.text.secondary;
-
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ flex: 1, backgroundColor: c.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={c.primary} />
       </View>
     );
   }
 
   if (isError || !exam) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-        <Text style={{ fontSize: 40, marginBottom: 16 }}>😕</Text>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: textPrimary, textAlign: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: c.background, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+        <Ionicons name="alert-circle-outline" size={56} color={c.error} style={{ marginBottom: 16 }} />
+        <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary, textAlign: 'center' }}>
           Atividade não encontrada
         </Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 24 }}>
-          <Text style={{ color: colors.primary, fontWeight: '600' }}>Voltar</Text>
+          <Text style={{ color: c.primary, fontWeight: '600' }}>Voltar</Text>
         </TouchableOpacity>
       </View>
     );
@@ -94,9 +94,7 @@ export default function ActivityScreen() {
 
   function renderCTA() {
     if (attemptLoading) {
-      return (
-        <ActivityIndicator size="small" color={colors.primary} />
-      );
+      return <ActivityIndicator size="small" color={c.primary} />;
     }
 
     if (!hasAttempt || attempt?.status === undefined) {
@@ -107,18 +105,18 @@ export default function ActivityScreen() {
           accessibilityLabel="Iniciar Atividade"
           accessibilityRole="button"
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: c.primary,
             borderRadius: 18,
             paddingVertical: 18,
             alignItems: 'center',
-            shadowColor: colors.primary,
+            shadowColor: c.primary,
             shadowOffset: { width: 0, height: 6 },
             shadowOpacity: 0.3,
             shadowRadius: 12,
             elevation: 8,
           }}
         >
-          <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.2 }}>
+          <Text style={{ fontSize: scale(17), fontWeight: '700', color: '#fff', letterSpacing: -0.2 }}>
             Iniciar Atividade
           </Text>
         </TouchableOpacity>
@@ -128,7 +126,7 @@ export default function ActivityScreen() {
     if (attempt.status === 'InProgress') {
       return (
         <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 13, color: textSecondary, textAlign: 'center' }}>
+          <Text style={{ fontSize: scale(13), color: c.text.secondary, textAlign: 'center' }}>
             {attempt.answeredCount} de {attempt.totalQuestions} questões respondidas
           </Text>
           <TouchableOpacity
@@ -137,13 +135,13 @@ export default function ActivityScreen() {
             accessibilityLabel="Continuar atividade"
             accessibilityRole="button"
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: c.primary,
               borderRadius: 18,
               paddingVertical: 18,
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff' }}>
+            <Text style={{ fontSize: scale(17), fontWeight: '700', color: '#fff' }}>
               Continuar
             </Text>
           </TouchableOpacity>
@@ -157,7 +155,7 @@ export default function ActivityScreen() {
           <AttemptStatusBadge status={attempt.status} score={attempt.score} />
         </View>
         {attempt.status === 'Submitted' && (
-          <Text style={{ fontSize: 13, color: textSecondary, textAlign: 'center' }}>
+          <Text style={{ fontSize: scale(13), color: c.text.secondary, textAlign: 'center' }}>
             Aguardando avaliação do professor
           </Text>
         )}
@@ -167,15 +165,15 @@ export default function ActivityScreen() {
           accessibilityLabel={attempt.status === 'Graded' ? 'Ver resultado' : 'Ver detalhes'}
           accessibilityRole="button"
           style={{
-            backgroundColor: colors.surfaceAlt,
+            backgroundColor: c.surfaceAlt,
             borderRadius: 18,
             paddingVertical: 16,
             alignItems: 'center',
             borderWidth: 2,
-            borderColor: colors.primary,
+            borderColor: c.primary,
           }}
         >
-          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.primary }}>
+          <Text style={{ fontSize: scale(17), fontWeight: '700', color: c.primary }}>
             {attempt.status === 'Graded' ? 'Ver resultado' : 'Ver detalhes'}
           </Text>
         </TouchableOpacity>
@@ -184,36 +182,36 @@ export default function ActivityScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20 }}>
-          <Ionicons name="arrow-back" size={20} color={colors.primary} />
-          <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '600' }}>Voltar</Text>
+          <Ionicons name="arrow-back" size={20} color={c.primary} />
+          <Text style={{ fontSize: scale(15), color: c.primary, fontWeight: '600' }}>Voltar</Text>
         </TouchableOpacity>
 
         <Animated.View entering={reducedMotion ? undefined : FadeInDown.delay(50).duration(400)}>
           <View style={{
-            backgroundColor: colors.surfaceAlt,
+            backgroundColor: c.surfaceAlt,
             borderRadius: 20,
             padding: 20,
             marginBottom: 24,
             borderWidth: 1,
-            borderColor: colors.primaryLight + '30',
+            borderColor: c.primaryLight + '30',
           }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>
+            <Text style={{ fontSize: scale(13), fontWeight: '600', color: c.primary, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>
               Atividade
             </Text>
-            <Text style={{ fontSize: 24, fontWeight: '800', color: textPrimary, letterSpacing: -0.5, marginBottom: 8 }}>
+            <Text style={{ fontSize: scale(24), fontWeight: '800', color: c.text.primary, letterSpacing: -0.5, marginBottom: 8 }}>
               {exam.title}
             </Text>
             {exam.description && (
-              <Text style={{ fontSize: 15, color: textSecondary, lineHeight: 22 }}>
+              <Text style={{ fontSize: scale(15), color: c.text.secondary, lineHeight: 22 }}>
                 {exam.description}
               </Text>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
-              <Ionicons name="help-circle-outline" size={16} color={colors.text.tertiary} />
-              <Text style={{ fontSize: 13, color: colors.text.tertiary }}>
+              <Ionicons name="help-circle-outline" size={16} color={c.text.tertiary} />
+              <Text style={{ fontSize: scale(13), color: c.text.tertiary }}>
                 {exam.questions.length} pergunta{exam.questions.length !== 1 ? 's' : ''}
               </Text>
             </View>
@@ -222,7 +220,7 @@ export default function ActivityScreen() {
 
         {exam.questions.length > 0 && (
           <Animated.View entering={reducedMotion ? undefined : FadeInDown.delay(150).duration(400)}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: textPrimary, marginBottom: 12 }}>
+            <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.text.primary, marginBottom: 12 }}>
               Perguntas
             </Text>
             <View style={{ gap: 10 }}>
@@ -230,18 +228,18 @@ export default function ActivityScreen() {
                 <View
                   key={q.id}
                   style={{
-                    backgroundColor: colors.surface,
+                    backgroundColor: c.surface,
                     borderRadius: 16,
                     padding: 16,
                     borderWidth: 1,
-                    borderColor: colors.borderLight,
+                    borderColor: c.borderLight,
                     gap: 10,
                   }}
                 >
-                  <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600', marginBottom: 4 }}>
+                  <Text style={{ fontSize: scale(13), color: c.primary, fontWeight: '600', marginBottom: 4 }}>
                     Pergunta {i + 1}
                   </Text>
-                  <Text style={{ fontSize: 15, color: textPrimary, lineHeight: 22 }}>
+                  <Text style={{ fontSize: scale(15), color: c.text.primary, lineHeight: 22 }}>
                     {q.text}
                   </Text>
                   {isAudioFormat && (
@@ -257,14 +255,14 @@ export default function ActivityScreen() {
                         paddingHorizontal: 14,
                         borderRadius: 10,
                         borderWidth: 1,
-                        borderColor: colors.border,
-                        backgroundColor: colors.borderLight,
+                        borderColor: c.border,
+                        backgroundColor: c.borderLight,
                         opacity: 0.5,
                         alignSelf: 'flex-start',
                       }}
                     >
-                      <Ionicons name="play-circle-outline" size={18} color={colors.text.tertiary} />
-                      <Text style={{ fontSize: 13, color: colors.text.tertiary }}>Ouvir questão</Text>
+                      <Ionicons name="play-circle-outline" size={18} color={c.text.tertiary} />
+                      <Text style={{ fontSize: scale(13), color: c.text.tertiary }}>Ouvir questão</Text>
                     </TouchableOpacity>
                   )}
                   {q.options.length > 0 && (
@@ -273,14 +271,14 @@ export default function ActivityScreen() {
                         <View
                           key={opt.id}
                           style={{
-                            backgroundColor: colors.surfaceAlt,
+                            backgroundColor: c.surfaceAlt,
                             borderRadius: 10,
                             padding: 10,
                             borderWidth: 1,
-                            borderColor: colors.borderLight,
+                            borderColor: c.borderLight,
                           }}
                         >
-                          <Text style={{ fontSize: 14, color: textSecondary }}>{opt.text}</Text>
+                          <Text style={{ fontSize: scale(14), color: c.text.secondary }}>{opt.text}</Text>
                         </View>
                       ))}
                     </View>
@@ -299,9 +297,9 @@ export default function ActivityScreen() {
         right: 0,
         padding: 20,
         paddingBottom: Platform.OS === 'ios' ? 36 : 20,
-        backgroundColor: bg,
+        backgroundColor: c.background,
         borderTopWidth: 1,
-        borderTopColor: colors.borderLight,
+        borderTopColor: c.borderLight,
       }}>
         {renderCTA()}
       </View>
@@ -314,8 +312,6 @@ export default function ActivityScreen() {
           setShowFormats(false);
           router.push(`/respond/${id}/${fmt}`);
         }}
-        reducedMotion={reducedMotion}
-        highContrast={highContrast}
       />
 
       <AccessibilityPanel />
@@ -328,19 +324,15 @@ function FormatModal({
   defaultFormat,
   onClose,
   onSelect,
-  reducedMotion,
-  highContrast,
 }: {
   visible: boolean;
   defaultFormat: AvailableFormat;
   onClose: () => void;
   onSelect: (format: AvailableFormat) => void;
-  reducedMotion: boolean;
-  highContrast: boolean;
 }) {
-  const bg = highContrast ? '#000' : colors.surface;
-  const textPrimary = highContrast ? '#fff' : colors.text.primary;
-  const textSecondary = highContrast ? '#aaa' : colors.text.secondary;
+  const c = useColors();
+  const scale = useScale();
+  const { reducedMotion } = useAccessibilityStore();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -350,7 +342,7 @@ function FormatModal({
       >
         <Pressable onPress={() => {}}>
           <View style={{
-            backgroundColor: bg,
+            backgroundColor: c.surface,
             borderTopLeftRadius: 32,
             borderTopRightRadius: 32,
             padding: 24,
@@ -358,12 +350,12 @@ function FormatModal({
             gap: 16,
           }}>
             <View style={{ alignItems: 'center', marginBottom: 4 }}>
-              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: c.border }} />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: textPrimary, letterSpacing: -0.3 }}>
+            <Text style={{ fontSize: scale(22), fontWeight: '800', color: c.text.primary, letterSpacing: -0.3 }}>
               Como você quer responder?
             </Text>
-            <Text style={{ fontSize: 14, color: textSecondary, marginTop: -8, lineHeight: 20 }}>
+            <Text style={{ fontSize: scale(14), color: c.text.secondary, marginTop: -8, lineHeight: 20 }}>
               Escolha o formato que melhor combina com você.
             </Text>
             {AVAILABLE_FORMATS.map((fmt, i) => (
@@ -374,7 +366,6 @@ function FormatModal({
                 isDefault={fmt === defaultFormat}
                 onSelect={onSelect}
                 reducedMotion={reducedMotion}
-                highContrast={highContrast}
               />
             ))}
           </View>
@@ -390,28 +381,27 @@ function FormatCard({
   isDefault,
   onSelect,
   reducedMotion,
-  highContrast,
 }: {
   format: AvailableFormat;
   index: number;
   isDefault: boolean;
   onSelect: (f: AvailableFormat) => void;
   reducedMotion: boolean;
-  highContrast: boolean;
 }) {
+  const c = useColors();
+  const scale = useScale();
   const color = colors.formats[format];
-  const lightColor = highContrast ? '#111' : colors.formatsLight[format];
-  const textPrimary = highContrast ? '#fff' : colors.text.primary;
-  const scale = useSharedValue(1);
+  const lightColor = c.formatsLight[format];
+  const animScale = useSharedValue(1);
 
   const animated = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: animScale.value }],
   }));
 
   function handlePress() {
     if (!reducedMotion) {
-      scale.value = withSpring(0.96, { damping: 15 }, () => {
-        scale.value = withSpring(1);
+      animScale.value = withSpring(0.96, { damping: 15 }, () => {
+        animScale.value = withSpring(1);
       });
     }
     onSelect(format);
@@ -450,16 +440,16 @@ function FormatCard({
         </View>
         <View style={{ flex: 1, gap: 3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: textPrimary, letterSpacing: -0.2 }}>
+            <Text style={{ fontSize: scale(17), fontWeight: '700', color: c.text.primary, letterSpacing: -0.2 }}>
               {formatLabels[format]}
             </Text>
             {isDefault && (
               <View style={{ backgroundColor: color + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color }}>Padrão</Text>
+                <Text style={{ fontSize: scale(10), fontWeight: '700', color }}>{`Padrão`}</Text>
               </View>
             )}
           </View>
-          <Text style={{ fontSize: 13, color, fontWeight: '500' }}>
+          <Text style={{ fontSize: scale(13), color, fontWeight: '500' }}>
             {formatMotivations[format]}
           </Text>
         </View>

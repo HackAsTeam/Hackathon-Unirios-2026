@@ -24,7 +24,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { apiFetch } from '../../../../lib/api';
-import { colors } from '../../../../lib/colors';
+import { useColors } from '../../../../hooks/useColors';
+import { useScale } from '../../../../hooks/useScale';
 import { WaveformVisualizer } from '../../../../components/response/WaveformVisualizer';
 import { AccessibilityPanel } from '../../../../components/accessibility/AccessibilityPanel';
 import type { AttemptResponse, ExamDetail } from '../../../../types/classroom';
@@ -43,7 +44,9 @@ export default function AudioResponseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
-  const { highContrast, reducedMotion } = useAccessibilityStore();
+  const { reducedMotion } = useAccessibilityStore();
+  const c = useColors();
+  const scale = useScale();
 
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
@@ -89,10 +92,7 @@ export default function AudioResponseScreen() {
     onError: () => Alert.alert('Erro', 'Não foi possível enviar. Tente novamente.'),
   });
 
-  const bg = highContrast ? '#000' : colors.background;
-  const textPrimary = highContrast ? '#fff' : colors.text.primary;
-  const textSecondary = highContrast ? '#aaa' : colors.text.secondary;
-  const accentColor = colors.formats.audio;
+  const accentColor = c.formats.audio;
 
   useEffect(() => {
     return () => {
@@ -212,20 +212,20 @@ export default function AudioResponseScreen() {
 
   if (state === 'done') {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+      <View style={{ flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
         <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(400)}>
-          <Text style={{ fontSize: 64, textAlign: 'center', marginBottom: 16 }}>🎉</Text>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: textPrimary, textAlign: 'center', letterSpacing: -0.4 }}>
+          <Ionicons name="checkmark-circle" size={64} color={accentColor} style={{ marginBottom: 16 }} />
+          <Text style={{ fontSize: scale(24), fontWeight: '800', color: c.text.primary, textAlign: 'center', letterSpacing: -0.4 }}>
             Resposta enviada!
           </Text>
-          <Text style={{ fontSize: 15, color: textSecondary, textAlign: 'center', marginTop: 8, lineHeight: 22 }}>
+          <Text style={{ fontSize: scale(15), color: c.text.secondary, textAlign: 'center', marginTop: 8, lineHeight: 22 }}>
             Seu áudio foi registrado com sucesso.
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40, alignItems: 'center' }}
           >
-            <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>Voltar</Text>
+            <Text style={{ fontSize: scale(16), fontWeight: '700', color: '#fff' }}>Voltar</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -233,7 +233,7 @@ export default function AudioResponseScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}
         scrollEnabled={false}
@@ -243,7 +243,7 @@ export default function AudioResponseScreen() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 24 }}
         >
           <Ionicons name="arrow-back" size={20} color={accentColor} />
-          <Text style={{ fontSize: 15, color: accentColor, fontWeight: '600' }}>Voltar</Text>
+          <Text style={{ fontSize: scale(15), color: accentColor, fontWeight: '600' }}>Voltar</Text>
         </TouchableOpacity>
 
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 32 }}>
@@ -254,11 +254,11 @@ export default function AudioResponseScreen() {
             <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: accentColor + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
               <Ionicons name="mic-outline" size={28} color={accentColor} />
             </View>
-            <Text style={{ fontSize: 26, fontWeight: '800', color: textPrimary, letterSpacing: -0.4, textAlign: 'center' }}>
+            <Text style={{ fontSize: scale(26), fontWeight: '800', color: c.text.primary, letterSpacing: -0.4, textAlign: 'center' }}>
               Resposta em Áudio
             </Text>
             {exam && (
-              <Text style={{ fontSize: 14, color: textSecondary, textAlign: 'center', maxWidth: 260, lineHeight: 20 }}>
+              <Text style={{ fontSize: scale(14), color: c.text.secondary, textAlign: 'center', maxWidth: 260, lineHeight: 20 }}>
                 {exam.title}
               </Text>
             )}
@@ -274,14 +274,14 @@ export default function AudioResponseScreen() {
             <Text style={{
               fontSize: 44,
               fontWeight: '200',
-              color: state === 'recording' ? accentColor : textSecondary,
+              color: state === 'recording' ? accentColor : c.text.secondary,
               letterSpacing: 2,
               fontVariant: ['tabular-nums'],
             }}>
               {state === 'playing' ? formatDuration(playPosition) : formatDuration(duration)}
             </Text>
 
-            <StatusLabel state={state} color={accentColor} textSecondary={textSecondary} />
+            <StatusLabel state={state} color={accentColor} textSecondary={c.text.secondary} />
           </View>
 
           <Animated.View style={pulseStyle}>
@@ -303,17 +303,17 @@ export default function AudioResponseScreen() {
             >
               <TouchableOpacity
                 onPress={resetRecording}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 16, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', gap: 6, flexDirection: 'row', justifyContent: 'center' }}
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 16, borderWidth: 1.5, borderColor: c.border, alignItems: 'center', gap: 6, flexDirection: 'row', justifyContent: 'center' }}
               >
-                <Ionicons name="refresh-outline" size={18} color={colors.text.secondary} />
-                <Text style={{ fontSize: 15, fontWeight: '600', color: textSecondary }}>Regravar</Text>
+                <Ionicons name="refresh-outline" size={18} color={c.text.secondary} />
+                <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.secondary }}>Regravar</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={state === 'playing' ? stopPlayback : playRecording}
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: accentColor + '18', borderWidth: 1.5, borderColor: accentColor + '40', alignItems: 'center', gap: 6, flexDirection: 'row', justifyContent: 'center' }}
               >
                 <Ionicons name={state === 'playing' ? 'stop-outline' : 'play-outline'} size={18} color={accentColor} />
-                <Text style={{ fontSize: 15, fontWeight: '600', color: accentColor }}>
+                <Text style={{ fontSize: scale(15), fontWeight: '600', color: accentColor }}>
                   {state === 'playing' ? 'Parar' : 'Ouvir'}
                 </Text>
               </TouchableOpacity>
@@ -326,7 +326,7 @@ export default function AudioResponseScreen() {
         <View style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20,
-          backgroundColor: bg, borderTopWidth: 1, borderTopColor: colors.borderLight,
+          backgroundColor: c.background, borderTopWidth: 1, borderTopColor: c.borderLight,
         }}>
           <TouchableOpacity
             onPress={() => submitMutation.mutate()}
@@ -352,7 +352,7 @@ export default function AudioResponseScreen() {
             ) : (
               <>
                 <Ionicons name="send-outline" size={20} color="#fff" />
-                <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff' }}>Enviar resposta</Text>
+                <Text style={{ fontSize: scale(17), fontWeight: '700', color: '#fff' }}>Enviar resposta</Text>
               </>
             )}
           </TouchableOpacity>
@@ -365,6 +365,7 @@ export default function AudioResponseScreen() {
 }
 
 function StatusLabel({ state, color, textSecondary }: { state: RecordingState; color: string; textSecondary: string }) {
+  const scale = useScale();
   const labels: Partial<Record<RecordingState, string>> = {
     idle: 'Toque para começar',
     recording: 'Gravando…',
@@ -374,7 +375,7 @@ function StatusLabel({ state, color, textSecondary }: { state: RecordingState; c
   const label = labels[state];
   if (!label) return null;
   return (
-    <Text style={{ fontSize: 15, color: state === 'recording' ? color : textSecondary, fontWeight: state === 'recording' ? '600' : '400' }}>
+    <Text style={{ fontSize: scale(15), color: state === 'recording' ? color : textSecondary, fontWeight: state === 'recording' ? '600' : '400' }}>
       {label}
     </Text>
   );
@@ -391,14 +392,14 @@ function RecordButton({
   onPress: () => void;
   reducedMotion: boolean;
 }) {
-  const scale = useSharedValue(1);
-  const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const animScale = useSharedValue(1);
+  const animated = useAnimatedStyle(() => ({ transform: [{ scale: animScale.value }] }));
   const isRecording = state === 'recording';
   const disabled = state === 'recorded' || state === 'playing' || state === 'submitting';
 
   function handlePress() {
     if (!reducedMotion) {
-      scale.value = withSpring(0.92, { damping: 12 }, () => { scale.value = withSpring(1); });
+      animScale.value = withSpring(0.92, { damping: 12 }, () => { animScale.value = withSpring(1); });
     }
     onPress();
   }

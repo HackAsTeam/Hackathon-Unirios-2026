@@ -1,4 +1,5 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ResponseFormat } from '../../types/activity';
 import { colors, formatIcons } from '../../lib/colors';
 
@@ -23,7 +24,7 @@ export function FormatIcon({ format, size = 40 }: FormatIconProps) {
       }}
       accessibilityLabel={`Formato: ${format}`}
     >
-      <Text style={{ fontSize: size * 0.5 }}>{icon}</Text>
+      <Ionicons name={icon as any} size={size * 0.5} color={colors.formats[format]} />
     </View>
   );
 }

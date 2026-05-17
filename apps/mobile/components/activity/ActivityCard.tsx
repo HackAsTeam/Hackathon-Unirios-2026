@@ -1,6 +1,6 @@
 import { TouchableOpacity, View, Text } from 'react-native';
 import { Activity, ResponseFormat } from '../../types/activity';
-import { colors } from '../../lib/colors';
+import { colors, formatIcons } from '../../lib/colors';
 import { Chip } from '../ui/Chip';
 
 interface ActivityCardProps {
@@ -82,7 +82,7 @@ export function ActivityCard({ activity, onPress, compact = false }: ActivityCar
               label=""
               color={getFormatColor(f)}
               lightColor={getFormatLight(f)}
-              icon={f === 'text' ? '✍️' : f === 'audio' ? '🎤' : f === 'video' ? '🎬' : f === 'drawing' ? '🎨' : f === 'mindmap' ? '🧠' : f === 'presentation' ? '📽️' : f === 'quiz' ? '❓' : f === 'podcast' ? '🎙️' : '🗣️'}
+              iconName={formatIcons[f]}
               size="sm"
             />
           ))}

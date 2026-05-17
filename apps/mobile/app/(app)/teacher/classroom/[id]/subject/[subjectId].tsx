@@ -6,11 +6,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
-import { colors } from '@/lib/colors';
+import { useColors } from '@/hooks/useColors';
+import { useScale } from '@/hooks/useScale';
 import type { Exam } from '@/types/classroom';
 
 export default function SubjectDetailScreen() {
@@ -21,6 +22,8 @@ export default function SubjectDetailScreen() {
   }>();
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const c = useColors();
+  const scale = useScale();
 
   const { data: activities, isLoading } = useQuery({
     queryKey: ['activities', subjectId],
@@ -33,16 +36,15 @@ export default function SubjectDetailScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <View
         style={{
           paddingTop: 56,
           paddingBottom: 16,
           paddingHorizontal: 20,
-          backgroundColor: colors.surface,
+          backgroundColor: c.surface,
           borderBottomWidth: 1,
-          borderBottomColor: colors.borderLight,
+          borderBottomColor: c.borderLight,
         }}
       >
         <TouchableOpacity
@@ -50,40 +52,39 @@ export default function SubjectDetailScreen() {
           style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}
           accessibilityLabel="Voltar"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.primary} />
-          <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '500' }}>Matérias</Text>
+          <Ionicons name="chevron-back" size={20} color={c.primary} />
+          <Text style={{ fontSize: scale(15), color: c.primary, fontWeight: '500' }}>Matérias</Text>
         </TouchableOpacity>
 
-        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text.primary }}>
+        <Text style={{ fontSize: scale(24), fontWeight: '700', color: c.text.primary }}>
           {decodeURIComponent(name ?? '')}
         </Text>
       </View>
 
-      {/* Body */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={c.primary} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
               Atividades
             </Text>
             <TouchableOpacity
               onPress={openCreate}
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 12,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
                 borderWidth: 1,
-                borderColor: colors.primaryLight,
+                borderColor: c.primaryLight,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.primary }}>
                 + Nova Atividade
               </Text>
             </TouchableOpacity>
@@ -92,7 +93,7 @@ export default function SubjectDetailScreen() {
           {(!activities || activities.length === 0) && (
             <View
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 16,
                 padding: 28,
                 alignItems: 'center',
@@ -100,31 +101,31 @@ export default function SubjectDetailScreen() {
                 marginTop: 8,
               }}
             >
-              <Text style={{ fontSize: 32 }}>📝</Text>
+              <Ionicons name="document-text-outline" size={48} color={c.text.tertiary} />
               <Text
                 style={{
-                  fontSize: 16,
+                  fontSize: scale(16),
                   fontWeight: '600',
-                  color: colors.text.primary,
+                  color: c.text.primary,
                   marginTop: 4,
                 }}
               >
                 Nenhuma atividade ainda
               </Text>
-              <Text style={{ fontSize: 14, color: colors.text.secondary, textAlign: 'center' }}>
+              <Text style={{ fontSize: scale(14), color: c.text.secondary, textAlign: 'center' }}>
                 Crie a primeira atividade para os alunos desta matéria.
               </Text>
               <TouchableOpacity
                 onPress={openCreate}
                 style={{
                   marginTop: 8,
-                  backgroundColor: colors.primary,
+                  backgroundColor: c.primary,
                   borderRadius: 12,
                   paddingVertical: 12,
                   paddingHorizontal: 24,
                 }}
               >
-                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text.inverse }}>
+                <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.inverse }}>
                   Criar Atividade
                 </Text>
               </TouchableOpacity>
@@ -136,11 +137,11 @@ export default function SubjectDetailScreen() {
               key={a.id}
               onPress={() => router.push(`/teacher/activity/${a.id}?subjectId=${subjectId}&classroomId=${id}&name=${encodeURIComponent(name ?? '')}`)}
               style={{
-                backgroundColor: colors.surface,
+                backgroundColor: c.surface,
                 borderRadius: 16,
                 padding: 18,
                 borderWidth: 1,
-                borderColor: colors.borderLight,
+                borderColor: c.borderLight,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 14,
@@ -151,30 +152,30 @@ export default function SubjectDetailScreen() {
                   width: 44,
                   height: 44,
                   borderRadius: 14,
-                  backgroundColor: colors.primary + '15',
+                  backgroundColor: c.primary + '15',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="document-text-outline" size={22} color={colors.primary} />
+                <Ionicons name="document-text-outline" size={22} color={c.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary }}>
+                <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.primary }}>
                   {a.title}
                 </Text>
                 {a.description && (
                   <Text
-                    style={{ fontSize: 13, color: colors.text.secondary, marginTop: 2 }}
+                    style={{ fontSize: scale(13), color: c.text.secondary, marginTop: 2 }}
                     numberOfLines={1}
                   >
                     {a.description}
                   </Text>
                 )}
-                <Text style={{ fontSize: 12, color: colors.text.tertiary, marginTop: 4 }}>
+                <Text style={{ fontSize: scale(12), color: c.text.tertiary, marginTop: 4 }}>
                   {a.questionCount} questão{a.questionCount !== 1 ? 'es' : ''}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
             </TouchableOpacity>
           ))}
         </ScrollView>
