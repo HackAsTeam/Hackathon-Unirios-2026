@@ -182,5 +182,5 @@ public sealed class AttemptEndpoints : IEndpoint
     private sealed record SaveAnswerRequest(Guid QuestionId, Guid? SelectedOptionId, string? AnswerText, ResponseFormat? Format);
     private sealed record SubmitAnswersRequest(List<SubmitAnswerRequest> Answers);
     private sealed record SubmitAnswerRequest(Guid QuestionId, Guid SelectedOptionId);
-    private sealed record GradeAnswerRequest(decimal Score, string? Feedback);
+    private sealed record GradeAnswerRequest(decimal? Score, string? Feedback);
 }
