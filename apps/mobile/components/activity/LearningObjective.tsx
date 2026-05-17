@@ -1,5 +1,7 @@
 import { View, Text } from 'react-native';
-import { colors } from '../../lib/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 
 interface LearningObjectiveProps {
   objective: string;
@@ -7,25 +9,28 @@ interface LearningObjectiveProps {
 }
 
 export function LearningObjective({ objective, compact = false }: LearningObjectiveProps) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View
       style={{
-        backgroundColor: colors.primary + '0D',
+        backgroundColor: c.primary + '0D',
         borderRadius: 16,
         padding: compact ? 14 : 20,
         borderLeftWidth: 4,
-        borderLeftColor: colors.primary,
+        borderLeftColor: c.primary,
       }}
       accessibilityLabel={`Objetivo de aprendizagem: ${objective}`}
       accessibilityRole="text"
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: compact ? 4 : 8 }}>
-        <Text style={{ fontSize: compact ? 14 : 16 }}>🎯</Text>
+        <Ionicons name="flag-outline" size={compact ? 14 : 16} color={c.primary} />
         <Text
           style={{
-            fontSize: compact ? 12 : 13,
+            fontSize: scale(compact ? 12 : 13),
             fontWeight: '700',
-            color: colors.primary,
+            color: c.primary,
             textTransform: 'uppercase',
             letterSpacing: 0.5,
           }}
@@ -35,9 +40,9 @@ export function LearningObjective({ objective, compact = false }: LearningObject
       </View>
       <Text
         style={{
-          fontSize: compact ? 14 : 17,
+          fontSize: scale(compact ? 14 : 17),
           fontWeight: '600',
-          color: colors.text.primary,
+          color: c.text.primary,
           lineHeight: compact ? 20 : 26,
           letterSpacing: -0.2,
         }}

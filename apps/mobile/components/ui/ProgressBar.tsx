@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
 
 interface ProgressBarProps {
   progress: number;
@@ -10,10 +10,13 @@ interface ProgressBarProps {
 
 export function ProgressBar({
   progress,
-  color = colors.primary,
+  color,
   height = 6,
-  backgroundColor = colors.borderLight,
+  backgroundColor,
 }: ProgressBarProps) {
+  const c = useColors();
+  const finalColor = color ?? c.primary;
+  const finalBg = backgroundColor ?? c.borderLight;
   const clampedProgress = Math.min(1, Math.max(0, progress));
 
   return (
@@ -21,7 +24,7 @@ export function ProgressBar({
       style={{
         width: '100%',
         height,
-        backgroundColor,
+        backgroundColor: finalBg,
         borderRadius: height / 2,
         overflow: 'hidden',
       }}
@@ -32,7 +35,7 @@ export function ProgressBar({
         style={{
           width: `${clampedProgress * 100}%`,
           height: '100%',
-          backgroundColor: color,
+          backgroundColor: finalColor,
           borderRadius: height / 2,
         }}
       />

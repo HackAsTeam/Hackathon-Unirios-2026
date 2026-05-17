@@ -1,16 +1,21 @@
 import { View, Text } from 'react-native';
-import { colors } from '../../lib/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 import { Button } from './Button';
 
 interface EmptyStateProps {
-  icon?: string;
+  iconName?: string;
   title: string;
   message: string;
   actionLabel?: string;
   onAction?: () => void;
 }
 
-export function EmptyState({ icon = '📭', title, message, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ iconName = 'mail-open-outline', title, message, actionLabel, onAction }: EmptyStateProps) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View
       style={{
@@ -19,16 +24,17 @@ export function EmptyState({ icon = '📭', title, message, actionLabel, onActio
         alignItems: 'center',
         padding: 40,
         gap: 12,
+        backgroundColor: c.background,
       }}
       accessibilityLabel={`${title}. ${message}`}
       accessibilityRole="alert"
     >
-      <Text style={{ fontSize: 48 }}>{icon}</Text>
+      <Ionicons name={iconName as any} size={56} color={c.text.tertiary} />
       <Text
         style={{
-          fontSize: 20,
+          fontSize: scale(20),
           fontWeight: '700',
-          color: colors.text.primary,
+          color: c.text.primary,
           textAlign: 'center',
         }}
       >
@@ -36,10 +42,10 @@ export function EmptyState({ icon = '📭', title, message, actionLabel, onActio
       </Text>
       <Text
         style={{
-          fontSize: 15,
-          color: colors.text.secondary,
+          fontSize: scale(15),
+          color: c.text.secondary,
           textAlign: 'center',
-          lineHeight: 22,
+          lineHeight: scale(15) * 1.5,
           maxWidth: 280,
         }}
       >

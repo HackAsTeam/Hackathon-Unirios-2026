@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import { colors } from '../../lib/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../../hooks/useColors';
 
 interface ChipProps {
   label: string;
@@ -7,40 +8,45 @@ interface ChipProps {
   lightColor?: string;
   selected?: boolean;
   onPress?: () => void;
-  icon?: string;
+  iconName?: string;
   size?: 'sm' | 'md';
 }
 
 export function Chip({
   label,
-  color = colors.primary,
-  lightColor = colors.surfaceAlt,
+  color,
+  lightColor,
   selected = false,
   onPress,
-  icon,
+  iconName,
   size = 'md',
 }: ChipProps) {
+  const c = useColors();
+  const effectiveColor = color ?? c.primary;
+  const effectiveLightColor = lightColor ?? c.surfaceAlt;
   const isMd = size === 'md';
+  const iconSize = isMd ? 14 : 12;
+
   const content = (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: selected ? color : lightColor,
+        backgroundColor: selected ? effectiveColor : effectiveLightColor,
         borderRadius: 100,
         paddingVertical: isMd ? 8 : 6,
         paddingHorizontal: isMd ? 14 : 10,
         borderWidth: selected ? 0 : 1,
-        borderColor: color + '30',
+        borderColor: effectiveColor + '30',
       }}
     >
-      {icon && <Text style={{ fontSize: isMd ? 14 : 12 }}>{icon}</Text>}
+      {iconName && <Ionicons name={iconName as any} size={iconSize} color={selected ? '#fff' : effectiveColor} />}
       <Text
         style={{
           fontSize: isMd ? 14 : 12,
           fontWeight: '600',
-          color: selected ? '#fff' : color,
+          color: selected ? '#fff' : effectiveColor,
         }}
       >
         {label}

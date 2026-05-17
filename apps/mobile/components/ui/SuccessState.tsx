@@ -1,5 +1,7 @@
 import { View, Text } from 'react-native';
-import { colors } from '../../lib/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 import { Button } from './Button';
 
 interface SuccessStateProps {
@@ -19,6 +21,9 @@ export function SuccessState({
   secondaryLabel,
   onSecondary,
 }: SuccessStateProps) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View
       style={{
@@ -27,7 +32,7 @@ export function SuccessState({
         alignItems: 'center',
         padding: 40,
         gap: 16,
-        backgroundColor: colors.background,
+        backgroundColor: c.background,
       }}
       accessibilityLabel={`${title}. ${message}`}
       accessibilityRole="alert"
@@ -37,18 +42,18 @@ export function SuccessState({
           width: 80,
           height: 80,
           borderRadius: 40,
-          backgroundColor: colors.successLight,
+          backgroundColor: c.successLight,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Text style={{ fontSize: 36 }}>✓</Text>
+        <Ionicons name="checkmark-circle" size={44} color={c.success} />
       </View>
       <Text
         style={{
-          fontSize: 22,
+          fontSize: scale(22),
           fontWeight: '700',
-          color: colors.text.primary,
+          color: c.text.primary,
           textAlign: 'center',
           letterSpacing: -0.3,
         }}
@@ -57,8 +62,8 @@ export function SuccessState({
       </Text>
       <Text
         style={{
-          fontSize: 15,
-          color: colors.text.secondary,
+          fontSize: scale(15),
+          color: c.text.secondary,
           textAlign: 'center',
           lineHeight: 22,
           maxWidth: 300,

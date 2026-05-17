@@ -1,5 +1,6 @@
 import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 
 interface ButtonProps {
   title: string;
@@ -12,14 +13,6 @@ interface ButtonProps {
   fullWidth?: boolean;
   accessibilityLabel?: string;
 }
-
-const variantStyles: Record<string, { bg: string; text: string; border: string }> = {
-  primary: { bg: colors.primary, text: colors.text.inverse, border: colors.primary },
-  secondary: { bg: colors.surfaceAlt, text: colors.primary, border: 'transparent' },
-  outline: { bg: 'transparent', text: colors.primary, border: colors.primary },
-  ghost: { bg: 'transparent', text: colors.primary, border: 'transparent' },
-  danger: { bg: colors.error, text: colors.text.inverse, border: colors.error },
-};
 
 const sizeStyles: Record<string, { py: number; px: number; fs: number }> = {
   sm: { py: 10, px: 16, fs: 14 },
@@ -38,6 +31,17 @@ export function Button({
   fullWidth = false,
   accessibilityLabel,
 }: ButtonProps) {
+  const c = useColors();
+  const scale = useScale();
+
+  const variantStyles: Record<string, { bg: string; text: string; border: string }> = {
+    primary: { bg: c.primary, text: c.text.inverse, border: c.primary },
+    secondary: { bg: c.surfaceAlt, text: c.primary, border: 'transparent' },
+    outline: { bg: 'transparent', text: c.primary, border: c.primary },
+    ghost: { bg: 'transparent', text: c.primary, border: 'transparent' },
+    danger: { bg: c.error, text: c.text.inverse, border: c.error },
+  };
+
   const vs = variantStyles[variant];
   const ss = sizeStyles[size];
 
@@ -68,11 +72,11 @@ export function Button({
         <ActivityIndicator color={vs.text} size="small" />
       ) : (
         <>
-          {icon && <Text style={{ fontSize: ss.fs }}>{icon}</Text>}
+          {icon && <Text style={{ fontSize: scale(ss.fs) }}>{icon}</Text>}
           <Text
             style={{
               color: vs.text,
-              fontSize: ss.fs,
+              fontSize: scale(ss.fs),
               fontWeight: '600',
               textAlign: 'center',
             }}

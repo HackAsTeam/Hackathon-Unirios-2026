@@ -1,6 +1,5 @@
 import { View, ScrollView, RefreshControl } from 'react-native';
-import { colors } from '../../lib/colors';
-import { useAccessibilityStore } from '../../store/acessibility';
+import { useColors } from '../../hooks/useColors';
 
 interface ScreenWrapperProps {
   children: React.ReactNode;
@@ -17,11 +16,10 @@ export function ScreenWrapper({
   refreshing = false,
   onRefresh,
   paddingHorizontal = 24,
-  backgroundColor = colors.background,
+  backgroundColor,
 }: ScreenWrapperProps) {
-  const { highContrast } = useAccessibilityStore();
-
-  const bg = highContrast ? '#000000' : backgroundColor;
+  const c = useColors();
+  const bg = backgroundColor ?? c.background;
 
   if (scroll) {
     return (
@@ -37,7 +35,7 @@ export function ScreenWrapper({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={colors.primary}
+              tintColor={c.primary}
             />
           ) : undefined
         }

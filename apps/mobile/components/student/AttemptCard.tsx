@@ -1,7 +1,8 @@
 import { View, Text } from 'react-native';
 import { Card } from '../ui/Card';
 import { AttemptStatusBadge } from './AttemptStatusBadge';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 import type { AttemptSummary } from '../../types/attempt';
 
 function formatDate(dateStr: string | null): string {
@@ -16,6 +17,9 @@ export function AttemptCard({
   attempt: AttemptSummary;
   onPress: () => void;
 }) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <Card
       variant="elevated"
@@ -24,13 +28,13 @@ export function AttemptCard({
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text.primary, marginBottom: 4 }}>
+          <Text style={{ fontSize: scale(15), fontWeight: '700', color: c.text.primary, marginBottom: 4 }}>
             {attempt.examTitle ?? 'Atividade'}
           </Text>
-          <Text style={{ fontSize: 13, color: colors.text.secondary, marginBottom: 4 }}>
+          <Text style={{ fontSize: scale(13), color: c.text.secondary, marginBottom: 4 }}>
             {attempt.classroomName ?? ''}
           </Text>
-          <Text style={{ fontSize: 12, color: colors.text.tertiary }}>
+          <Text style={{ fontSize: scale(12), color: c.text.tertiary }}>
             {attempt.submittedAt
               ? `Enviado em ${formatDate(attempt.submittedAt)}`
               : `Iniciado em ${formatDate(attempt.startedAt)}`}

@@ -1,5 +1,6 @@
 import { View, Text, ActivityIndicator } from 'react-native';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 
 interface LoadingProps {
   message?: string;
@@ -7,6 +8,9 @@ interface LoadingProps {
 }
 
 export function Loading({ message = 'Carregando...', fullScreen = true }: LoadingProps) {
+  const c = useColors();
+  const scale = useScale();
+
   const content = (
     <View
       style={{
@@ -18,8 +22,8 @@ export function Loading({ message = 'Carregando...', fullScreen = true }: Loadin
       accessibilityLabel={message}
       accessibilityRole="alert"
     >
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={{ fontSize: 16, color: colors.text.secondary, textAlign: 'center' }}>
+      <ActivityIndicator size="large" color={c.primary} />
+      <Text style={{ fontSize: scale(16), color: c.text.secondary, textAlign: 'center' }}>
         {message}
       </Text>
     </View>
@@ -27,7 +31,7 @@ export function Loading({ message = 'Carregando...', fullScreen = true }: Loadin
 
   if (fullScreen) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: c.background, justifyContent: 'center', alignItems: 'center' }}>
         {content}
       </View>
     );

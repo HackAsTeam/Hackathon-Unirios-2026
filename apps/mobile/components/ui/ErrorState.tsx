@@ -1,5 +1,7 @@
 import { View, Text } from 'react-native';
-import { colors } from '../../lib/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 import { Button } from './Button';
 
 interface ErrorStateProps {
@@ -8,6 +10,9 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ message = 'Algo deu errado. Tente novamente.', onRetry }: ErrorStateProps) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View
       style={{
@@ -16,27 +21,18 @@ export function ErrorState({ message = 'Algo deu errado. Tente novamente.', onRe
         alignItems: 'center',
         padding: 40,
         gap: 12,
-        backgroundColor: colors.background,
+        backgroundColor: c.background,
       }}
       accessibilityLabel={`Erro: ${message}`}
       accessibilityRole="alert"
     >
-      <Text style={{ fontSize: 48 }}>😕</Text>
+      <Ionicons name="alert-circle-outline" size={56} color={c.error} />
       <Text
         style={{
-          fontSize: 18,
-          fontWeight: '600',
-          color: colors.text.primary,
+          fontSize: scale(15),
+          color: c.text.secondary,
           textAlign: 'center',
-        }}
-      >
-      </Text>
-      <Text
-        style={{
-          fontSize: 15,
-          color: colors.text.secondary,
-          textAlign: 'center',
-          lineHeight: 22,
+          lineHeight: scale(15) * 1.5,
         }}
       >
         {message}

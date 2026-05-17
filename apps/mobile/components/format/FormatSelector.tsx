@@ -1,7 +1,9 @@
 import { View, Text, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ResponseFormat } from '../../types/activity';
 import { FormatCard } from './FormatCard';
-import { colors } from '../../lib/colors';
+import { useColors } from '../../hooks/useColors';
+import { useScale } from '../../hooks/useScale';
 
 interface FormatSelectorProps {
   formats: ResponseFormat[];
@@ -9,15 +11,18 @@ interface FormatSelectorProps {
 }
 
 export function FormatSelector({ formats, onSelect }: FormatSelectorProps) {
+  const c = useColors();
+  const scale = useScale();
+
   return (
     <View style={{ gap: 12 }} accessibilityLabel="Escolha como você quer responder">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-        <Text style={{ fontSize: 18 }}>🎯</Text>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary }}>
+        <Ionicons name="apps-outline" size={scale(18)} color={c.primary} />
+        <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.primary }}>
           Escolha seu formato de resposta
         </Text>
       </View>
-      <Text style={{ fontSize: 14, color: colors.text.secondary, marginBottom: 8, lineHeight: 20 }}>
+      <Text style={{ fontSize: scale(14), color: c.text.secondary, marginBottom: 8, lineHeight: 20 }}>
         Você sabe o conteúdo. Agora escolha como quer mostrar isso.
         {'\n'}Cada formato tem seu superpoder!
       </Text>
