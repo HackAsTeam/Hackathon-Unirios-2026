@@ -34,7 +34,8 @@ public sealed class GradeAnswerCommandHandler(AppDbContext db, IHttpContextAcces
         if (answer is null)
             throw new AttemptNotFoundException();
 
-        answer.Score = cmd.Score;
+        if (cmd.Score.HasValue)
+            answer.Score = cmd.Score.Value;
         answer.Feedback = cmd.Feedback;
 
         await db.SaveChangesAsync(ct);
