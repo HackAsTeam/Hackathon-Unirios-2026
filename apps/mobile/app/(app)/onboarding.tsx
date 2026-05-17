@@ -133,32 +133,45 @@ export default function OnboardingScreen() {
               onMomentumScrollEnd={handleScroll}
               className="flex-1"
             >
-              {slides.map((slide, index) => (
-                <View key={index} style={{ width }} className="flex-1 px-8">
-                  <View className="flex-1 items-center justify-center">
-                    <View className="mb-10 h-28 w-28 items-center justify-center rounded-full bg-green-50">
-                      <MaterialIcons name={slide.icon} size={48} color="#16a34a" />
+              {slides.map((slide, index) => {
+                const isLast = index === slides.length - 1;
+                return (
+                  <View key={index} style={{ width }} className="flex-1 px-8">
+                    <View className="flex-1 items-center justify-center">
+                      <View className="mb-10 h-28 w-28 items-center justify-center rounded-full bg-green-50">
+                        <MaterialIcons name={slide.icon} size={48} color="#16a34a" />
+                      </View>
+                      <Text className="mb-4 text-center text-2xl font-bold text-black">
+                        {slide.title}
+                      </Text>
+                      <Text className="max-w-xs text-center text-base leading-6 text-gray-500">
+                        {slide.description}
+                      </Text>
+                      {isLast && (
+                        <TouchableOpacity
+                          onPress={handleSkipOrContinue}
+                          className="mt-14 w-full rounded-2xl bg-green-600 py-4"
+                        >
+                          <Text className="text-center text-lg font-bold text-white">
+                            Continuar
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-                    <Text className="mb-4 text-center text-2xl font-bold text-black">
-                      {slide.title}
-                    </Text>
-                    <Text className="max-w-xs text-center text-base leading-6 text-gray-500">
-                      {slide.description}
-                    </Text>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </ScrollView>
           </View>
 
-          <TouchableOpacity
-            onPress={handleSkipOrContinue}
-            className="absolute right-6 top-16"
-          >
-            <Text className="text-sm text-gray-400">
-              {isLastSlide ? 'Continuar' : 'Pular'}
-            </Text>
-          </TouchableOpacity>
+          {!isLastSlide && (
+            <TouchableOpacity
+              onPress={handleSkipOrContinue}
+              className="absolute right-6 top-16"
+            >
+              <Text className="text-sm text-gray-400">Pular</Text>
+            </TouchableOpacity>
+          )}
 
           <View className="flex-row items-center justify-center pb-12">
             {currentIndex > 0 && (
