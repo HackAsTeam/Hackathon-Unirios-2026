@@ -5,6 +5,16 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   token?: string;
 };
 
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly body: unknown,
+  ) {
+    super(`API ${status}`);
+    this.name = "ApiError";
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestOptions = {},
@@ -22,8 +32,17 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    const text = await response.text().catch(() => response.statusText);
-    throw new Error(`API ${response.status}: ${text}`);
+    let parsed: unknown;
+    try {
+      parsed = await response.json();
+    } catch {
+      parsed = await response.text().catch(() => response.statusText);
+    }
+    throw new ApiError(response.status, parsed);
+  }
+
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return undefined as T;
   }
 
   return response.json() as Promise<T>;

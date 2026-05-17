@@ -19,6 +19,17 @@ public sealed class LoginCommandHandler(
             throw new AuthUnauthorizedException("Invalid email or password.");
         }
 
+        if (user.Status == UserStatus.PendingDeletion)
+        {
+            throw new AccountPendingDeletionException(user.PurgeAfter!.Value);
+        }
+
+        if (user.Status != UserStatus.Active)
+        {
+            // Anonymized / Purged / Suspended — same generic message to avoid enumeration.
+            throw new AuthUnauthorizedException("Invalid email or password.");
+        }
+
         if (await userManager.IsLockedOutAsync(user))
         {
             throw new AuthUnauthorizedException("Invalid email or password.");

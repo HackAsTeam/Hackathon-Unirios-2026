@@ -4,7 +4,8 @@ import { useOnboardingStore } from "../../../store/onboarding";
 import { signOutFromGoogle } from "../../../lib/googleAuth";
 import { useAccessibilityStore, type DefaultResponseFormat } from "../../../store/acessibility";
 import { useScreenContext } from "../../../hooks/useScreenContext";
-import { Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
+import { Alert, Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
+import { apiFetch } from "../../../lib/api";
 import { useColors } from "../../../hooks/useColors";
 import { useScale } from "../../../hooks/useScale";
 
@@ -47,7 +48,7 @@ const FONT_OPTIONS: { value: number; label: string }[] = [
 ];
 
 export default function ProfileScreen() {
-  const { userId, email, displayName, avatarUrl, signOut, role } = useAuthStore();
+  const { userId, token, email, displayName, avatarUrl, signOut, role } = useAuthStore();
   useScreenContext({ screen: 'profile', role: role as 'teacher' | 'student' | undefined });
   const {
     defaultResponseFormat,
@@ -68,6 +69,29 @@ export default function ProfileScreen() {
   async function handleSignOut() {
     await Promise.all([signOut(), useOnboardingStore.getState().reset(), signOutFromGoogle()]);
     router.replace("/(auth)/sign-in");
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      "Excluir conta?",
+      "Sua conta ficará em período de carência por 30 dias. Durante esse tempo você poderá restaurá-la ao tentar entrar novamente. Após esse prazo, seus dados pessoais serão anonimizados permanentemente.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Solicitar exclusão",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await apiFetch("/auth/me", { method: "DELETE", token: token ?? undefined });
+              await Promise.all([signOut(), useOnboardingStore.getState().reset(), signOutFromGoogle()]);
+              router.replace("/(auth)/sign-in");
+            } catch {
+              Alert.alert("Erro", "Não foi possível excluir a conta. Tente novamente.");
+            }
+          },
+        },
+      ]
+    );
   }
 
   return (
@@ -253,16 +277,13 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          disabled={true}
-          accessibilityLabel="Excluir conta e dados, em breve"
+          activeOpacity={0.6}
+          onPress={handleDeleteAccount}
+          accessibilityLabel="Excluir conta e dados"
           accessibilityRole="button"
-          accessibilityState={{ disabled: true }}
-          style={{ borderWidth: 1, borderColor: c.error, borderRadius: 12, paddingVertical: 16, alignItems: 'center', opacity: 0.5 }}
+          style={{ borderWidth: 1, borderColor: c.error, borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ color: c.error, fontWeight: '600', fontSize: scale(16) }}>Excluir Conta e Dados</Text>
-            <Text style={{ color: c.error, fontSize: scale(12), fontWeight: '500' }}>Em breve</Text>
-          </View>
+          <Text style={{ color: c.error, fontWeight: '600', fontSize: scale(16) }}>Excluir Conta e Dados</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

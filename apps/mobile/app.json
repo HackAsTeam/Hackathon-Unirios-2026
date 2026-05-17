@@ -39,7 +39,8 @@
         {
           "microphonePermission": "Permita o acesso ao microfone para gravar suas respostas."
         }
-      ]
+      ],
+      "expo-speech-recognition"
     ],
     "experiments": {
       "typedRoutes": true

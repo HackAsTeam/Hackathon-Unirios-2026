@@ -4,6 +4,7 @@ using HackathonUnirios2026.Domain.Entities;
 using HackathonUnirios2026.Infra;
 using HackathonUnirios2026.Infra.Auth;
 using HackathonUnirios2026.Infra.Database;
+using HackathonUnirios2026.Infra.Jobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddHostedService<PurgeDeletedAccountsJob>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 var jwtSigningKey = ResolveJwtSigningKey(jwtOptions, builder.Environment);
