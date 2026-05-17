@@ -188,6 +188,8 @@ export default function ProfileScreen() {
         <View style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, overflow: 'hidden' }}>
           <TouchableOpacity
             activeOpacity={0.6}
+            accessibilityLabel="Política de Privacidade"
+            accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
           >
             <Text style={{ fontSize: scale(16), color: c.text.primary }}>Política de Privacidade</Text>
@@ -196,6 +198,8 @@ export default function ProfileScreen() {
           <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
           <TouchableOpacity
             activeOpacity={0.6}
+            accessibilityLabel="Termos de Uso"
+            accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
           >
             <Text style={{ fontSize: scale(16), color: c.text.primary }}>Termos de Uso</Text>
@@ -204,6 +208,8 @@ export default function ProfileScreen() {
           <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
           <TouchableOpacity
             activeOpacity={0.6}
+            accessibilityLabel="Consentimento de Dados"
+            accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
           >
             <Text style={{ fontSize: scale(16), color: c.text.primary }}>Consentimento de Dados</Text>
@@ -216,6 +222,8 @@ export default function ProfileScreen() {
         <TouchableOpacity
           activeOpacity={0.6}
           onPress={handleSignOut}
+          accessibilityLabel="Sair da conta"
+          accessibilityRole="button"
           style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
         >
           <Text style={{ color: c.text.secondary, fontWeight: '600', fontSize: scale(16) }}>Sair</Text>
@@ -223,6 +231,9 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           disabled={true}
+          accessibilityLabel="Excluir conta e dados, em breve"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: true }}
           style={{ borderWidth: 1, borderColor: c.error, borderRadius: 12, paddingVertical: 16, alignItems: 'center', opacity: 0.5 }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

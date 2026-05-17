@@ -22,7 +22,6 @@ import Animated, {
   Easing,
   type SharedValue,
 } from 'react-native-reanimated';
-import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -32,23 +31,10 @@ import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
 import { useScale } from '../../../../hooks/useScale';
 import { AccessibilityPanel } from '../../../../components/accessibility/AccessibilityPanel';
+import { requestSTTPermission, startListening, stopListening } from '../../../../lib/stt';
 import type { AttemptResponse, ExamDetail } from '../../../../types/classroom';
 
-type Stage = 'idle' | 'listening' | 'transcribing' | 'editing' | 'done';
-
-const MOCK_TRANSCRIPTION_FRAGMENTS = [
-  'Bem, ',
-  'com base no que estudamos, ',
-  'acredito que ',
-  'a resposta para esta questão ',
-  'envolve compreender ',
-  'os conceitos fundamentais ',
-  'e aplicá-los de forma clara. ',
-  'É importante considerar ',
-  'todos os aspectos apresentados ',
-  'e organizar as ideias ',
-  'de maneira coerente.',
-];
+type Stage = 'idle' | 'listening' | 'editing' | 'done';
 
 export default function OralResponseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,9 +47,8 @@ export default function OralResponseScreen() {
   const [stage, setStage] = useState<Stage>('idle');
   const [transcript, setTranscript] = useState('');
   const [duration, setDuration] = useState(0);
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const stopSTTRef = useRef<(() => void) | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const transcriptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef(0);
 
   const dot1 = useSharedValue(0.3);
@@ -100,18 +85,18 @@ export default function OralResponseScreen() {
 
   useEffect(() => {
     return () => {
-      stopTimer();
-      clearTranscriptTimer();
-      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
+      stopSTTRef.current?.();
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  function stopTimer() {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  function startTimer() {
+    startTimeRef.current = Date.now();
+    timerRef.current = setInterval(() => setDuration(Date.now() - startTimeRef.current), 100);
   }
 
-  function clearTranscriptTimer() {
-    if (transcriptTimerRef.current) { clearTimeout(transcriptTimerRef.current); transcriptTimerRef.current = null; }
+  function stopTimer() {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }
 
   function startListeningAnimation() {
@@ -134,60 +119,51 @@ export default function OralResponseScreen() {
     ringScale.value = withSpring(1);
   }
 
-  async function startListening() {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Precisamos do microfone para ouvir você.');
-        return;
-      }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      recordingRef.current = recording;
-      startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => setDuration(Date.now() - startTimeRef.current), 100);
-      startListeningAnimation();
-      setStage('listening');
-    } catch {
-      Alert.alert('Erro', 'Não foi possível acessar o microfone.');
+  async function handleStartListening() {
+    const granted = await requestSTTPermission();
+    if (!granted) {
+      Alert.alert('Permissão negada', 'Precisamos do microfone para ouvir você.');
+      return;
     }
+
+    setTranscript('');
+    setStage('listening');
+    startTimer();
+    startListeningAnimation();
+
+    stopSTTRef.current = startListening(
+      ({ transcript: text }) => setTranscript(text),
+      () => {
+        stopTimer();
+        stopListeningAnimation();
+        setStage('editing');
+        stopSTTRef.current = null;
+      },
+      (err) => {
+        stopTimer();
+        stopListeningAnimation();
+        setStage('idle');
+        stopSTTRef.current = null;
+        if (err !== 'no-speech') {
+          Alert.alert('Erro', 'Não foi possível transcrever. Tente novamente.');
+        }
+      },
+    );
   }
 
-  async function stopListening() {
+  function handleStopListening() {
+    stopListening();
+    stopSTTRef.current = null;
     stopTimer();
     stopListeningAnimation();
-    try {
-      await recordingRef.current?.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-      recordingRef.current = null;
-    } catch {}
-    setStage('transcribing');
-    simulateTranscription();
-  }
-
-  function simulateTranscription() {
-    setTranscript('');
-    let i = 0;
-    let accumulated = '';
-    function addFragment() {
-      if (i >= MOCK_TRANSCRIPTION_FRAGMENTS.length) {
-        setStage('editing');
-        return;
-      }
-      accumulated += MOCK_TRANSCRIPTION_FRAGMENTS[i];
-      setTranscript(accumulated);
-      i++;
-      transcriptTimerRef.current = setTimeout(addFragment, reducedMotion ? 30 : 180 + Math.random() * 120);
-    }
-    addFragment();
+    setStage('editing');
   }
 
   function resetAll() {
+    stopSTTRef.current?.();
+    stopSTTRef.current = null;
     stopTimer();
-    clearTranscriptTimer();
     stopListeningAnimation();
-    recordingRef.current?.stopAndUnloadAsync().catch(() => {});
-    recordingRef.current = null;
     setTranscript('');
     setDuration(0);
     setStage('idle');
@@ -209,6 +185,8 @@ export default function OralResponseScreen() {
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}
+            accessibilityLabel="Voltar"
+            accessibilityRole="button"
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40 }}
           >
             <Text style={{ fontSize: scale(16), fontWeight: '700', color: '#fff' }}>Voltar</Text>
@@ -226,6 +204,8 @@ export default function OralResponseScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}>
         <TouchableOpacity
           onPress={() => router.back()}
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 24 }}
         >
           <Ionicons name="arrow-back" size={20} color={accentColor} />
@@ -253,8 +233,9 @@ export default function OralResponseScreen() {
           <View style={{ alignItems: 'center', gap: 24 }}>
             <Animated.View style={ringStyle}>
               <TouchableOpacity
-                onPress={stage === 'idle' ? startListening : stopListening}
+                onPress={stage === 'idle' ? handleStartListening : handleStopListening}
                 accessibilityLabel={stage === 'idle' ? 'Iniciar fala' : 'Parar fala'}
+                accessibilityRole="button"
                 style={{
                   width: 120,
                   height: 120,
@@ -291,6 +272,14 @@ export default function OralResponseScreen() {
                     Ouvindo você…
                   </Text>
                 </View>
+                {transcript.length > 0 && (
+                  <Text
+                    style={{ fontSize: scale(13), color: c.text.secondary, marginTop: 12, textAlign: 'center', maxWidth: 280 }}
+                    accessibilityLiveRegion="polite"
+                  >
+                    {transcript}
+                  </Text>
+                )}
                 <Text style={{ fontSize: scale(13), color: c.text.secondary, textAlign: 'center', marginTop: 6 }}>
                   {Math.floor(duration / 1000)}s
                 </Text>
@@ -305,35 +294,18 @@ export default function OralResponseScreen() {
           </View>
         )}
 
-        {stage === 'transcribing' && (
-          <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(300)} style={{ gap: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <ActivityIndicator color={accentColor} size="small" />
-              <Text style={{ fontSize: scale(15), color: accentColor, fontWeight: '600' }}>Transcrevendo…</Text>
-            </View>
-            <View style={{
-              backgroundColor: c.surfaceAlt,
-              borderRadius: 16,
-              padding: 18,
-              borderWidth: 1.5,
-              borderColor: accentColor + '30',
-              minHeight: 140,
-            }}>
-              <Text style={{ fontSize: textFs, color: c.text.primary, lineHeight: textFs * 1.6 }}>
-                {transcript}
-                <Text style={{ color: accentColor }}>|</Text>
-              </Text>
-            </View>
-          </Animated.View>
-        )}
-
         {stage === 'editing' && (
           <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(300)} style={{ gap: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.text.primary }}>
                 Revise e edite
               </Text>
-              <TouchableOpacity onPress={resetAll} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TouchableOpacity
+                onPress={resetAll}
+                accessibilityLabel="Regravar resposta"
+                accessibilityRole="button"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
                 <Ionicons name="refresh-outline" size={16} color={accentColor} />
                 <Text style={{ fontSize: scale(14), color: accentColor, fontWeight: '600' }}>Regravar</Text>
               </TouchableOpacity>
@@ -343,6 +315,7 @@ export default function OralResponseScreen() {
               onChangeText={setTranscript}
               multiline
               textAlignVertical="top"
+              accessibilityLabel="Transcrição da resposta oral"
               style={{
                 backgroundColor: c.surface,
                 borderRadius: 16,
@@ -371,6 +344,9 @@ export default function OralResponseScreen() {
           <TouchableOpacity
             onPress={() => transcript.trim() && submitMutation.mutate()}
             disabled={submitMutation.isPending || !transcript.trim()}
+            accessibilityLabel="Enviar resposta oral"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: submitMutation.isPending || !transcript.trim() }}
             style={{
               backgroundColor: accentColor,
               borderRadius: 18,

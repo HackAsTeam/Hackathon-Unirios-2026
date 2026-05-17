@@ -161,6 +161,8 @@ function TeacherHome({
             </Text>
             <TouchableOpacity
               onPress={() => setShowCreate(true)}
+              accessibilityLabel="Criar nova turma"
+              accessibilityRole="button"
               style={{
                 backgroundColor: c.surfaceAlt,
                 borderRadius: 12,
@@ -180,6 +182,9 @@ function TeacherHome({
             <TouchableOpacity
               key={classroom.id}
               onPress={() => router.push(`/teacher/classroom/${classroom.id}`)}
+              accessibilityLabel={`Turma ${classroom.title}${classroom.description ? `, ${classroom.description}` : ''}, ${classroom.subjects.length} matéria${classroom.subjects.length !== 1 ? 's' : ''}`}
+              accessibilityRole="button"
+              accessibilityHint="Toque para gerenciar a turma"
               style={{
                 backgroundColor: c.surface,
                 borderRadius: 16,
@@ -270,6 +275,8 @@ function TeacherHome({
               <TouchableOpacity
                 onPress={() => setShowCreate(false)}
                 disabled={createClassroom.isPending}
+                accessibilityLabel="Cancelar criação de turma"
+                accessibilityRole="button"
                 style={{
                   flex: 1,
                   paddingVertical: 14,
@@ -286,6 +293,9 @@ function TeacherHome({
               <TouchableOpacity
                 onPress={() => title.trim() && createClassroom.mutate()}
                 disabled={createClassroom.isPending || !title.trim()}
+                accessibilityLabel="Confirmar criação de turma"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: createClassroom.isPending || !title.trim() }}
                 style={{
                   flex: 1,
                   paddingVertical: 14,
