@@ -24,6 +24,8 @@ export interface AnswerDetail {
   answerText: string | null;
   format: 'Text' | 'Audio' | 'Oral' | 'Video' | null;
   selectedOptionId: string | null;
+  selectedOptionText: string | null;
+  isCorrectOption: boolean | null;
   score: number | null;
   feedback: string | null;
   answeredAt: string;
