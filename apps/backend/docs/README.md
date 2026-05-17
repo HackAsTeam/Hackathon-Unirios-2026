@@ -29,6 +29,7 @@
 - [POST /subjects/{subjectId}/activities](Activities/CreateSubjectActivity.md) — create an activity tied to a subject (teacher only)
 - [GET /subjects/{subjectId}/activities](Activities/GetSubjectActivities.md) — list activities for a subject
 - [GET /activities/{id}](Activities/GetActivityById.md) — get activity detail including questions
+- [GET /activities/{id}/attempts](Activities/GetActivityAttempts.md) — list submitted/graded attempts for an activity (teacher only)
 
 ## Exam Attempts
 - [POST /attempts](Attempts/StartExamAttempt.md) — start an exam attempt (enrolled students only)
@@ -36,4 +37,9 @@
 - [POST /attempts/{attemptId}/submit-answers](Attempts/SubmitAnswers.md) — submit all multiple-choice answers at once with automatic scoring
 - [POST /attempts/{attemptId}/submit](Attempts/SubmitAttempt.md) — finalize and submit a finished attempt
 - [GET /attempts](Attempts/GetMyAttempts.md) — list the authenticated student's attempts, optionally filtered by exam
+- [GET /attempts/{id}](Attempts/GetAttemptDetail.md) — get full attempt detail with answers (student view)
+- [GET /attempts/{id}/teacher-view](Attempts/GetAttemptDetailAsTeacher.md) — get full attempt detail for grading (teacher only)
 - [POST /attempts/{attemptId}/answers/{answerId}/grade](Attempts/GradeAnswer.md) — grade a student answer (teacher only)
+
+## Voice Commands
+- [POST /voice-commands](VoiceCommands/ProcessVoiceCommand.md) — process a voice transcript and return a typed action with spoken feedback
