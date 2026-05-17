@@ -7,6 +7,7 @@
 - [POST /classrooms](Classrooms/CreateClassroom.md) — create a classroom
 - [GET /classrooms](Classrooms/GetMyClassrooms.md) — list classrooms where the user is teacher or enrolled student
 - [GET /classrooms/{id}](Classrooms/GetClassroomById.md) — get a classroom the user belongs to
+- [GET /classrooms/{id}/members](Classrooms/GetClassroomMembers.md) — list members (teacher and students) in a classroom
 
 ## Subjects
 - [POST /classrooms/{classroomId}/subjects](Subjects/CreateSubject.md) — create a subject inside a classroom (teacher only)
