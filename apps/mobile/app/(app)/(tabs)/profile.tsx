@@ -71,15 +71,22 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View className="px-6 py-4 pb-12">
+      <View className="px-6 py-4 pb-12 gap-3">
         <TouchableOpacity
-          className="border border-red-400 rounded-xl py-4 items-center active:opacity-60"
-          onPress={() => handleSignOut()}
+          className="border border-gray-300 rounded-xl py-4 items-center active:opacity-60"
+          onPress={handleSignOut}
         >
-          {/* LEMBRAR DE IMPLEMENTAR A FUNÇÃO DE EXCLUSÃO DE CONTA */}
-          <Text className="text-red-500 font-semibold text-base">
-            Excluir Conta e Dados
-          </Text>
+          <Text className="text-gray-700 font-semibold text-base">Sair</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="border border-red-400 rounded-xl py-4 items-center opacity-50"
+          disabled={true}
+        >
+          <View className="flex-row items-center gap-2">
+            <Text className="text-red-500 font-semibold text-base">Excluir Conta e Dados</Text>
+            <Text className="text-red-400 text-xs font-medium">Em breve</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>

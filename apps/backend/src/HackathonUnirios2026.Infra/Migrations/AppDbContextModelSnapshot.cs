@@ -448,6 +448,9 @@ namespace HackathonUnirios2026.Infra.Migrations
                     b.Property<string>("Feedback")
                         .HasColumnType("text");
 
+                    b.Property<string>("Format")
+                        .HasColumnType("varchar(10)");
+
                     b.Property<Guid>("QuestionId")
                         .HasColumnType("uuid");
 

@@ -1,9 +1,12 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuthStore } from "../../store/auth";
 import { apiFetch } from "../../lib/api";
 import { useGoogleSignIn } from "../../lib/googleAuth";
+import { AppScreen } from "../../components/AppScreen";
+import { AppButton } from "../../components/AppButton";
+import { AppInput } from "../../components/AppInput";
 
 export default function SignUpScreen() {
   const { signIn } = useAuthStore();
@@ -21,16 +24,12 @@ export default function SignUpScreen() {
     try {
       const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string }>(
         "/auth/register",
-        {
-          method: "POST",
-          body: { email, password, displayName },
-        },
+        { method: "POST", body: { email, password, displayName } },
       );
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
       router.replace("/onboarding");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Erro ao cadastrar");
     } finally {
       setLoading(false);
     }
@@ -44,66 +43,84 @@ export default function SignUpScreen() {
   }
 
   return (
-    <View className="flex-1 justify-center px-6 bg-white">
-      <Text className="text-2xl font-bold mb-8 text-center">Cadastre-se</Text>
-
-      <TextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="Nome"
-        value={displayName}
-        onChangeText={setDisplayName}
-        autoCapitalize="none"
-        keyboardType="default"
-      />
-
-      <TextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-
-      <TextInput
-        className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      {error ? (
-        <Text className="text-red-500 mb-4 text-sm">{error}</Text>
-      ) : null}
-
-      <TouchableOpacity
-        className="bg-black rounded-lg py-4 items-center mb-4"
-        onPress={handleSignUp}
-        disabled={loading}
-      >
-        <Text className="text-white font-semibold text-base">
-          {loading ? "Cadastrando..." : "Cadastrar"}
+    <AppScreen>
+      <View className="flex-1 justify-center px-6">
+        <Text className="text-3xl font-bold text-green-900 mb-2">
+          Criar conta
         </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        className="border border-gray-300 rounded-lg py-4 items-center mb-4"
-        onPress={handleGoogleSignIn}
-        disabled={!google.configured || google.loading}
-      >
-        <Text className="text-black font-semibold text-base">
-          {google.loading ? "Entrando com Google..." : "Continuar com Google"}
+        <Text className="text-gray-500 mb-8">
+          Preencha os dados para se cadastrar
         </Text>
-      </TouchableOpacity>
 
-      {google.error ? (
-        <Text className="text-red-500 mb-4 text-sm">{google.error}</Text>
-      ) : null}
+        <AppInput
+          label="Nome"
+          value={displayName}
+          onChangeText={setDisplayName}
+          autoCapitalize="words"
+        />
 
-      <Link href="/(auth)/sign-in" className="text-center text-gray-500">
-        Já tem conta? Entre
-      </Link>
-    </View>
+        <AppInput
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+
+        <AppInput
+          label="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+
+        {error ? (
+          <Text
+            className="text-red-600 text-sm mb-4 -mt-2"
+            accessibilityLiveRegion="polite"
+          >
+            {error}
+          </Text>
+        ) : null}
+
+        <View className="mb-4">
+          <AppButton
+            label="Cadastrar"
+            onPress={handleSignUp}
+            loading={loading}
+          />
+        </View>
+
+        {google.error ? (
+          <Text
+            className="text-red-600 text-sm mb-3 text-center"
+            accessibilityLiveRegion="polite"
+          >
+            {google.error}
+          </Text>
+        ) : null}
+
+        <View className="flex-row items-center mb-4">
+          <View className="flex-1 h-px bg-green-200" />
+          <Text className="text-gray-400 text-sm mx-3">ou</Text>
+          <View className="flex-1 h-px bg-green-200" />
+        </View>
+
+        <View className="mb-6">
+          <AppButton
+            label="Continuar com Google"
+            onPress={handleGoogleSignIn}
+            loading={google.loading}
+            disabled={!google.configured}
+            variant="outline"
+            accessibilityHint="Cadastrar usando sua conta Google"
+          />
+        </View>
+
+        <Link href="/(auth)/sign-in" className="text-center text-green-700">
+          Já tem conta? Entre
+        </Link>
+      </View>
+    </AppScreen>
   );
 }

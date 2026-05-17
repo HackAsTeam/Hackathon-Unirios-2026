@@ -26,6 +26,10 @@ public sealed class QuestionAnswerConfiguration : IEntityTypeConfiguration<Quest
         builder.Property(qa => qa.AnswerText)
             .HasColumnType("text");
 
+        builder.Property(qa => qa.Format)
+            .HasColumnType("varchar(10)")
+            .HasConversion<string>();
+
         builder.Property(qa => qa.Score)
             .HasColumnType("numeric(5,2)");
 

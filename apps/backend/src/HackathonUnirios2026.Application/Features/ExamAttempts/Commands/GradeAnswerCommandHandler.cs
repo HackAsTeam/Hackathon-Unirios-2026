@@ -56,6 +56,7 @@ public sealed class GradeAnswerCommandHandler(AppDbContext db, IHttpContextAcces
             answer.QuestionId,
             answer.SelectedOptionId,
             answer.AnswerText,
+            answer.Format,
             answer.Score,
             answer.Feedback,
             answer.AnsweredAt);

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useOnboardingStore } from '../store/onboarding';
+import { useOnboardingStore } from '@/store/onboarding';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -29,21 +29,6 @@ export default function OnboardingScreen() {
             A plataforma que transforma a maneira de avaliar
           </Text>
         </View>
-
-        {/* <View className="gap-3 mb-10">
-          <ValuePropCard
-            title="O que isso tem de diferente?"
-            description="IA que personaliza avaliações e dá feedback instantâneo para cada aluno, tornando o aprendizado mais eficiente."
-          />
-          <ValuePropCard
-            title="Qual é a melhor forma de usar isso?"
-            description="Crie turmas, monte matérias, elabore atividades e acompanhe o desempenho da sua turma em tempo real."
-          />
-          <ValuePropCard
-            title="Isso vale meu tempo?"
-            description="Economize horas corrigindo provas manualmente. A correção automatizada libera seu tempo para o que importa: ensinar."
-          />
-        </View> */}
       </View>
 
       <View className="h-full justify-center px-6 pb-12 gap-3">
@@ -70,18 +55,3 @@ export default function OnboardingScreen() {
     </ScrollView>
   );
 }
-
-// function ValuePropCard({
-//   title,
-//   description,
-// }: {
-//   title: string;
-//   description: string;
-// }) {
-//   return (
-//     <View className="bg-gray-50 rounded-xl p-5 gap-2">
-//       <Text className="font-semibold text-base text-black">{title}</Text>
-//       <Text className="text-gray-500 text-sm leading-5">{description}</Text>
-//     </View>
-//   );
-// }

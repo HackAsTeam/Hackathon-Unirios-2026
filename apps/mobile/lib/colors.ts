@@ -1,18 +1,18 @@
 export const colors = {
-  primary: "#6C5CE7",
-  primaryLight: "#A29BFE",
-  primaryDark: "#5A4BD1",
+  primary: "#16a34a",
+  primaryLight: "#bbf7d0",
+  primaryDark: "#15803d",
 
-  background: "#FAFAFE",
+  background: "#FFFFFF",
   surface: "#FFFFFF",
-  surfaceAlt: "#F4F3FF",
+  surfaceAlt: "#F0FDF4",
 
   text: {
     primary: "#1A1A2E",
     secondary: "#6B7280",
     tertiary: "#9CA3AF",
     inverse: "#FFFFFF",
-    link: "#6C5CE7",
+    link: "#15803d",
   },
 
   border: "#E5E7EB",
@@ -52,7 +52,7 @@ export const colors = {
     oral: "#CFFAFE",
   },
 
-  cardShadow: "rgba(108, 92, 231, 0.08)",
+  cardShadow: "rgba(22, 163, 74, 0.08)",
   overlay: "rgba(0, 0, 0, 0.4)",
 };
 

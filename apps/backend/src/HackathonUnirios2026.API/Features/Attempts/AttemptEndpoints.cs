@@ -3,6 +3,7 @@ using HackathonUnirios2026.Application.Features.ExamAttempts.Commands;
 using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
 using HackathonUnirios2026.Application.Features.ExamAttempts.Queries;
 using HackathonUnirios2026.Application.Features.Classrooms;
+using HackathonUnirios2026.Domain.Enums;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Attempts;
@@ -100,7 +101,7 @@ public sealed class AttemptEndpoints : IEndpoint
     {
         try
         {
-            var result = await sender.Send(new SaveAnswerCommand(attemptId, body.QuestionId, body.AnswerText), ct);
+            var result = await sender.Send(new SaveAnswerCommand(attemptId, body.QuestionId, body.AnswerText, body.Format), ct);
             return Results.Ok(result);
         }
         catch (AttemptNotFoundException ex)
@@ -164,7 +165,7 @@ public sealed class AttemptEndpoints : IEndpoint
         }
     }
 
-    private sealed record SaveAnswerRequest(Guid QuestionId, string AnswerText);
+    private sealed record SaveAnswerRequest(Guid QuestionId, string AnswerText, ResponseFormat? Format);
     private sealed record SubmitAnswersRequest(List<SubmitAnswerRequest> Answers);
     private sealed record SubmitAnswerRequest(Guid QuestionId, Guid SelectedOptionId);
     private sealed record GradeAnswerRequest(decimal Score, string? Feedback);

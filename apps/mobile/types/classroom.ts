@@ -26,6 +26,38 @@ interface Exam {
   createdAt: string;
 }
 
+interface QuestionOption {
+  id: string;
+  orderIndex: number;
+  text: string;
+}
+
+interface Question {
+  id: string;
+  orderIndex: number;
+  text: string;
+  options: QuestionOption[];
+}
+
+interface ExamDetail {
+  id: string;
+  subjectId: string | null;
+  classroomId: string;
+  title: string;
+  description: string | null;
+  questions: Question[];
+  createdAt: string;
+}
+
+interface AttemptResponse {
+  id: string;
+  examId: string;
+  studentId: string;
+  status: 'InProgress' | 'Submitted' | 'Graded';
+  startedAt: string;
+  submittedAt: string | null;
+}
+
 interface InvitationLinkResponse {
   id: string;
   token: string;
@@ -37,4 +69,4 @@ interface InvitationLinkResponse {
   createdAt: string;
 }
 
-export type { Classroom, Subject, Exam, InvitationLinkResponse };
+export type { Classroom, Subject, Exam, ExamDetail, Question, QuestionOption, AttemptResponse, InvitationLinkResponse };

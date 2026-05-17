@@ -1,6 +1,6 @@
 import { View, ScrollView, RefreshControl } from 'react-native';
 import { colors } from '../../lib/colors';
-import { useAccessibilityStore } from '../../store/accessibility';
+import { useAccessibilityStore } from '../../store/acessibility';
 
 interface ScreenWrapperProps {
   children: React.ReactNode;

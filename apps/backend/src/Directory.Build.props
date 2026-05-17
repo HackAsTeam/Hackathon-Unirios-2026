@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- SDK 10.0.104 is missing ASP.NET Core prune package data; suppress until a fixed SDK is released -->
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+</Project>

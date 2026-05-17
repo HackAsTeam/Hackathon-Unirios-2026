@@ -1,3 +1,5 @@
+using HackathonUnirios2026.Domain.Enums;
+
 namespace HackathonUnirios2026.Domain.Entities;
 
 public class QuestionAnswer : AuditableEntity
@@ -6,6 +8,7 @@ public class QuestionAnswer : AuditableEntity
     public Guid QuestionId { get; set; }
     public Guid? SelectedOptionId { get; set; }
     public string? AnswerText { get; set; }
+    public ResponseFormat? Format { get; set; }
     public decimal? Score { get; set; }
     public string? Feedback { get; set; }
     public DateTime AnsweredAt { get; set; }

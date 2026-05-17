@@ -36,6 +36,7 @@ public sealed class SaveAnswerCommandHandler(AppDbContext db, IHttpContextAccess
                 AttemptId = cmd.AttemptId,
                 QuestionId = cmd.QuestionId,
                 AnswerText = cmd.AnswerText,
+                Format = cmd.Format,
                 AnsweredAt = DateTime.UtcNow,
             };
             db.QuestionAnswers.Add(answer);
@@ -43,6 +44,7 @@ public sealed class SaveAnswerCommandHandler(AppDbContext db, IHttpContextAccess
         else
         {
             answer.AnswerText = cmd.AnswerText;
+            answer.Format = cmd.Format;
             answer.AnsweredAt = DateTime.UtcNow;
         }
 
@@ -53,6 +55,7 @@ public sealed class SaveAnswerCommandHandler(AppDbContext db, IHttpContextAccess
             answer.QuestionId,
             answer.SelectedOptionId,
             answer.AnswerText,
+            answer.Format,
             answer.Score,
             answer.Feedback,
             answer.AnsweredAt);
