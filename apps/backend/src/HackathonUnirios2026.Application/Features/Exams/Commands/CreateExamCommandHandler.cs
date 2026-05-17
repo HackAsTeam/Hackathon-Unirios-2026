@@ -40,12 +40,12 @@ public sealed class CreateExamCommandHandler(AppDbContext db, IHttpContextAccess
             {
                 OrderIndex = q.OrderIndex,
                 Text = q.Text,
-                Options = q.Options.Select(o => new QuestionOption
+                Options = q.Options?.Select(o => new QuestionOption
                 {
                     OrderIndex = o.OrderIndex,
                     Text = o.Text,
                     IsCorrect = o.IsCorrect,
-                }).ToList(),
+                }).ToList() ?? [],
             }).ToList(),
         };
 
@@ -82,14 +82,17 @@ public sealed class CreateExamCommandHandler(AppDbContext db, IHttpContextAccess
             if (string.IsNullOrWhiteSpace(question.Text))
                 throw new InvalidExamException("Question text is required.");
 
-            if (question.Options is null || question.Options.Count < 2)
-                throw new InvalidExamException("Each multiple-choice question must have at least two options.");
+            if (question.Options is not null && question.Options.Count > 0)
+            {
+                if (question.Options.Count < 2)
+                    throw new InvalidExamException("Each multiple-choice question must have at least two options.");
 
-            if (question.Options.Count(o => o.IsCorrect) != 1)
-                throw new InvalidExamException("Each multiple-choice question must have exactly one correct option.");
+                if (question.Options.Count(o => o.IsCorrect) != 1)
+                    throw new InvalidExamException("Each multiple-choice question must have exactly one correct option.");
 
-            if (question.Options.Any(o => string.IsNullOrWhiteSpace(o.Text)))
-                throw new InvalidExamException("Question option text is required.");
+                if (question.Options.Any(o => string.IsNullOrWhiteSpace(o.Text)))
+                    throw new InvalidExamException("Question option text is required.");
+            }
         }
     }
 }
