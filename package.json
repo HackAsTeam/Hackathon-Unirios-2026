@@ -6,9 +6,9 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "mobile": "pnpm --filter mobile expo start",
-    "mobile:ios": "pnpm --filter mobile expo start --ios",
-    "mobile:android": "pnpm --filter mobile expo start --android",
-    "mobile:web": "pnpm --filter mobile expo start --web"
+    "mobile": "pnpm --filter mobile run start",
+    "mobile:ios": "pnpm --filter mobile run ios",
+    "mobile:android": "pnpm --filter mobile run android",
+    "mobile:web": "pnpm --filter mobile run web"
   }
 }

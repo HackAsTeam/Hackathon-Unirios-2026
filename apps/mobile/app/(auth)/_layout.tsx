@@ -14,7 +14,8 @@ export default function AuthLayout() {
 
   if (hydrated && isSignedIn) {
     if (!loaded) return null;
-    if (completed) return <Redirect href="/(app)/(tabs)" />;
+    // Sempre abre onboarding (Apenas para debug)
+    // if (completed) return <Redirect href="/(app)/(tabs)" />;
     return <Redirect href="/onboarding" />;
   }
 
