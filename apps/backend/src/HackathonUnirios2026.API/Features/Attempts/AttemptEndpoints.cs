@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.ExamAttempts;
 using HackathonUnirios2026.Application.Features.ExamAttempts.Commands;
 using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
@@ -51,6 +52,13 @@ public sealed class AttemptEndpoints : IEndpoint
         group.MapPost("/{attemptId:guid}/answers/{answerId:guid}/grade", GradeAnswerAsync)
             .WithName("GradeAnswer")
             .Produces<QuestionAnswerResponse>()
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
+
+        group.MapGet("/{id:guid}/teacher-view", GetAttemptDetailAsTeacherAsync)
+            .WithName("GetAttemptDetailAsTeacher")
+            .RequireAuthorization()
+            .Produces<AttemptDetailResponse>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
     }
@@ -176,6 +184,28 @@ public sealed class AttemptEndpoints : IEndpoint
         catch (AttemptNotFoundException ex)
         {
             return Results.NotFound(new { Message = ex.Message });
+        }
+    }
+
+    private static async Task<IResult> GetAttemptDetailAsTeacherAsync(
+        Guid id,
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var teacherId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        try
+        {
+            var result = await sender.Send(new GetAttemptDetailAsTeacherQuery(id, teacherId), ct);
+            return Results.Ok(result);
+        }
+        catch (NotTeacherException)
+        {
+            return Results.Forbid();
+        }
+        catch (AttemptNotFoundException)
+        {
+            return Results.NotFound();
         }
     }
 
