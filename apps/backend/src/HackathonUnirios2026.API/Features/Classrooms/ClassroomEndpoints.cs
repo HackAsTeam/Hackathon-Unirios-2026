@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Classrooms.Commands;
 using HackathonUnirios2026.Application.Features.Classrooms.DTOs;
@@ -26,6 +27,11 @@ public sealed class ClassroomEndpoints : IEndpoint
             .WithName("GetClassroomById")
             .Produces<ClassroomDetailResponse>()
             .Produces(StatusCodes.Status404NotFound);
+
+        group.MapGet("/{id:guid}/members", GetClassroomMembersAsync)
+            .WithName("GetClassroomMembers")
+            .Produces<List<ClassroomMemberResponse>>()
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> CreateClassroomAsync(
@@ -53,6 +59,24 @@ public sealed class ClassroomEndpoints : IEndpoint
         try
         {
             var result = await sender.Send(new GetClassroomByIdQuery(id), ct);
+            return Results.Ok(result);
+        }
+        catch (ClassroomNotFoundException ex)
+        {
+            return Results.NotFound(new { Message = ex.Message });
+        }
+    }
+
+    private static async Task<IResult> GetClassroomMembersAsync(
+        Guid id,
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        try
+        {
+            var result = await sender.Send(new GetClassroomMembersQuery(id, userId), ct);
             return Results.Ok(result);
         }
         catch (ClassroomNotFoundException ex)
