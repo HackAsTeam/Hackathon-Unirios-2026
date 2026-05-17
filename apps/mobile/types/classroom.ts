@@ -58,4 +58,15 @@ interface AttemptResponse {
   submittedAt: string | null;
 }
 
-export type { Classroom, Subject, Exam, ExamDetail, Question, QuestionOption, AttemptResponse };
+interface InvitationLinkResponse {
+  id: string;
+  token: string;
+  inviteUrl: string;
+  classroomId: string;
+  expiresAt: string | null;
+  useCount: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type { Classroom, Subject, Exam, ExamDetail, Question, QuestionOption, AttemptResponse, InvitationLinkResponse };

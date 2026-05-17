@@ -18,7 +18,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { colors } from '@/lib/colors';
 import { apiFetch } from '../../../lib/api';
-import type { Classroom, Exam } from '../../../types/classroom';
+import type { Classroom, Exam, InvitationLinkResponse } from '../../../types/classroom';
 
 function Input({
   value,
