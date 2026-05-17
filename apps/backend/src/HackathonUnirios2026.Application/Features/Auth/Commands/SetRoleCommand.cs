@@ -3,4 +3,4 @@ using MediatR;
 
 namespace HackathonUnirios2026.Application.Features.Auth.Commands;
 
-public record RegisterCommand(string Email, string Password, string? DisplayName, string? Role) : IRequest<AuthResponse>;
+public record SetRoleCommand(string UserId, string Role) : IRequest<AuthResponse>;

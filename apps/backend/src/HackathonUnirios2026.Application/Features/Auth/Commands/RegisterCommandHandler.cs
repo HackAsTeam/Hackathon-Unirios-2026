@@ -20,12 +20,17 @@ public sealed class RegisterCommandHandler(
             throw new AuthValidationException("Email is already registered.");
         }
 
+        var role = Enum.TryParse<UserRole>(cmd.Role, ignoreCase: true, out var parsed)
+            ? parsed
+            : UserRole.Student;
+
         var user = new ApplicationUser
         {
             UserName = email,
             Email = email,
             LockoutEnabled = true,
             DisplayName = string.IsNullOrWhiteSpace(cmd.DisplayName) ? null : cmd.DisplayName.Trim(),
+            Role = role,
         };
 
         var result = await userManager.CreateAsync(user, cmd.Password);
@@ -34,7 +39,7 @@ public sealed class RegisterCommandHandler(
             throw new AuthValidationException(string.Join(" ", result.Errors.Select(error => error.Description)));
         }
 
-        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user));
+        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role.ToString());
     }
 
     private static void Validate(RegisterCommand cmd)

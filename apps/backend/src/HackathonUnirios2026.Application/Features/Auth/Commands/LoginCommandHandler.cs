@@ -32,7 +32,7 @@ public sealed class LoginCommandHandler(
 
         await userManager.ResetAccessFailedCountAsync(user);
 
-        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user));
+        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role.ToString());
     }
 
     private static void Validate(LoginCommand cmd)

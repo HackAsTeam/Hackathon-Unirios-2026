@@ -31,7 +31,7 @@ public sealed class GoogleLoginCommandHandler(
         await EnsureGoogleLoginLinkedAsync(user, googleAccount.Subject);
         await UpdateGoogleProfileAsync(user, googleAccount);
 
-        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user));
+        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role.ToString());
     }
 
     private async Task<ApplicationUser> FindOrCreateUserAsync(GoogleAccount googleAccount)
