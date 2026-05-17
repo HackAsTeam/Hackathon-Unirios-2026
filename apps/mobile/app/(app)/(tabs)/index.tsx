@@ -338,7 +338,6 @@ function StudentHome({
     enabled: !!token,
   });
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [joinInput, setJoinInput] = useState('');
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -449,12 +448,7 @@ function StudentHome({
             </TouchableOpacity>
           </View>
           {classrooms.map((classroom) => (
-            <StudentClassroomCard
-              key={classroom.id}
-              classroom={classroom}
-              expanded={expandedId === classroom.id}
-              onToggle={() => setExpandedId(expandedId === classroom.id ? null : classroom.id)}
-            />
+            <StudentClassroomCard key={classroom.id} classroom={classroom} />
           ))}
         </ScrollView>
       )}
@@ -551,21 +545,12 @@ function StudentHome({
   );
 }
 
-function StudentClassroomCard({
-  classroom,
-  expanded,
-  onToggle,
-}: {
-  classroom: Classroom;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
+function StudentClassroomCard({ classroom }: { classroom: Classroom }) {
   const router = useRouter();
   const c = useColors();
-  const scale = useScale();
 
   return (
-    <Card variant="elevated" onPress={onToggle}>
+    <Card variant="elevated" onPress={() => router.push(`/student/classroom/${classroom.id}`)}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flex: 1 }}>
           <CardHeader
@@ -576,69 +561,8 @@ function StudentClassroomCard({
             }
           />
         </View>
-        <Ionicons name={expanded ? 'chevron-down' : 'chevron-forward'} size={18} color={c.text.tertiary} />
+        <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
       </View>
-
-      {expanded && (
-        <View style={{ marginTop: 8, gap: 8 }}>
-          {classroom.subjects.length === 0 && (
-            <Text
-              style={{ fontSize: scale(14), color: c.text.tertiary, textAlign: 'center', padding: 12 }}
-            >
-              Nenhuma matéria disponível ainda.
-            </Text>
-          )}
-
-          {classroom.subjects.map((subject) => (
-            <TouchableOpacity
-              key={subject.id}
-              onPress={() =>
-                router.push(
-                  `/subject/${subject.id}?name=${encodeURIComponent(subject.name)}&classroomTitle=${encodeURIComponent(classroom.title)}`
-                )
-              }
-              accessibilityLabel={`Abrir matéria: ${subject.name}`}
-              style={{
-                backgroundColor: c.surfaceAlt,
-                borderRadius: 14,
-                padding: 14,
-                borderWidth: 1,
-                borderColor: c.primaryLight + '30',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-              }}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  backgroundColor: c.primary + '15',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="book-outline" size={20} color={c.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary }}>
-                  {subject.name}
-                </Text>
-                {subject.description && (
-                  <Text
-                    style={{ fontSize: scale(13), color: c.text.secondary, marginTop: 2 }}
-                    numberOfLines={1}
-                  >
-                    {subject.description}
-                  </Text>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
     </Card>
   );
 }
