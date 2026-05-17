@@ -15,9 +15,10 @@ import { useAuthStore } from '../../../store/auth';
 import { Header } from '@/components/ui/Header';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Card, CardHeader } from '@/components/ui/Card';
-import { colors } from '@/lib/colors';
+import { useColors } from '@/hooks/useColors';
+import { useScale } from '@/hooks/useScale';
 import { apiFetch } from '../../../lib/api';
-import type { Classroom, InvitationLinkResponse } from '../../../types/classroom';
+import type { Classroom } from '../../../types/classroom';
 
 function Input({
   value,
@@ -30,25 +31,46 @@ function Input({
   placeholder: string;
   multiline?: boolean;
 }) {
+  const c = useColors();
+  const scale = useScale();
   return (
     <TextInput
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
       multiline={multiline}
-      placeholderTextColor={colors.text.tertiary}
+      placeholderTextColor={c.text.tertiary}
       style={{
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: c.border,
         borderRadius: 12,
         padding: 14,
-        fontSize: 16,
-        color: colors.text.primary,
-        backgroundColor: colors.surface,
+        fontSize: scale(16),
+        color: c.text.primary,
+        backgroundColor: c.surface,
         minHeight: multiline ? 80 : undefined,
         textAlignVertical: multiline ? 'top' : undefined,
       }}
     />
+  );
+}
+
+function RoleBadge({ label }: { label: string }) {
+  const c = useColors();
+  const scale = useScale();
+  return (
+    <View
+      style={{
+        backgroundColor: c.surfaceAlt,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: c.borderLight,
+      }}
+    >
+      <Text style={{ fontSize: scale(12), fontWeight: '600', color: c.primary }}>{label}</Text>
+    </View>
   );
 }
 
@@ -65,6 +87,8 @@ function TeacherHome({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const c = useColors();
+  const scale = useScale();
 
   const { data: classrooms, isLoading } = useQuery({
     queryKey: ['classrooms'],
@@ -93,30 +117,30 @@ function TeacherHome({
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, backgroundColor: c.background }}>
         <Header
           title={`Olá, ${displayName ?? 'Usuário'}!`}
           subtitle="Gerencie suas turmas"
-          rightAction={roleBadge(roleLabel)}
+          rightAction={<RoleBadge label={roleLabel} />}
         />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={c.primary} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <Header
         title={`Olá, ${displayName ?? 'Usuário'}!`}
         subtitle="Gerencie suas turmas"
-        rightAction={roleBadge(roleLabel)}
+        rightAction={<RoleBadge label={roleLabel} />}
       />
 
       {(!classrooms || classrooms.length === 0) ? (
         <EmptyState
-          icon="🏫"
+          iconName="school-outline"
           title="Vamos criar uma turma?"
           message="Crie sua primeira turma para começar a adicionar matérias e atividades."
           actionLabel="Criar Turma"
@@ -132,36 +156,36 @@ function TeacherHome({
               marginBottom: 4,
             }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
               Suas Turmas
             </Text>
             <TouchableOpacity
               onPress={() => setShowCreate(true)}
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 12,
                 paddingVertical: 8,
                 paddingHorizontal: 16,
                 borderWidth: 1,
-                borderColor: colors.primaryLight,
+                borderColor: c.primaryLight,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.primary }}>
                 + Nova Turma
               </Text>
             </TouchableOpacity>
           </View>
 
-          {classrooms.map((c) => (
+          {classrooms.map((classroom) => (
             <TouchableOpacity
-              key={c.id}
-              onPress={() => router.push(`/teacher/classroom/${c.id}`)}
+              key={classroom.id}
+              onPress={() => router.push(`/teacher/classroom/${classroom.id}`)}
               style={{
-                backgroundColor: colors.surface,
+                backgroundColor: c.surface,
                 borderRadius: 16,
                 padding: 18,
                 borderWidth: 1,
-                borderColor: colors.borderLight,
+                borderColor: c.borderLight,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 14,
@@ -172,36 +196,35 @@ function TeacherHome({
                   width: 48,
                   height: 48,
                   borderRadius: 16,
-                  backgroundColor: colors.primary + '15',
+                  backgroundColor: c.primary + '15',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="school-outline" size={24} color={colors.primary} />
+                <Ionicons name="school-outline" size={24} color={c.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text.primary }}>
-                  {c.title}
+                <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.text.primary }}>
+                  {classroom.title}
                 </Text>
-                {c.description && (
+                {classroom.description && (
                   <Text
-                    style={{ fontSize: 13, color: colors.text.secondary, marginTop: 2 }}
+                    style={{ fontSize: scale(13), color: c.text.secondary, marginTop: 2 }}
                     numberOfLines={1}
                   >
-                    {c.description}
+                    {classroom.description}
                   </Text>
                 )}
-                <Text style={{ fontSize: 12, color: colors.text.tertiary, marginTop: 4 }}>
-                  {c.subjects.length} matéria{c.subjects.length !== 1 ? 's' : ''}
+                <Text style={{ fontSize: scale(12), color: c.text.tertiary, marginTop: 4 }}>
+                  {classroom.subjects.length} matéria{classroom.subjects.length !== 1 ? 's' : ''}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
             </TouchableOpacity>
           ))}
         </ScrollView>
       )}
 
-      {/* Create classroom modal */}
       <Modal
         visible={showCreate}
         transparent
@@ -219,16 +242,16 @@ function TeacherHome({
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowCreate(false)} />
           <View
             style={{
-              backgroundColor: colors.background,
+              backgroundColor: c.background,
               borderRadius: 24,
               padding: 24,
             }}
           >
             <Text
               style={{
-                fontSize: 20,
+                fontSize: scale(20),
                 fontWeight: '700',
-                color: colors.text.primary,
+                color: c.text.primary,
                 marginBottom: 16,
               }}
             >
@@ -252,11 +275,11 @@ function TeacherHome({
                   paddingVertical: 14,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: c.border,
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.secondary }}>
+                <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.secondary }}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -267,15 +290,15 @@ function TeacherHome({
                   flex: 1,
                   paddingVertical: 14,
                   borderRadius: 12,
-                  backgroundColor: colors.primary,
+                  backgroundColor: c.primary,
                   alignItems: 'center',
                   opacity: createClassroom.isPending || !title.trim() ? 0.6 : 1,
                 }}
               >
                 {createClassroom.isPending ? (
-                  <ActivityIndicator color={colors.text.inverse} size="small" />
+                  <ActivityIndicator color={c.text.inverse} size="small" />
                 ) : (
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.inverse }}>
+                  <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.inverse }}>
                     Criar
                   </Text>
                 )}
@@ -306,6 +329,9 @@ function StudentHome({
   roleLabel: string;
 }) {
   const queryClient = useQueryClient();
+  const c = useColors();
+  const scale = useScale();
+
   const { data: classrooms, isLoading } = useQuery({
     queryKey: ['classrooms'],
     queryFn: () => apiFetch<Classroom[]>('/classrooms', { token: token! }),
@@ -351,16 +377,16 @@ function StudentHome({
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <Header
         title={`Olá, ${displayName ?? 'Usuário'}!`}
         subtitle="Suas atividades"
-        rightAction={roleBadge(roleLabel)}
+        rightAction={<RoleBadge label={roleLabel} />}
       />
 
       {joinSuccess && (
         <View style={{
-          backgroundColor: colors.successLight,
+          backgroundColor: c.successLight,
           marginHorizontal: 20,
           marginTop: 8,
           borderRadius: 12,
@@ -369,8 +395,8 @@ function StudentHome({
           alignItems: 'center',
           gap: 8,
         }}>
-          <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-          <Text style={{ fontSize: 14, color: colors.primaryDark, fontWeight: '600', flex: 1 }}>
+          <Ionicons name="checkmark-circle" size={18} color={c.success} />
+          <Text style={{ fontSize: scale(14), color: c.primaryDark, fontWeight: '600', flex: 1 }}>
             {joinSuccess}
           </Text>
         </View>
@@ -378,14 +404,14 @@ function StudentHome({
 
       {isLoading && (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={c.primary} />
         </View>
       )}
 
       {!isLoading && (!classrooms || classrooms.length === 0) && (
         <View style={{ flex: 1 }}>
           <EmptyState
-            icon="📚"
+            iconName="library-outline"
             title="Nenhuma turma ainda"
             message="Peça um link de convite ao seu professor e ingresse em uma turma."
             actionLabel="Ingressar com código"
@@ -397,13 +423,7 @@ function StudentHome({
       {!isLoading && classrooms && classrooms.length > 0 && (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '700',
-                color: colors.text.primary,
-              }}
-            >
+            <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
               Minhas Turmas
             </Text>
             <TouchableOpacity
@@ -411,35 +431,34 @@ function StudentHome({
               accessibilityLabel="Ingressar em turma com código"
               accessibilityRole="button"
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 12,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
                 borderWidth: 1,
-                borderColor: colors.primaryLight,
+                borderColor: c.primaryLight,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 6,
               }}
             >
-              <Ionicons name="enter-outline" size={16} color={colors.primary} />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+              <Ionicons name="enter-outline" size={16} color={c.primary} />
+              <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.primary }}>
                 Ingressar
               </Text>
             </TouchableOpacity>
           </View>
-          {classrooms.map((c) => (
+          {classrooms.map((classroom) => (
             <StudentClassroomCard
-              key={c.id}
-              classroom={c}
-              expanded={expandedId === c.id}
-              onToggle={() => setExpandedId(expandedId === c.id ? null : c.id)}
+              key={classroom.id}
+              classroom={classroom}
+              expanded={expandedId === classroom.id}
+              onToggle={() => setExpandedId(expandedId === classroom.id ? null : classroom.id)}
             />
           ))}
         </ScrollView>
       )}
 
-      {/* Join classroom modal */}
       <Modal
         visible={showJoin}
         transparent
@@ -449,7 +468,7 @@ function StudentHome({
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => { setShowJoin(false); setJoinError(null); }} />
           <View style={{
-            backgroundColor: colors.background,
+            backgroundColor: c.background,
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             padding: 24,
@@ -457,33 +476,33 @@ function StudentHome({
             gap: 16,
           }}>
             <View style={{ alignItems: 'center' }}>
-              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: c.border }} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(20), fontWeight: '700', color: c.text.primary }}>
               Ingressar em Turma
             </Text>
-            <Text style={{ fontSize: 14, color: colors.text.secondary, marginTop: -8 }}>
+            <Text style={{ fontSize: scale(14), color: c.text.secondary, marginTop: -8 }}>
               Cole o link ou código que o professor enviou
             </Text>
             <TextInput
               value={joinInput}
               onChangeText={(v) => { setJoinInput(v); setJoinError(null); }}
               placeholder="https://... ou código do convite"
-              placeholderTextColor={colors.text.tertiary}
+              placeholderTextColor={c.text.tertiary}
               autoCapitalize="none"
               autoCorrect={false}
               style={{
                 borderWidth: 1,
-                borderColor: joinError ? colors.error : colors.border,
+                borderColor: joinError ? c.error : c.border,
                 borderRadius: 12,
                 padding: 14,
-                fontSize: 15,
-                color: colors.text.primary,
-                backgroundColor: colors.surface,
+                fontSize: scale(15),
+                color: c.text.primary,
+                backgroundColor: c.surface,
               }}
             />
             {joinError && (
-              <Text style={{ fontSize: 13, color: colors.error, marginTop: -8 }}>
+              <Text style={{ fontSize: scale(13), color: c.error, marginTop: -8 }}>
                 {joinError}
               </Text>
             )}
@@ -496,11 +515,11 @@ function StudentHome({
                   paddingVertical: 14,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: c.border,
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.secondary }}>
+                <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.secondary }}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -511,7 +530,7 @@ function StudentHome({
                   flex: 1,
                   paddingVertical: 14,
                   borderRadius: 12,
-                  backgroundColor: colors.primary,
+                  backgroundColor: c.primary,
                   alignItems: 'center',
                   opacity: joinClassroom.isPending || !joinInput.trim() ? 0.6 : 1,
                 }}
@@ -519,7 +538,7 @@ function StudentHome({
                 {joinClassroom.isPending ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+                  <Text style={{ fontSize: scale(16), fontWeight: '600', color: '#fff' }}>
                     Confirmar
                   </Text>
                 )}
@@ -542,6 +561,8 @@ function StudentClassroomCard({
   onToggle: () => void;
 }) {
   const router = useRouter();
+  const c = useColors();
+  const scale = useScale();
 
   return (
     <Card variant="elevated" onPress={onToggle}>
@@ -555,14 +576,14 @@ function StudentClassroomCard({
             }
           />
         </View>
-        <Text style={{ fontSize: 18, color: colors.text.tertiary }}>{expanded ? '▾' : '▸'}</Text>
+        <Ionicons name={expanded ? 'chevron-down' : 'chevron-forward'} size={18} color={c.text.tertiary} />
       </View>
 
       {expanded && (
         <View style={{ marginTop: 8, gap: 8 }}>
           {classroom.subjects.length === 0 && (
             <Text
-              style={{ fontSize: 14, color: colors.text.tertiary, textAlign: 'center', padding: 12 }}
+              style={{ fontSize: scale(14), color: c.text.tertiary, textAlign: 'center', padding: 12 }}
             >
               Nenhuma matéria disponível ainda.
             </Text>
@@ -578,11 +599,11 @@ function StudentClassroomCard({
               }
               accessibilityLabel={`Abrir matéria: ${subject.name}`}
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 14,
                 padding: 14,
                 borderWidth: 1,
-                borderColor: colors.primaryLight + '30',
+                borderColor: c.primaryLight + '30',
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 12,
@@ -593,27 +614,27 @@ function StudentClassroomCard({
                   width: 40,
                   height: 40,
                   borderRadius: 12,
-                  backgroundColor: colors.primary + '15',
+                  backgroundColor: c.primary + '15',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="book-outline" size={20} color={colors.primary} />
+                <Ionicons name="book-outline" size={20} color={c.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text.primary }}>
+                <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary }}>
                   {subject.name}
                 </Text>
                 {subject.description && (
                   <Text
-                    style={{ fontSize: 13, color: colors.text.secondary, marginTop: 2 }}
+                    style={{ fontSize: scale(13), color: c.text.secondary, marginTop: 2 }}
                     numberOfLines={1}
                   >
                     {subject.description}
                   </Text>
                 )}
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
             </TouchableOpacity>
           ))}
         </View>
@@ -641,22 +662,5 @@ export default function HomeScreen() {
       displayName={displayName}
       roleLabel={roleLabel}
     />
-  );
-}
-
-function roleBadge(label: string) {
-  return (
-    <View
-      style={{
-        backgroundColor: colors.surfaceAlt,
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderWidth: 1,
-        borderColor: colors.borderLight,
-      }}
-    >
-      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>{label}</Text>
-    </View>
   );
 }

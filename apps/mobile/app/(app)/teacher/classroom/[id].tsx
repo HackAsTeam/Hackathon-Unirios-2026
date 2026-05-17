@@ -14,7 +14,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
-import { colors } from '@/lib/colors';
+import { useColors } from '@/hooks/useColors';
+import { useScale } from '@/hooks/useScale';
 import type { Classroom, InvitationLinkResponse } from '@/types/classroom';
 
 function Input({
@@ -28,21 +29,23 @@ function Input({
   placeholder: string;
   multiline?: boolean;
 }) {
+  const c = useColors();
+  const scale = useScale();
   return (
     <TextInput
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
       multiline={multiline}
-      placeholderTextColor={colors.text.tertiary}
+      placeholderTextColor={c.text.tertiary}
       style={{
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: c.border,
         borderRadius: 12,
         padding: 14,
-        fontSize: 16,
-        color: colors.text.primary,
-        backgroundColor: colors.surface,
+        fontSize: scale(16),
+        color: c.text.primary,
+        backgroundColor: c.surface,
         minHeight: multiline ? 72 : undefined,
         textAlignVertical: multiline ? 'top' : undefined,
       }}
@@ -55,6 +58,8 @@ export default function ClassroomDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+  const c = useColors();
+  const scale = useScale();
 
   const { data: classroom, isLoading } = useQuery({
     queryKey: ['classroom', id],
@@ -114,16 +119,15 @@ export default function ClassroomDetailScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <View
         style={{
           paddingTop: 56,
           paddingBottom: 16,
           paddingHorizontal: 20,
-          backgroundColor: colors.surface,
+          backgroundColor: c.surface,
           borderBottomWidth: 1,
-          borderBottomColor: colors.borderLight,
+          borderBottomColor: c.borderLight,
         }}
       >
         <TouchableOpacity
@@ -131,19 +135,19 @@ export default function ClassroomDetailScreen() {
           style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}
           accessibilityLabel="Voltar"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.primary} />
-          <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '500' }}>Turmas</Text>
+          <Ionicons name="chevron-back" size={20} color={c.primary} />
+          <Text style={{ fontSize: scale(15), color: c.primary, fontWeight: '500' }}>Turmas</Text>
         </TouchableOpacity>
 
         {isLoading ? (
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color={c.primary} />
         ) : (
           <>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(24), fontWeight: '700', color: c.text.primary }}>
               {classroom?.title}
             </Text>
             {classroom?.description && (
-              <Text style={{ fontSize: 14, color: colors.text.secondary, marginTop: 4 }}>
+              <Text style={{ fontSize: scale(14), color: c.text.secondary, marginTop: 4 }}>
                 {classroom.description}
               </Text>
             )}
@@ -151,31 +155,30 @@ export default function ClassroomDetailScreen() {
         )}
       </View>
 
-      {/* Body */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={c.primary} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary }}>
+            <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
               Matérias
             </Text>
             <TouchableOpacity
               onPress={() => setShowCreate(true)}
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 12,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
                 borderWidth: 1,
-                borderColor: colors.primaryLight,
+                borderColor: c.primaryLight,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+              <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.primary }}>
                 + Nova Matéria
               </Text>
             </TouchableOpacity>
@@ -184,7 +187,7 @@ export default function ClassroomDetailScreen() {
           {(!classroom?.subjects || classroom.subjects.length === 0) && (
             <View
               style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 16,
                 padding: 28,
                 alignItems: 'center',
@@ -192,28 +195,24 @@ export default function ClassroomDetailScreen() {
                 marginTop: 8,
               }}
             >
-              <Text style={{ fontSize: 32 }}>📚</Text>
-              <Text
-                style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary, marginTop: 4 }}
-              >
+              <Ionicons name="library-outline" size={48} color={c.text.tertiary} />
+              <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.primary, marginTop: 4 }}>
                 Nenhuma matéria ainda
               </Text>
-              <Text
-                style={{ fontSize: 14, color: colors.text.secondary, textAlign: 'center' }}
-              >
+              <Text style={{ fontSize: scale(14), color: c.text.secondary, textAlign: 'center' }}>
                 Crie a primeira matéria para organizar as atividades desta turma.
               </Text>
               <TouchableOpacity
                 onPress={() => setShowCreate(true)}
                 style={{
                   marginTop: 8,
-                  backgroundColor: colors.primary,
+                  backgroundColor: c.primary,
                   borderRadius: 12,
                   paddingVertical: 12,
                   paddingHorizontal: 24,
                 }}
               >
-                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text.inverse }}>
+                <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.inverse }}>
                   Criar Matéria
                 </Text>
               </TouchableOpacity>
@@ -228,13 +227,12 @@ export default function ClassroomDetailScreen() {
                   `/teacher/classroom/${id}/subject/${s.id}?name=${encodeURIComponent(s.name)}`
                 )
               }
-
               style={{
-                backgroundColor: colors.surface,
+                backgroundColor: c.surface,
                 borderRadius: 16,
                 padding: 18,
                 borderWidth: 1,
-                borderColor: colors.borderLight,
+                borderColor: c.borderLight,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 14,
@@ -245,34 +243,33 @@ export default function ClassroomDetailScreen() {
                   width: 44,
                   height: 44,
                   borderRadius: 14,
-                  backgroundColor: colors.primary + '15',
+                  backgroundColor: c.primary + '15',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="book-outline" size={22} color={colors.primary} />
+                <Ionicons name="book-outline" size={22} color={c.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary }}>
+                <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.primary }}>
                   {s.name}
                 </Text>
                 {s.description && (
                   <Text
-                    style={{ fontSize: 13, color: colors.text.secondary, marginTop: 2 }}
+                    style={{ fontSize: scale(13), color: c.text.secondary, marginTop: 2 }}
                     numberOfLines={1}
                   >
                     {s.description}
                   </Text>
                 )}
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
             </TouchableOpacity>
           ))}
 
-          {/* Invite section */}
           <View style={{ marginTop: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text.primary }}>
+              <Text style={{ fontSize: scale(18), fontWeight: '700', color: c.text.primary }}>
                 Convite de Alunos
               </Text>
               <TouchableOpacity
@@ -281,12 +278,12 @@ export default function ClassroomDetailScreen() {
                 accessibilityLabel="Gerar link de convite"
                 accessibilityRole="button"
                 style={{
-                  backgroundColor: colors.surfaceAlt,
+                  backgroundColor: c.surfaceAlt,
                   borderRadius: 12,
                   paddingVertical: 8,
                   paddingHorizontal: 14,
                   borderWidth: 1,
-                  borderColor: colors.primaryLight,
+                  borderColor: c.primaryLight,
                   opacity: generateInvite.isPending ? 0.6 : 1,
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -294,11 +291,11 @@ export default function ClassroomDetailScreen() {
                 }}
               >
                 {generateInvite.isPending ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color={c.primary} />
                 ) : (
                   <>
-                    <Ionicons name="link-outline" size={16} color={colors.primary} />
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                    <Ionicons name="link-outline" size={16} color={c.primary} />
+                    <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.primary }}>
                       Gerar Link
                     </Text>
                   </>
@@ -307,30 +304,30 @@ export default function ClassroomDetailScreen() {
             </View>
 
             {inviteError && (
-              <Text style={{ fontSize: 13, color: colors.error, marginBottom: 8 }}>
+              <Text style={{ fontSize: scale(13), color: c.error, marginBottom: 8 }}>
                 {inviteError}
               </Text>
             )}
 
             {activeInvite && (
               <View style={{
-                backgroundColor: colors.surfaceAlt,
+                backgroundColor: c.surfaceAlt,
                 borderRadius: 16,
                 padding: 16,
                 borderWidth: 1,
-                borderColor: colors.primaryLight,
+                borderColor: c.primaryLight,
                 gap: 10,
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ionicons name="link" size={16} color={colors.primary} />
+                  <Ionicons name="link" size={16} color={c.primary} />
                   <Text
-                    style={{ fontSize: 13, color: colors.text.secondary, flex: 1 }}
+                    style={{ fontSize: scale(13), color: c.text.secondary, flex: 1 }}
                     numberOfLines={1}
                   >
                     {activeInvite.inviteUrl}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 12, color: colors.text.tertiary }}>
+                <Text style={{ fontSize: scale(12), color: c.text.tertiary }}>
                   Usado {activeInvite.useCount} vez{activeInvite.useCount !== 1 ? 'es' : ''}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
@@ -340,7 +337,7 @@ export default function ClassroomDetailScreen() {
                     accessibilityRole="button"
                     style={{
                       flex: 1,
-                      backgroundColor: colors.primary,
+                      backgroundColor: c.primary,
                       borderRadius: 12,
                       paddingVertical: 12,
                       alignItems: 'center',
@@ -350,7 +347,7 @@ export default function ClassroomDetailScreen() {
                     }}
                   >
                     <Ionicons name="share-social-outline" size={16} color="#fff" />
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>
+                    <Text style={{ fontSize: scale(14), fontWeight: '600', color: '#fff' }}>
                       Compartilhar
                     </Text>
                   </TouchableOpacity>
@@ -365,14 +362,14 @@ export default function ClassroomDetailScreen() {
                       paddingVertical: 12,
                       alignItems: 'center',
                       borderWidth: 1,
-                      borderColor: colors.error,
+                      borderColor: c.error,
                       opacity: revokeInvite.isPending ? 0.6 : 1,
                     }}
                   >
                     {revokeInvite.isPending ? (
-                      <ActivityIndicator size="small" color={colors.error} />
+                      <ActivityIndicator size="small" color={c.error} />
                     ) : (
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.error }}>
+                      <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.error }}>
                         Revogar
                       </Text>
                     )}
@@ -383,14 +380,14 @@ export default function ClassroomDetailScreen() {
 
             {!activeInvite && !generateInvite.isPending && !inviteError && (
               <View style={{
-                backgroundColor: colors.borderLight,
+                backgroundColor: c.borderLight,
                 borderRadius: 16,
                 padding: 20,
                 alignItems: 'center',
                 gap: 6,
               }}>
-                <Ionicons name="people-outline" size={28} color={colors.text.tertiary} />
-                <Text style={{ fontSize: 14, color: colors.text.tertiary, textAlign: 'center' }}>
+                <Ionicons name="people-outline" size={28} color={c.text.tertiary} />
+                <Text style={{ fontSize: scale(14), color: c.text.tertiary, textAlign: 'center' }}>
                   Gere um link para convidar alunos para esta turma
                 </Text>
               </View>
@@ -399,7 +396,6 @@ export default function ClassroomDetailScreen() {
         </ScrollView>
       )}
 
-      {/* Create subject modal */}
       <Modal
         visible={showCreate}
         transparent
@@ -417,16 +413,16 @@ export default function ClassroomDetailScreen() {
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowCreate(false)} />
           <View
             style={{
-              backgroundColor: colors.background,
+              backgroundColor: c.background,
               borderRadius: 24,
               padding: 24,
             }}
           >
             <Text
               style={{
-                fontSize: 20,
+                fontSize: scale(20),
                 fontWeight: '700',
-                color: colors.text.primary,
+                color: c.text.primary,
                 marginBottom: 16,
               }}
             >
@@ -454,11 +450,11 @@ export default function ClassroomDetailScreen() {
                   paddingVertical: 14,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: c.border,
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.secondary }}>
+                <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.secondary }}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -469,15 +465,15 @@ export default function ClassroomDetailScreen() {
                   flex: 1,
                   paddingVertical: 14,
                   borderRadius: 12,
-                  backgroundColor: colors.primary,
+                  backgroundColor: c.primary,
                   alignItems: 'center',
                   opacity: createSubject.isPending || !subjectName.trim() ? 0.6 : 1,
                 }}
               >
                 {createSubject.isPending ? (
-                  <ActivityIndicator color={colors.text.inverse} size="small" />
+                  <ActivityIndicator color={c.text.inverse} size="small" />
                 ) : (
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.inverse }}>
+                  <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.inverse }}>
                     Criar
                   </Text>
                 )}

@@ -1,22 +1,23 @@
 import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from "@/lib/colors";
 import { useOnboardingStore } from "@/store/onboarding";
+import { useColors } from "@/hooks/useColors";
 
 export default function TabsLayout() {
   const role = useOnboardingStore((s) => s.role);
+  const c = useColors();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: c.primary,
         tabBarInactiveTintColor: "#9ca3af",
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: colors.primaryLight,
-          backgroundColor: "#ffffff",
+          borderTopColor: c.primaryLight,
+          backgroundColor: c.background,
         },
       }}
     >
