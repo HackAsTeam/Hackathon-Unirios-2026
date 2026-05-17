@@ -1,16 +1,17 @@
 import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import { colors } from "@/lib/colors";
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#16a34a",
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: "#9ca3af",
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: "#bbf7d0",
+          borderTopColor: colors.primaryLight,
           backgroundColor: "#ffffff",
         },
       }}
