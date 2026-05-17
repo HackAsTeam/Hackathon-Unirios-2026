@@ -1,10 +1,11 @@
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import { requestSTTPermission } from './stt';
 
-// Matches "hey/ei/oi dillo" and variations the STT might produce in pt-BR
+// Covers STT variations of "dillo" in pt-BR:
+// dillo, dila, dilu, dile, dilos, dilo, dilu
 const WAKE_PATTERNS = [
-  /\b(?:hey|ei|oi|ey|e)\s+dill?[oa]s?\b/i,
-  /\bdill[oa]\b/i, // fallback: just "dillo" alone
+  /\b(?:hey|ei|oi|ey|e)\s+dill?[aoue]s?\b/i,
+  /\bdill?[aoue]s?\b/i, // fallback: "dillo"/"dilu" sem saudação
 ];
 
 function matchesWakeWord(text: string): boolean {
@@ -39,8 +40,9 @@ function _loop() {
   _subs.push(
     ExpoSpeechRecognitionModule.addListener('result', (e) => {
       const text = e.results?.[0]?.transcript ?? '';
+      console.log(`[WakeWord] ouvi: "${text}" (final: ${e.isFinal})`);
       if (matchesWakeWord(text)) {
-        // Stop first, then fire callback so STT is free for the overlay
+        console.log('[WakeWord] wake word detectado! ativando assistente...');
         _active = false;
         _cleanup();
         try { ExpoSpeechRecognitionModule.stop(); } catch {}
@@ -51,6 +53,7 @@ function _loop() {
 
   _subs.push(
     ExpoSpeechRecognitionModule.addListener('end', () => {
+      console.log('[WakeWord] sessão STT encerrada, reiniciando loop...');
       _cleanup();
       if (_active) _restartTimer = setTimeout(_loop, 300);
     }),
@@ -58,6 +61,9 @@ function _loop() {
 
   _subs.push(
     ExpoSpeechRecognitionModule.addListener('error', (e) => {
+      if (e.error !== 'aborted') {
+        console.warn(`[WakeWord] erro STT: ${e.error}, reiniciando em 1s...`);
+      }
       _cleanup();
       if (_active && e.error !== 'aborted') {
         _restartTimer = setTimeout(_loop, 1000);
@@ -70,8 +76,12 @@ export async function startWakeWordDetection(onDetected: WakeCallback): Promise<
   if (_active) return true;
 
   const granted = await requestSTTPermission();
-  if (!granted) return false;
+  if (!granted) {
+    console.warn('[WakeWord] permissão de microfone negada');
+    return false;
+  }
 
+  console.log('[WakeWord] iniciando detecção — diga "Hey Dillo"');
   _active = true;
   _onDetected = onDetected;
   _loop();
@@ -79,6 +89,8 @@ export async function startWakeWordDetection(onDetected: WakeCallback): Promise<
 }
 
 export function stopWakeWordDetection() {
+  if (!_active) return; // evita spam de log quando já está parado
+  console.log('[WakeWord] detecção pausada');
   _active = false;
   _onDetected = null;
   _cleanup();

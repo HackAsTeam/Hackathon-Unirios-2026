@@ -17,7 +17,7 @@ import { speak } from '../../lib/tts';
 import { colors } from '../../lib/colors';
 
 const ACCENT = colors.formats.oral;
-const DOT_COLOR = '#22c55e'; // green-500
+const DOT_COLOR = '#22c55e';
 
 interface Props {
   onScreenAction?: (cmd: VoiceCommandResponse) => void;
@@ -26,6 +26,7 @@ interface Props {
 export function VoiceAssistantButton({ onScreenAction }: Props) {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [wakeWordActive, setWakeWordActive] = useState(false);
+  const [isForegrounded, setIsForegrounded] = useState(true);
 
   const status = useVoiceCommandStore((s) => s.status);
   const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
@@ -34,7 +35,47 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const dotOpacity = useSharedValue(0);
   const dotScale = useSharedValue(1);
 
-  // ─── Wake word dot animation ──────────────────────────────────────────────
+  // ─── Track app foreground/background ─────────────────────────────────────
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      setIsForegrounded(state === 'active');
+    });
+    return () => sub.remove();
+  }, []);
+
+  // ─── Wake word callback ───────────────────────────────────────────────────
+  const handleWakeWordDetected = useCallback(() => {
+    setWakeWordActive(false);
+    speak('Sim?');
+    setTimeout(() => setOverlayVisible(true), 400);
+  }, []);
+
+  // ─── Single effect — única fonte de verdade para o ciclo de wake word ────
+  useEffect(() => {
+    const shouldRun = wakeWordEnabled && !overlayVisible && isForegrounded;
+
+    if (!shouldRun) {
+      stopWakeWordDetection();
+      setWakeWordActive(false);
+      return;
+    }
+
+    let cancelled = false;
+    const startTimer = setTimeout(async () => {
+      if (cancelled) return;
+      const ok = await startWakeWordDetection(handleWakeWordDetected);
+      if (!cancelled) setWakeWordActive(ok);
+    }, 1500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(startTimer);
+      stopWakeWordDetection();
+      setWakeWordActive(false);
+    };
+  }, [wakeWordEnabled, overlayVisible, isForegrounded, handleWakeWordDetected]);
+
+  // ─── Dot animation ────────────────────────────────────────────────────────
   useEffect(() => {
     if (wakeWordActive && !reducedMotion) {
       dotOpacity.value = 1;
@@ -50,62 +91,8 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     }
   }, [wakeWordActive, reducedMotion]);
 
-  // ─── Start/stop wake word based on setting + overlay state ───────────────
-  const handleWakeWordDetected = useCallback(() => {
-    setWakeWordActive(false);
-    speak('Sim?');
-    // Small delay so TTS has time to start before overlay STT kicks in
-    setTimeout(() => setOverlayVisible(true), 400);
-  }, []);
-
-  const resumeWakeWord = useCallback(async () => {
-    if (!wakeWordEnabled) return;
-    const ok = await startWakeWordDetection(handleWakeWordDetected);
-    setWakeWordActive(ok);
-  }, [wakeWordEnabled, handleWakeWordDetected]);
-
-  // React to wakeWordEnabled setting change
-  useEffect(() => {
-    if (overlayVisible) return;
-    if (wakeWordEnabled) {
-      resumeWakeWord();
-    } else {
-      stopWakeWordDetection();
-      setWakeWordActive(false);
-    }
-    return () => {
-      stopWakeWordDetection();
-      setWakeWordActive(false);
-    };
-  }, [wakeWordEnabled]);
-
-  // Pause wake word when overlay opens; restart when it closes
-  useEffect(() => {
-    if (overlayVisible) {
-      stopWakeWordDetection();
-      setWakeWordActive(false);
-    } else {
-      resumeWakeWord();
-    }
-  }, [overlayVisible]);
-
-  // Pause when app goes to background
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        if (wakeWordEnabled && !overlayVisible) resumeWakeWord();
-      } else {
-        stopWakeWordDetection();
-        setWakeWordActive(false);
-      }
-    });
-    return () => sub.remove();
-  }, [wakeWordEnabled, overlayVisible]);
-
   // ─── Manual tap ──────────────────────────────────────────────────────────
   function openOverlay() {
-    stopWakeWordDetection();
-    setWakeWordActive(false);
     setOverlayVisible(true);
     if (!reducedMotion) {
       pulse.value = withRepeat(withTiming(1.12, { duration: 900 }), -1, true);
@@ -150,7 +137,6 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
           />
         </TouchableOpacity>
 
-        {/* Wake word active indicator dot */}
         <Animated.View style={[styles.dot, dotStyle]}>
           <View style={[styles.dotInner, { backgroundColor: DOT_COLOR }]} />
         </Animated.View>
