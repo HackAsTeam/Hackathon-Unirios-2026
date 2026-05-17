@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../../store/auth';
+import { useScreenContext } from '../../../hooks/useScreenContext';
+import { useVoiceCommandStore } from '../../../store/voiceCommand';
 import { Header } from '@/components/ui/Header';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -89,6 +91,7 @@ function TeacherHome({
   const queryClient = useQueryClient();
   const c = useColors();
   const scale = useScale();
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
 
   const { data: classrooms, isLoading } = useQuery({
     queryKey: ['classrooms'],
@@ -96,16 +99,22 @@ function TeacherHome({
     enabled: !!token,
   });
 
+  useScreenContext({
+    screen: 'home-teacher',
+    role: 'teacher',
+    classroomCount: classrooms?.length ?? 0,
+  });
+
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
 
   const createClassroom = useMutation({
-    mutationFn: () =>
+    mutationFn: ({ t, d }: { t: string; d?: string }) =>
       apiFetch('/classrooms', {
         method: 'POST',
         token: token!,
-        body: { title, description: desc || undefined },
+        body: { title: t, description: d || undefined },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['classrooms'] });
@@ -114,6 +123,17 @@ function TeacherHome({
       setDesc('');
     },
   });
+
+  useEffect(() => {
+    if (!lastCommand) return;
+    if (lastCommand.command === 'CREATE_CLASSROOM' && lastCommand.payload?.title) {
+      const t = lastCommand.payload.title as string;
+      const d = lastCommand.payload.description as string | undefined;
+      createClassroom.mutate({ t, d });
+    } else if (lastCommand.command === 'OPEN_CREATE_CLASSROOM_MODAL') {
+      setShowCreate(true);
+    }
+  }, [lastCommand]);
 
   if (isLoading) {
     return (
@@ -291,7 +311,7 @@ function TeacherHome({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => title.trim() && createClassroom.mutate()}
+                onPress={() => title.trim() && createClassroom.mutate({ t: title, d: desc })}
                 disabled={createClassroom.isPending || !title.trim()}
                 accessibilityLabel="Confirmar criação de turma"
                 accessibilityRole="button"
@@ -341,13 +361,21 @@ function StudentHome({
   const queryClient = useQueryClient();
   const c = useColors();
   const scale = useScale();
-
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const { data: classrooms, isLoading } = useQuery({
     queryKey: ['classrooms'],
     queryFn: () => apiFetch<Classroom[]>('/classrooms', { token: token! }),
     enabled: !!token,
   });
 
+  useScreenContext({
+    screen: 'home-student',
+    role: 'student',
+    classroomCount: classrooms?.length ?? 0,
+    hasEnrollments: (classrooms?.length ?? 0) > 0,
+  });
+
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [joinInput, setJoinInput] = useState('');
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -378,6 +406,10 @@ function StudentHome({
       }
     },
   });
+
+  useEffect(() => {
+    if (lastCommand?.command === 'OPEN_JOIN_MODAL') setShowJoin(true);
+  }, [lastCommand]);
 
   function handleJoinConfirm() {
     if (!joinInput.trim()) return;

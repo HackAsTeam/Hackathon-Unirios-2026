@@ -27,6 +27,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
+import { useScreenContext } from '../../../../hooks/useScreenContext';
 import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
 import { useScale } from '../../../../hooks/useScale';
@@ -38,6 +39,7 @@ type Stage = 'idle' | 'listening' | 'editing' | 'done';
 
 export default function OralResponseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useScreenContext({ screen: 'respond-oral', activityId: id, role: 'student' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const { reducedMotion } = useAccessibilityStore();

@@ -1,11 +1,15 @@
 import { router } from 'expo-router';
 import { apiFetch } from './api';
 import { speak } from './tts';
+import { useAccessibilityStore } from '../store/acessibility';
+import { useAuthStore } from '../store/auth';
+import { useVoiceCommandStore } from '../store/voiceCommand';
 import type { ScreenContext, VoiceCommandResponse } from '../store/voiceCommand';
 
 // ─── Tier 1: local keyword matching ──────────────────────────────────────────
 
 const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandResponse }> = [
+  // ── Navigation ────────────────────────────────────────────────────────────
   {
     pattern: /\b(volta|voltar|back)\b/i,
     handler: () => {
@@ -28,10 +32,129 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
     },
   },
   {
-    pattern: /\b(resultado|resultados|notas)\b/i,
+    pattern: /\b(resultado|resultados|notas|minhas notas)\b/i,
     handler: () => {
       router.push('/(app)/(tabs)/results');
       return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo resultados.' };
+    },
+  },
+
+  // ── Confirmation (must come before sign-out) ──────────────────────────────
+  {
+    pattern: /^(confirmar?|sim|yes|pode|ok|confirmo)\b/i,
+    handler: () => {
+      const pending = useVoiceCommandStore.getState().pendingConfirmAction;
+      if (!pending) {
+        return { type: 'UNKNOWN', speak: 'Não há nada para confirmar.' };
+      }
+      useVoiceCommandStore.getState().setPendingConfirmAction(null);
+      if (pending === 'SIGN_OUT') {
+        useAuthStore.getState().signOut();
+        router.replace('/(auth)/sign-in');
+        return { type: 'COMMAND', command: 'SIGN_OUT', speak: 'Até logo!' };
+      }
+      return { type: 'UNKNOWN', speak: 'Ação desconhecida.' };
+    },
+  },
+
+  // ── Sign out (two-step confirmation) ─────────────────────────────────────
+  {
+    pattern: /\b(sair|deslogar|desconectar|sign out|log ?out)\b/i,
+    handler: () => {
+      useVoiceCommandStore.getState().setPendingConfirmAction('SIGN_OUT');
+      return {
+        type: 'CONFIRM',
+        command: 'SIGN_OUT',
+        speak: 'Tem certeza que quer sair? Diga confirmar para continuar.',
+      };
+    },
+  },
+
+  // ── Font size ─────────────────────────────────────────────────────────────
+  {
+    pattern: /\b(aumentar? (a |a |a)?fonte|fonte maior|texto maior|letra maior|aumentar? texto)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().increaseFontSize();
+      const s = useAccessibilityStore.getState().fontSizeScale;
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: `Fonte aumentada para ${Math.round(s * 100)} por cento.` };
+    },
+  },
+  {
+    pattern: /\b(diminuir? (a |a |a)?fonte|fonte menor|texto menor|letra menor|reduzir? texto|diminuir? texto)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().decreaseFontSize();
+      const s = useAccessibilityStore.getState().fontSizeScale;
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: `Fonte diminuída para ${Math.round(s * 100)} por cento.` };
+    },
+  },
+  {
+    pattern: /\b(fonte normal|tamanho padrão|resetar? fonte|fonte padrão)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setFontSizeScale(1.0);
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Tamanho de fonte padrão restaurado.' };
+    },
+  },
+
+  // ── High contrast ─────────────────────────────────────────────────────────
+  {
+    pattern: /\b(ativar?|ligar?|habilitar?) (o |o |o )?alto contraste\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setHighContrast(true);
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Alto contraste ativado.' };
+    },
+  },
+  {
+    pattern: /\b(desativar?|desligar?|desabilitar?) (o |o |o )?alto contraste\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setHighContrast(false);
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Alto contraste desativado.' };
+    },
+  },
+  {
+    pattern: /\b(alternar?|toggle|mudar) (o |o |o )?contraste\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().toggleHighContrast();
+      const on = useAccessibilityStore.getState().highContrast;
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: `Alto contraste ${on ? 'ativado' : 'desativado'}.` };
+    },
+  },
+
+  // ── Reduced motion ────────────────────────────────────────────────────────
+  {
+    pattern: /\b(ativar?|ligar?|habilitar?) (o |o |o )?(movimento reduzido|menos animações?|reduzir? animações?|reduzir? movimento)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setReducedMotion(true);
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Animações reduzidas ativadas.' };
+    },
+  },
+  {
+    pattern: /\b(desativar?|desligar?|desabilitar?) (o |o |o )?(movimento reduzido|animações?|restaurar? animações?)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setReducedMotion(false);
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Animações restauradas.' };
+    },
+  },
+
+  // ── Default response format ───────────────────────────────────────────────
+  {
+    pattern: /\b(formato padrão (texto|escrito?)|responder (por |em )?texto|formato texto)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setDefaultResponseFormat('text');
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como texto.' };
+    },
+  },
+  {
+    pattern: /\b(formato padrão áudio|formato padrão audio|responder (por |em )?áudio|responder (por |em )?audio|formato áudio|formato audio)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setDefaultResponseFormat('audio');
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como áudio.' };
+    },
+  },
+  {
+    pattern: /\b(formato padrão oral|responder (por |em )?oral|formato oral|resposta oral)\b/i,
+    handler: () => {
+      useAccessibilityStore.getState().setDefaultResponseFormat('oral');
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como oral.' };
     },
   },
 ];
@@ -51,18 +174,50 @@ async function dispatchToAI(
   context: ScreenContext,
   token: string,
 ): Promise<VoiceCommandResponse> {
+  const payload = { transcript, screen: context.screen, context };
+  console.log('[Dispatcher] tier2 → enviando para AI:', JSON.stringify(payload));
   try {
     const result = await apiFetch<VoiceCommandResponse>('/voice-commands', {
       method: 'POST',
       token,
-      body: { transcript, screen: context.screen, context },
+      body: payload,
     });
+    console.log('[Dispatcher] tier2 ← resposta AI:', JSON.stringify(result));
     return result;
-  } catch {
+  } catch (err) {
+    console.error('[Dispatcher] tier2 ← erro na chamada API:', err);
     return {
       type: 'ERROR',
       speak: 'Não consegui processar o comando. Tente novamente.',
     };
+  }
+}
+
+// ─── Post-process AI navigation/global commands ───────────────────────────────
+
+function postProcessAI(
+  result: VoiceCommandResponse,
+  onScreenAction?: (cmd: VoiceCommandResponse) => void,
+): void {
+  if (result.type !== 'COMMAND') return;
+  switch (result.command) {
+    case 'GO_BACK':
+      router.back();
+      break;
+    case 'GO_HOME':
+      router.push('/(app)/(tabs)');
+      break;
+    case 'NAVIGATE_TO': {
+      const route = result.payload?.route as string | undefined;
+      if (route) router.push(route as Parameters<typeof router.push>[0]);
+      break;
+    }
+    case 'OPEN_RESULTS':
+      router.push('/(app)/(tabs)/results');
+      break;
+    default:
+      onScreenAction?.(result);
+      break;
   }
 }
 
@@ -74,23 +229,26 @@ export async function dispatch(
   token: string | null,
   onScreenAction?: (cmd: VoiceCommandResponse) => void,
 ): Promise<VoiceCommandResponse> {
+  console.log(`[Dispatcher] transcript: "${transcript}" | tela: ${context?.screen ?? '(sem contexto)'} | token: ${token ? 'ok' : 'AUSENTE'}`);
+
   const local = tryLocalDispatch(transcript);
   if (local) {
+    console.log('[Dispatcher] tier1 → match local:', local.command);
     speak(local.speak);
     return local;
   }
+  console.log('[Dispatcher] tier1 → sem match, escalando para tier2');
 
-  if (!token || !context) {
+  if (!token) {
+    console.warn('[Dispatcher] token ausente — abortando antes do tier2');
     const r: VoiceCommandResponse = { type: 'UNKNOWN', speak: 'Não entendi. Pode repetir?' };
     speak(r.speak);
     return r;
   }
 
-  const result = await dispatchToAI(transcript, context, token);
+  const result = await dispatchToAI(transcript, context ?? { screen: 'home' }, token);
 
-  if (result.type === 'COMMAND' && onScreenAction) {
-    onScreenAction(result);
-  }
+  postProcessAI(result, onScreenAction);
 
   speak(result.speak);
   return result;

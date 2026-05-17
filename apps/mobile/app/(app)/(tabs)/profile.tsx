@@ -3,6 +3,7 @@ import { useAuthStore } from "../../../store/auth";
 import { useOnboardingStore } from "../../../store/onboarding";
 import { signOutFromGoogle } from "../../../lib/googleAuth";
 import { useAccessibilityStore, type DefaultResponseFormat } from "../../../store/acessibility";
+import { useScreenContext } from "../../../hooks/useScreenContext";
 import { Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
 import { useColors } from "../../../hooks/useColors";
 import { useScale } from "../../../hooks/useScale";
@@ -46,7 +47,8 @@ const FONT_OPTIONS: { value: number; label: string }[] = [
 ];
 
 export default function ProfileScreen() {
-  const { userId, email, displayName, avatarUrl, signOut } = useAuthStore();
+  const { userId, email, displayName, avatarUrl, signOut, role } = useAuthStore();
+  useScreenContext({ screen: 'profile', role: role as 'teacher' | 'student' | undefined });
   const {
     defaultResponseFormat,
     setDefaultResponseFormat,

@@ -11,46 +11,26 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
 {
     private static readonly string[] AllowedActions =
     [
-        "GO_BACK", "GO_HOME", "NAVIGATE_TO",
-        "READ_ALOUD", "SELECT_ALTERNATIVE", "SUBMIT_ANSWER",
-        "LIST_PENDING_ACTIVITIES", "UNKNOWN",
+        "GO_BACK", "GO_HOME", "NAVIGATE_TO", "OPEN_RESULTS",
+        "OPEN_JOIN_MODAL",
+        "CREATE_CLASSROOM", "CREATE_SUBJECT",
+        "GENERATE_INVITE_LINK", "START_ACTIVITY", "SUBMIT_ANSWER",
+        "READ_ALOUD", "SELECT_ALTERNATIVE",
+        "LIST_PENDING_ACTIVITIES", "LIST_CLASSROOMS", "LIST_ATTEMPTS",
+        "UNKNOWN",
     ];
-
-    private static readonly JsonElement ActionSchema = JsonDocument.Parse("""
-        {
-          "type": "object",
-          "properties": {
-            "action": {
-              "type": "string",
-              "enum": ["GO_BACK","GO_HOME","NAVIGATE_TO","READ_ALOUD","SELECT_ALTERNATIVE","SUBMIT_ANSWER","LIST_PENDING_ACTIVITIES","UNKNOWN"]
-            },
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "route": { "type": "string" },
-                "text": { "type": "string" },
-                "questionId": { "type": "string" },
-                "optionId": { "type": "string" },
-                "answerText": { "type": "string" }
-              }
-            },
-            "spokenFeedback": { "type": "string" },
-            "confidence": { "type": "number" }
-          },
-          "required": ["action","spokenFeedback","confidence"]
-        }
-        """).RootElement;
 
     public async Task<GeminiCommandResult> ProcessVoiceCommandAsync(
         string transcript,
         string screen,
         string? contextJson,
+        string? userDataContext,
         CancellationToken ct = default)
     {
         var opts = options.Value;
         var client = httpClientFactory.CreateClient("gemini");
 
-        var prompt = BuildPrompt(transcript, screen, contextJson);
+        var prompt = BuildPrompt(transcript, screen, contextJson, userDataContext);
 
         var requestBody = new
         {
@@ -108,7 +88,6 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         }
         catch (JsonException)
         {
-            // Gemini às vezes envolve JSON em markdown (```json ... ```) ou adiciona prefixo
             var jsonStart = text.IndexOf('{');
             var jsonEnd = text.LastIndexOf('}');
             if (jsonStart < 0 || jsonEnd < jsonStart)
@@ -134,25 +113,64 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         } // using doc
     }
 
-    private static string BuildPrompt(string transcript, string screen, string? contextJson)
+    private static string BuildPrompt(string transcript, string screen, string? contextJson, string? userDataContext)
     {
         var ctx = string.IsNullOrWhiteSpace(contextJson) ? "nenhum" : contextJson;
+        var userData = string.IsNullOrWhiteSpace(userDataContext) ? "Dados do usuário indisponíveis." : userDataContext;
         return $$"""
-            Você é um assistente de acessibilidade de um app educacional em português brasileiro.
+            Você é Dillo, um assistente de voz para um app educacional em português brasileiro.
             Responda SOMENTE com um objeto JSON válido, sem texto adicional, sem markdown, sem explicações.
 
+            === CONTEXTO ===
             Tela atual: {{screen}}
-            Contexto: {{ctx}}
+            Contexto da tela: {{ctx}}
+            {{userData}}
 
-            Ações possíveis (use exatamente esses valores para "action"):
-            GO_BACK, GO_HOME, NAVIGATE_TO, READ_ALOUD, SELECT_ALTERNATIVE, SUBMIT_ANSWER, LIST_PENDING_ACTIVITIES, UNKNOWN
+            === AÇÕES DISPONÍVEIS ===
+            Use exatamente estes valores para "action":
 
-            Comando do usuário: "{{transcript}}"
+            Navegação:
+            - GO_BACK: Volta para a tela anterior
+            - GO_HOME: Vai para a tela inicial (/(app)/(tabs))
+            - NAVIGATE_TO: Navega para rota específica. Parâmetro: route
+              Rotas válidas: /(app)/(tabs)/profile, /(app)/(tabs)/results
+            - OPEN_RESULTS: Abre a tela de resultados/notas (alunos)
 
-            Retorne exatamente este formato JSON (apenas o JSON, nada mais):
-            {"action":"<ação>","parameters":{"route":"","text":"","questionId":"","optionId":"","answerText":""},"spokenFeedback":"<texto em português para falar ao usuário>","confidence":0.9}
+            Ações em telas de aluno:
+            - OPEN_JOIN_MODAL: Abre modal para ingressar em turma (tela home-student)
+            - START_ACTIVITY: Inicia a atividade atual (tela student-activity)
+            - SUBMIT_ANSWER: Envia a resposta atual (telas respond-text, respond-audio, respond-oral)
 
-            Se não entender o comando, use action "UNKNOWN" e explique no spokenFeedback.
+            Ações em telas de professor:
+            - CREATE_CLASSROOM: Cria uma nova turma. Parâmetros: title (obrigatório), description (opcional)
+              Use quando professor diz "criar turma chamada X" ou "nova turma X"
+            - CREATE_SUBJECT: Cria nova matéria na turma atual. Parâmetros: name (obrigatório), description (opcional)
+              Use quando professor diz "criar matéria X" ou "nova matéria X" (apenas em tela teacher-classroom)
+            - GENERATE_INVITE_LINK: Gera link de convite para alunos (apenas em tela teacher-classroom)
+
+            Informação/Leitura:
+            - LIST_PENDING_ACTIVITIES: Lista atividades pendentes do aluno
+            - LIST_CLASSROOMS: Lista turmas do usuário
+            - LIST_ATTEMPTS: Lista tentativas/resultados do aluno
+            - READ_ALOUD: Lê o conteúdo da tela em voz alta
+            - SELECT_ALTERNATIVE: Seleciona uma alternativa. Parâmetros: optionId
+
+            - UNKNOWN: Não entendeu ou não pode realizar o comando
+
+            === REGRAS ===
+            1. Se o aluno pedir atividades pendentes mas "não está matriculado em nenhuma turma", use UNKNOWN e diga no spokenFeedback: "Você ainda não está em nenhuma turma. Peça ao professor um link de convite para ingressar."
+            2. Se o aluno pedir atividades pendentes e não houver nenhuma, use UNKNOWN e diga: "Você não tem atividades pendentes no momento."
+            3. Para CREATE_CLASSROOM, extraia o nome do título mesmo que diga "chamada X", "com nome X", etc.
+            4. Para CREATE_SUBJECT, só use se estiver na tela teacher-classroom.
+            5. Para LIST_PENDING_ACTIVITIES, inclua o número e nomes das atividades no spokenFeedback se disponível.
+            6. Ações de configuração de acessibilidade (fonte, contraste, etc.) são tratadas localmente — use UNKNOWN se o usuário pedir isso.
+            7. Responda sempre em português brasileiro no spokenFeedback.
+
+            === COMANDO DO USUÁRIO ===
+            "{{transcript}}"
+
+            Retorne exatamente este formato JSON:
+            {"action":"<ação>","parameters":{"route":"","title":"","description":"","name":"","text":"","questionId":"","optionId":"","answerText":""},"spokenFeedback":"<texto em português>","confidence":0.9}
             """;
     }
 

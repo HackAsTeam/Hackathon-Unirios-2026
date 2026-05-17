@@ -8,6 +8,7 @@ public interface IGeminiClient
         string transcript,
         string screen,
         string? contextJson,
+        string? userDataContext,
         CancellationToken ct = default);
 }
 

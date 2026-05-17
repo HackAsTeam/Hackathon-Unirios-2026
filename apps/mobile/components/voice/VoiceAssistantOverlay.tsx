@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   View,
@@ -22,6 +22,7 @@ import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voi
 import { useAccessibilityStore } from '../../store/acessibility';
 import { requestSTTPermission, startListening, stopListening } from '../../lib/stt';
 import { dispatch } from '../../lib/voiceCommandDispatcher';
+import { isSpeaking } from '../../lib/tts';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../lib/colors';
 
@@ -34,10 +35,11 @@ interface Props {
 const ACCENT = colors.formats.oral;
 
 export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Props) {
-  const { status, transcript, setStatus, setTranscript, setLastCommand, currentContext, reset } =
+  const { status, transcript, setStatus, setTranscript, setLastCommand, currentContext, reset, setPendingConfirmAction } =
     useVoiceCommandStore();
   const { reducedMotion } = useAccessibilityStore();
   const token = useAuthStore((s) => s.token);
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
   const stopSTTRef = useRef<(() => void) | null>(null);
   const dot1 = useSharedValue(0.3);
@@ -45,7 +47,10 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
   const dot3 = useSharedValue(0.3);
 
   useEffect(() => {
-    if (visible) startSession();
+    if (visible) {
+      setAwaitingConfirm(false);
+      startSession();
+    }
     return () => cleanup();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -97,6 +102,8 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
 
     if (!currentTranscript.trim()) {
       setStatus('idle');
+      setAwaitingConfirm(false);
+      setPendingConfirmAction(null);
       onClose();
       return;
     }
@@ -107,16 +114,32 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
     setLastCommand(result);
     setStatus('done');
 
-    setTimeout(() => {
-      reset();
-      onClose();
-    }, 1800);
+    if (result.type === 'CONFIRM') {
+      // Wait until TTS finishes, then add a 600ms buffer before STT starts
+      const poll = setInterval(async () => {
+        if (await isSpeaking()) return;
+        clearInterval(poll);
+        setTimeout(() => {
+          setAwaitingConfirm(true);
+          reset();
+          startSession();
+        }, 600);
+      }, 100);
+    } else {
+      setAwaitingConfirm(false);
+      setTimeout(() => {
+        reset();
+        onClose();
+      }, 1800);
+    }
   }
 
   function handleCancel() {
     stopListening();
     cleanup();
     reset();
+    setAwaitingConfirm(false);
+    setPendingConfirmAction(null);
     onClose();
   }
 
@@ -205,10 +228,10 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
             </>
           )}
 
-          {status === 'done' && lastCmd && (
+          {status === 'done' && lastCmd && !awaitingConfirm && (
             <>
               <Ionicons
-                name={lastCmd.type === 'COMMAND' ? 'checkmark-circle' : 'help-circle'}
+                name={lastCmd.type === 'COMMAND' ? 'checkmark-circle' : lastCmd.type === 'CONFIRM' ? 'help-circle' : 'help-circle'}
                 size={48}
                 color={lastCmd.type === 'COMMAND' ? colors.success : '#f59e0b'}
               />
@@ -218,6 +241,32 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
               >
                 {lastCmd.speak}
               </Text>
+            </>
+          )}
+
+          {awaitingConfirm && status === 'listening' && (
+            <>
+              <Ionicons name="alert-circle-outline" size={36} color="#f59e0b" />
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#111', textAlign: 'center' }}>
+                Confirmar saída?
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                {[dot1Style, dot2Style, dot3Style].map((s, i) => (
+                  <Animated.View
+                    key={i}
+                    style={[{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#f59e0b' }, s]}
+                  />
+                ))}
+              </View>
+              <Text style={{ fontSize: 14, color: '#6b7280', textAlign: 'center' }}>
+                Diga "confirmar" ou "não"
+              </Text>
+              <TouchableOpacity
+                onPress={handleCancel}
+                style={{ marginTop: 4, paddingVertical: 10, paddingHorizontal: 28, borderRadius: 14, borderWidth: 1, borderColor: '#d1d5db' }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#6b7280' }}>Cancelar</Text>
+              </TouchableOpacity>
             </>
           )}
         </Animated.View>

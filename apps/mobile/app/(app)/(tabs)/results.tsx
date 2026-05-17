@@ -6,6 +6,7 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { Header } from '../../../components/ui/Header';
 import { useColors } from '../../../hooks/useColors';
 import { useScale } from '../../../hooks/useScale';
+import { useScreenContext } from '../../../hooks/useScreenContext';
 import type { AttemptSummary } from '../../../types/attempt';
 
 function Section({ title, items }: { title: string; items: AttemptSummary[] }) {
@@ -32,6 +33,7 @@ function Section({ title, items }: { title: string; items: AttemptSummary[] }) {
 }
 
 export default function ResultsScreen() {
+  useScreenContext({ screen: 'results', role: 'student' });
   const { data: attempts, isLoading, isError, refetch } = useMyAttempts();
   const c = useColors();
   const scale = useScale();

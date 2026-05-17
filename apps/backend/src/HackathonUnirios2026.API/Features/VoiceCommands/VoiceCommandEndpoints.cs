@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.VoiceCommands.Commands;
 using HackathonUnirios2026.Application.Features.VoiceCommands.DTOs;
 using MediatR;
@@ -17,10 +18,12 @@ public sealed class VoiceCommandEndpoints : IEndpoint
 
     private static async Task<IResult> ProcessAsync(
         VoiceCommandRequest request,
+        ClaimsPrincipal user,
         ISender sender,
         CancellationToken ct)
     {
-        var result = await sender.Send(new ProcessVoiceCommandCommand(request), ct);
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await sender.Send(new ProcessVoiceCommandCommand(request, userId), ct);
         return Results.Ok(result);
     }
 }
