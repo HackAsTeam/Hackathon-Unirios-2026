@@ -10,11 +10,12 @@ interface AuthState {
   email: string | null;
   displayName: string | null;
   avatarUrl: string | null;
+  role: string | null;
   isSignedIn: boolean;
   hydrated: boolean;
   pendingInviteToken: string | null;
   hydrate: () => Promise<void>;
-  signIn: (userId: string, token: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null) => Promise<void>;
+  signIn: (userId: string, token: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null, role?: string | null) => Promise<void>;
   signOut: () => Promise<void>;
   setPendingInviteToken: (token: string | null) => void;
 }
@@ -25,6 +26,7 @@ type PersistedAuthState = {
   email?: string | null;
   displayName?: string | null;
   avatarUrl?: string | null;
+  role?: string | null;
 };
 
 async function getStoredAuth() {
@@ -60,6 +62,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   email: null,
   displayName: null,
   avatarUrl: null,
+  role: null,
   isSignedIn: false,
   hydrated: false,
   pendingInviteToken: null,
@@ -79,20 +82,21 @@ export const useAuthStore = create<AuthState>((set) => ({
         email: auth.email ?? null,
         displayName: auth.displayName ?? null,
         avatarUrl: auth.avatarUrl ?? null,
+        role: auth.role ?? null,
         isSignedIn: Boolean(auth.userId && auth.token),
         hydrated: true,
       });
     } catch {
       await deleteStoredAuth();
-      set({ userId: null, token: null, email: null, displayName: null, avatarUrl: null, isSignedIn: false, hydrated: true });
+      set({ userId: null, token: null, email: null, displayName: null, avatarUrl: null, role: null, isSignedIn: false, hydrated: true });
     }
   },
-  signIn: async (userId, token, email, displayName, avatarUrl) => {
-    await setStoredAuth({ userId, token, email, displayName, avatarUrl });
-    set({ userId, token, email: email ?? null, displayName: displayName ?? null, avatarUrl: avatarUrl ?? null, isSignedIn: true, hydrated: true });
+  signIn: async (userId, token, email, displayName, avatarUrl, role) => {
+    await setStoredAuth({ userId, token, email, displayName, avatarUrl, role });
+    set({ userId, token, email: email ?? null, displayName: displayName ?? null, avatarUrl: avatarUrl ?? null, role: role ?? null, isSignedIn: true, hydrated: true });
   },
   signOut: async () => {
     await deleteStoredAuth();
-    set({ userId: null, token: null, email: null, displayName: null, avatarUrl: null, isSignedIn: false, hydrated: true });
+    set({ userId: null, token: null, email: null, displayName: null, avatarUrl: null, role: null, isSignedIn: false, hydrated: true });
   },
 }));

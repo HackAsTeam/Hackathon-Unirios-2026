@@ -22,11 +22,11 @@ export default function SignUpScreen() {
     setError("");
     setLoading(true);
     try {
-      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string }>(
+      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string; role: string }>(
         "/auth/register",
         { method: "POST", body: { email, password, displayName } },
       );
-      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
+      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
       router.replace("/onboarding");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar");

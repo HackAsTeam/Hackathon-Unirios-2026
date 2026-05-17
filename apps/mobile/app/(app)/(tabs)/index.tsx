@@ -12,7 +12,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../../store/auth';
-import { useOnboardingStore } from '../../../store/onboarding';
 import { Header } from '@/components/ui/Header';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -483,8 +482,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const displayName = useAuthStore((s) => s.displayName);
-  const role = useOnboardingStore((s) => s.role);
-  const isTeacher = role === 'teacher';
+  const role = useAuthStore((s) => s.role);
+  const isTeacher = role?.toLowerCase() === 'teacher';
   const roleLabel = isTeacher ? 'Professor' : 'Aluno';
 
   if (isTeacher) {

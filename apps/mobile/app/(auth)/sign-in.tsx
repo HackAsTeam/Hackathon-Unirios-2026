@@ -36,11 +36,11 @@ export default function SignInScreen() {
     setError("");
     setLoading(true);
     try {
-      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string }>(
+      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string; role: string }>(
         "/auth/login",
         { method: "POST", body: { email, password } },
       );
-      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
+      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
       redirectAfterLogin();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao fazer login");

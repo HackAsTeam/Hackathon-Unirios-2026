@@ -69,7 +69,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
       body: { idToken },
     })
       .then(async (data) => {
-        await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
+        await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
         onSuccess?.();
       })
       .catch((err: unknown) => {
@@ -100,7 +100,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
         body: { idToken },
       });
 
-      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl);
+      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
       return data;
     } catch (err: unknown) {
       if (isErrorWithCode(err)) {
