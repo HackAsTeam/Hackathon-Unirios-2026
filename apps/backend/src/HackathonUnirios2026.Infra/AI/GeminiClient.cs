@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Linq;
 using HackathonUnirios2026.Domain.AI;
 using Microsoft.Extensions.Options;
 
@@ -17,15 +18,24 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
 
     private static readonly JsonElement ActionSchema = JsonDocument.Parse("""
         {
-          "type": "OBJECT",
+          "type": "object",
           "properties": {
             "action": {
-              "type": "STRING",
+              "type": "string",
               "enum": ["GO_BACK","GO_HOME","NAVIGATE_TO","READ_ALOUD","SELECT_ALTERNATIVE","SUBMIT_ANSWER","LIST_PENDING_ACTIVITIES","UNKNOWN"]
             },
-            "parameters": { "type": "OBJECT" },
-            "spokenFeedback": { "type": "STRING" },
-            "confidence": { "type": "NUMBER" }
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "route": { "type": "string" },
+                "text": { "type": "string" },
+                "questionId": { "type": "string" },
+                "optionId": { "type": "string" },
+                "answerText": { "type": "string" }
+              }
+            },
+            "spokenFeedback": { "type": "string" },
+            "confidence": { "type": "number" }
           },
           "required": ["action","spokenFeedback","confidence"]
         }
@@ -48,8 +58,7 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
             generationConfig = new
             {
                 responseMimeType = "application/json",
-                responseSchema = ActionSchema,
-                maxOutputTokens = 256,
+                maxOutputTokens = 512,
                 temperature = 0.1,
             }
         };
@@ -58,10 +67,11 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         using var response = await client.PostAsJsonAsync(url, requestBody, ct);
 
         var responseBody = await response.Content.ReadAsStringAsync(ct);
+        Console.WriteLine($"[GeminiClient] HTTP {(int)response.StatusCode}, body ({responseBody.Length} chars): {responseBody[..Math.Min(500, responseBody.Length)]}");
 
         if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"[GeminiClient] HTTP {(int)response.StatusCode}: {responseBody[..Math.Min(200, responseBody.Length)]}");
+            Console.Error.WriteLine($"[GeminiClient] falha HTTP {(int)response.StatusCode}");
             return UnknownResult("Não consegui processar. Tente novamente.");
         }
 
@@ -79,14 +89,35 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         using (doc)
         {
 
-        var text = doc.RootElement
+        var parts = doc.RootElement
             .GetProperty("candidates")[0]
             .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString() ?? "{}";
+            .GetProperty("parts");
 
-        using var parsed = JsonDocument.Parse(text);
+        var text = string.Concat(
+            Enumerable.Range(0, parts.GetArrayLength())
+                .Select(i => parts[i].TryGetProperty("text", out var t) ? t.GetString() ?? "" : "")
+        );
+
+        Console.WriteLine($"[GeminiClient] text recebido ({text.Length} chars): {text}");
+
+        JsonDocument parsed;
+        try
+        {
+            parsed = JsonDocument.Parse(text);
+        }
+        catch (JsonException)
+        {
+            // Gemini às vezes envolve JSON em markdown (```json ... ```) ou adiciona prefixo
+            var jsonStart = text.IndexOf('{');
+            var jsonEnd = text.LastIndexOf('}');
+            if (jsonStart < 0 || jsonEnd < jsonStart)
+                return UnknownResult("Não entendi o comando. Pode repetir?");
+            try { parsed = JsonDocument.Parse(text[jsonStart..(jsonEnd + 1)]); }
+            catch { return UnknownResult("Não entendi o comando. Pode repetir?"); }
+        }
+
+        using var _ = parsed;
         var root = parsed.RootElement;
 
         var action = root.TryGetProperty("action", out var a) ? a.GetString() ?? "UNKNOWN" : "UNKNOWN";
@@ -108,25 +139,20 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         var ctx = string.IsNullOrWhiteSpace(contextJson) ? "nenhum" : contextJson;
         return $$"""
             Você é um assistente de acessibilidade de um app educacional em português brasileiro.
-            O usuário pode dar comandos de voz para navegar e interagir com o app.
+            Responda SOMENTE com um objeto JSON válido, sem texto adicional, sem markdown, sem explicações.
 
             Tela atual: {{screen}}
-            Contexto da tela: {{ctx}}
+            Contexto: {{ctx}}
 
-            Ações disponíveis:
-            - GO_BACK: voltar para a tela anterior
-            - GO_HOME: ir para a tela inicial
-            - NAVIGATE_TO { "route": "..." }: navegar para uma rota específica
-            - READ_ALOUD { "text": "..." }: ler um texto em voz alta
-            - SELECT_ALTERNATIVE { "questionId": "...", "optionId": "..." }: marcar alternativa em questão de múltipla escolha
-            - SUBMIT_ANSWER { "questionId": "...", "answerText": "..." }: enviar resposta de questão
-            - LIST_PENDING_ACTIVITIES: listar atividades pendentes
-            - UNKNOWN: quando não entender o comando
+            Ações possíveis (use exatamente esses valores para "action"):
+            GO_BACK, GO_HOME, NAVIGATE_TO, READ_ALOUD, SELECT_ALTERNATIVE, SUBMIT_ANSWER, LIST_PENDING_ACTIVITIES, UNKNOWN
 
             Comando do usuário: "{{transcript}}"
 
-            Retorne JSON com a ação correspondente, parâmetros necessários, feedback em português para falar ao usuário, e sua confiança (0.0 a 1.0).
-            Se a ação não for possível na tela atual ou não entender, use UNKNOWN com explicação amigável no spokenFeedback.
+            Retorne exatamente este formato JSON (apenas o JSON, nada mais):
+            {"action":"<ação>","parameters":{"route":"","text":"","questionId":"","optionId":"","answerText":""},"spokenFeedback":"<texto em português para falar ao usuário>","confidence":0.9}
+
+            Se não entender o comando, use action "UNKNOWN" e explique no spokenFeedback.
             """;
     }
 
