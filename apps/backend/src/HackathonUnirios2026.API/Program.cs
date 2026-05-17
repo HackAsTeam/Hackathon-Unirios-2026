@@ -88,7 +88,10 @@ if (app.Environment.IsDevelopment())
     app.MapApiDocumentation();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("Expo");
 app.UseAuthentication();
 app.UseAuthorization();
