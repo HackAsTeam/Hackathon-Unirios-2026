@@ -14,7 +14,8 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         "GO_BACK", "GO_HOME", "NAVIGATE_TO", "OPEN_RESULTS",
         "OPEN_JOIN_MODAL",
         "CREATE_CLASSROOM", "CREATE_SUBJECT",
-        "GENERATE_INVITE_LINK", "START_ACTIVITY", "SUBMIT_ANSWER",
+        "GENERATE_INVITE_LINK", "NAVIGATE_TO_CLASSROOM_AND_INVITE",
+        "START_ACTIVITY", "SUBMIT_ANSWER",
         "READ_ALOUD", "SELECT_ALTERNATIVE",
         "LIST_PENDING_ACTIVITIES", "LIST_CLASSROOMS", "LIST_ATTEMPTS",
         "UNKNOWN",
@@ -141,12 +142,16 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
             - START_ACTIVITY: Inicia a atividade atual (tela student-activity)
             - SUBMIT_ANSWER: Envia a resposta atual (telas respond-text, respond-audio, respond-oral)
 
-            Ações em telas de professor:
+            Ações de professor (disponíveis em qualquer tela quando o papel do usuário for professor):
             - CREATE_CLASSROOM: Cria uma nova turma. Parâmetros: title (obrigatório), description (opcional)
-              Use quando professor diz "criar turma chamada X" ou "nova turma X"
+              Use quando professor diz "criar turma X", "crie uma turma X", "nova turma X", "criar turma de X", "criar turma chamada X"
             - CREATE_SUBJECT: Cria nova matéria na turma atual. Parâmetros: name (obrigatório), description (opcional)
               Use quando professor diz "criar matéria X" ou "nova matéria X" (apenas em tela teacher-classroom)
             - GENERATE_INVITE_LINK: Gera link de convite para alunos (apenas em tela teacher-classroom)
+            - NAVIGATE_TO_CLASSROOM_AND_INVITE: Navega para uma turma específica e gera link de convite.
+              Use quando professor pedir convite para uma turma pelo nome a partir de qualquer tela que não seja teacher-classroom.
+              Parâmetro: classroomName (nome da turma mencionada pelo professor)
+              Exemplo: "criar link de convite para turma de matemática" → {"action":"NAVIGATE_TO_CLASSROOM_AND_INVITE","parameters":{"classroomName":"matemática"},"spokenFeedback":"Indo para a turma de matemática e gerando o convite.","confidence":0.95}
 
             Informação/Leitura:
             - LIST_PENDING_ACTIVITIES: Lista atividades pendentes do aluno
@@ -160,11 +165,13 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
             === REGRAS ===
             1. Se o aluno pedir atividades pendentes mas "não está matriculado em nenhuma turma", use UNKNOWN e diga no spokenFeedback: "Você ainda não está em nenhuma turma. Peça ao professor um link de convite para ingressar."
             2. Se o aluno pedir atividades pendentes e não houver nenhuma, use UNKNOWN e diga: "Você não tem atividades pendentes no momento."
-            3. Para CREATE_CLASSROOM, extraia o nome do título mesmo que diga "chamada X", "com nome X", etc.
+            3. Para CREATE_CLASSROOM, extraia o nome do título mesmo que diga "chamada X", "com nome X", "de X", etc. CREATE_CLASSROOM pode ser usado de qualquer tela quando o usuário for professor.
             4. Para CREATE_SUBJECT, só use se estiver na tela teacher-classroom.
             5. Para LIST_PENDING_ACTIVITIES, inclua o número e nomes das atividades no spokenFeedback se disponível.
             6. Ações de configuração de acessibilidade (fonte, contraste, etc.) são tratadas localmente — use UNKNOWN se o usuário pedir isso.
             7. Responda sempre em português brasileiro no spokenFeedback.
+            8. Se o usuário for professor e pedir para criar uma turma (independente da tela atual), use CREATE_CLASSROOM.
+            9. Se o professor pedir para gerar/criar link de convite mencionando o nome de uma turma e não estiver na tela teacher-classroom, use SEMPRE NAVIGATE_TO_CLASSROOM_AND_INVITE — nunca retorne UNKNOWN nesse caso.
 
             === COMANDO DO USUÁRIO ===
             "{{transcript}}"

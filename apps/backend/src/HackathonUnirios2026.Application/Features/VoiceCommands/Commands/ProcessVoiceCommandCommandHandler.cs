@@ -32,9 +32,38 @@ public sealed class ProcessVoiceCommandCommandHandler(IGeminiClient geminiClient
             userContext,
             ct);
 
+        if (result.Action == "NAVIGATE_TO_CLASSROOM_AND_INVITE")
+            return await ResolveNavigateAndInviteAsync(cmd.UserId, result, ct);
+
         var type = result.Action == "UNKNOWN" ? "UNKNOWN" : "COMMAND";
 
         return new VoiceCommandResponse(type, result.Action, result.Parameters, result.SpokenFeedback);
+    }
+
+    private async Task<VoiceCommandResponse> ResolveNavigateAndInviteAsync(
+        string userId,
+        GeminiCommandResult result,
+        CancellationToken ct)
+    {
+        var classroomName = result.Parameters.HasValue &&
+            result.Parameters.Value.TryGetProperty("classroomName", out var cn)
+                ? cn.GetString()
+                : null;
+
+        if (string.IsNullOrWhiteSpace(classroomName))
+            return new VoiceCommandResponse("UNKNOWN", null, null, "Não consegui identificar o nome da turma. Pode repetir?");
+
+        var nameLower = classroomName.ToLower();
+        var classroom = await db.Classrooms
+            .AsNoTracking()
+            .Where(c => c.TeacherId == userId && c.Title.ToLower().Contains(nameLower))
+            .FirstOrDefaultAsync(ct);
+
+        if (classroom is null)
+            return new VoiceCommandResponse("UNKNOWN", null, null, $"Não encontrei uma turma chamada \"{classroomName}\". Verifique o nome e tente novamente.");
+
+        var payload = System.Text.Json.JsonSerializer.SerializeToElement(new { classroomId = classroom.Id.ToString() });
+        return new VoiceCommandResponse("COMMAND", "NAVIGATE_TO_CLASSROOM_AND_INVITE", payload, result.SpokenFeedback);
     }
 
     private async Task<string> BuildUserContextAsync(
