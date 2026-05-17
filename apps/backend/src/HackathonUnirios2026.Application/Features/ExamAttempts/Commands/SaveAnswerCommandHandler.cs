@@ -35,16 +35,29 @@ public sealed class SaveAnswerCommandHandler(AppDbContext db, IHttpContextAccess
             {
                 AttemptId = cmd.AttemptId,
                 QuestionId = cmd.QuestionId,
-                AnswerText = cmd.AnswerText,
-                Format = cmd.Format,
-                AnsweredAt = DateTime.UtcNow,
             };
             db.QuestionAnswers.Add(answer);
+        }
+
+        if (cmd.SelectedOptionId.HasValue)
+        {
+            var question = await db.Questions
+                .Include(q => q.Options)
+                .FirstOrDefaultAsync(q => q.Id == cmd.QuestionId, ct);
+            var option = question?.Options.FirstOrDefault(o => o.Id == cmd.SelectedOptionId.Value);
+            if (option is not null)
+            {
+                answer.SelectedOptionId = option.Id;
+                answer.Score = option.IsCorrect ? 1 : 0;
+                answer.AnswerText = null;
+                answer.Format = null;
+            }
         }
         else
         {
             answer.AnswerText = cmd.AnswerText;
             answer.Format = cmd.Format;
+            answer.SelectedOptionId = null;
             answer.AnsweredAt = DateTime.UtcNow;
         }
 
