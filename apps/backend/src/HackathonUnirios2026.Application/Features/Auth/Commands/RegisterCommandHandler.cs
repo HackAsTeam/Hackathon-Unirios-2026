@@ -20,17 +20,12 @@ public sealed class RegisterCommandHandler(
             throw new AuthValidationException("Email is already registered.");
         }
 
-        var role = Enum.TryParse<UserRole>(cmd.Role, ignoreCase: true, out var parsed)
-            ? parsed
-            : UserRole.Student;
-
         var user = new ApplicationUser
         {
             UserName = email,
             Email = email,
             LockoutEnabled = true,
             DisplayName = string.IsNullOrWhiteSpace(cmd.DisplayName) ? null : cmd.DisplayName.Trim(),
-            Role = role,
         };
 
         var result = await userManager.CreateAsync(user, cmd.Password);
