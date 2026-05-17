@@ -187,17 +187,17 @@ export default function ProfileScreen() {
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text.primary }}>
+              <Text style={{ fontSize: scale(14), fontWeight: '600', color: c.text.primary }}>
                 Assistente "Hey Dillo"
               </Text>
-              <Text style={{ fontSize: 12, color: colors.text.secondary, marginTop: 2 }}>
+              <Text style={{ fontSize: scale(12), color: c.text.secondary, marginTop: 2 }}>
                 Fique ouvindo o comando de voz em todo o app
               </Text>
             </View>
             <Switch
               value={wakeWordEnabled}
               onValueChange={setWakeWordEnabled}
-              trackColor={{ true: colors.primary, false: colors.border }}
+              trackColor={{ true: c.primary, false: c.border }}
               thumbColor="#fff"
               accessibilityLabel='Assistente de voz Hey Dillo sempre ativo'
               accessibilityHint='Quando ativo, diga Hey Dillo a qualquer momento para abrir o assistente'
