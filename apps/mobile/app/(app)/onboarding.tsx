@@ -17,7 +17,7 @@ interface AuthResponse {
 export default function OnboardingScreen() {
   const router = useRouter();
   const { completed, setRole } = useOnboardingStore();
-  const { token, userId, email, displayName, avatarUrl, signIn } = useAuthStore();
+  const { token, signIn } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
