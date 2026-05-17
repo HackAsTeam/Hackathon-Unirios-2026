@@ -28,6 +28,7 @@ export default function TextResponseScreen() {
   const { highContrast, reducedMotion, fontSizeScale } = useAccessibilityStore();
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [mcAnswers, setMcAnswers] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
 
   const { data: exam, isLoading } = useQuery({
@@ -43,12 +44,22 @@ export default function TextResponseScreen() {
         body: { examId: id },
       });
       for (const q of exam?.questions ?? []) {
-        const text = answers[q.id]?.trim();
-        if (text) {
-          await apiFetch(`/attempts/${attempt.id}/answers`, {
-            method: 'POST', token: token!,
-            body: { questionId: q.id, answerText: text, format: 'Text' },
-          });
+        if (q.options.length > 0) {
+          const selectedOptionId = mcAnswers[q.id];
+          if (selectedOptionId) {
+            await apiFetch(`/attempts/${attempt.id}/answers`, {
+              method: 'POST', token: token!,
+              body: { questionId: q.id, selectedOptionId },
+            });
+          }
+        } else {
+          const text = answers[q.id]?.trim();
+          if (text) {
+            await apiFetch(`/attempts/${attempt.id}/answers`, {
+              method: 'POST', token: token!,
+              body: { questionId: q.id, answerText: text, format: 'Text' },
+            });
+          }
         }
       }
       await apiFetch(`/attempts/${attempt.id}/submit`, { method: 'POST', token: token! });
@@ -63,7 +74,11 @@ export default function TextResponseScreen() {
   const accentColor = colors.formats.text;
   const baseFontSize = 15 * fontSizeScale;
 
-  const allAnswered = (exam?.questions ?? []).every((q) => (answers[q.id] ?? '').trim().length > 0);
+  const allAnswered = (exam?.questions ?? []).every((q) =>
+    q.options.length > 0
+      ? !!mcAnswers[q.id]
+      : (answers[q.id] ?? '').trim().length > 0
+  );
 
   if (done) {
     return (
@@ -143,29 +158,67 @@ export default function TextResponseScreen() {
                   </Text>
                 </View>
 
-                <TextInput
-                  value={answers[q.id] ?? ''}
-                  onChangeText={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-                  multiline
-                  textAlignVertical="top"
-                  placeholder="Digite sua resposta aqui…"
-                  placeholderTextColor={colors.text.tertiary}
-                  accessibilityLabel={`Resposta para pergunta ${i + 1}`}
-                  style={{
-                    backgroundColor: highContrast ? '#111' : colors.surface,
-                    borderRadius: 16,
-                    padding: 18,
-                    borderWidth: 1.5,
-                    borderColor: (answers[q.id] ?? '').trim() ? accentColor + '50' : colors.border,
-                    fontSize: baseFontSize,
-                    color: textPrimary,
-                    lineHeight: baseFontSize * 1.6,
-                    minHeight: 120,
-                  }}
-                />
-                <Text style={{ fontSize: 12, color: textSecondary, textAlign: 'right', marginTop: 4 }}>
-                  {(answers[q.id] ?? '').length} caracteres
-                </Text>
+                {q.options.length > 0 ? (
+                  <View style={{ gap: 8 }}>
+                    {[...q.options].sort((a, b) => a.orderIndex - b.orderIndex).map((opt) => {
+                      const selected = mcAnswers[q.id] === opt.id;
+                      return (
+                        <TouchableOpacity
+                          key={opt.id}
+                          onPress={() => setMcAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                          style={{
+                            backgroundColor: selected ? accentColor + '15' : (highContrast ? '#111' : colors.surface),
+                            borderRadius: 12,
+                            padding: 14,
+                            borderWidth: 1.5,
+                            borderColor: selected ? accentColor : colors.border,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 12,
+                          }}
+                        >
+                          <View style={{
+                            width: 20, height: 20, borderRadius: 10,
+                            borderWidth: 2,
+                            borderColor: selected ? accentColor : colors.text.tertiary,
+                            alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {selected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: accentColor }} />}
+                          </View>
+                          <Text style={{ fontSize: baseFontSize, color: textPrimary, flex: 1, lineHeight: baseFontSize * 1.4 }}>
+                            {opt.text}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <>
+                    <TextInput
+                      value={answers[q.id] ?? ''}
+                      onChangeText={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                      multiline
+                      textAlignVertical="top"
+                      placeholder="Digite sua resposta aqui…"
+                      placeholderTextColor={colors.text.tertiary}
+                      accessibilityLabel={`Resposta para pergunta ${i + 1}`}
+                      style={{
+                        backgroundColor: highContrast ? '#111' : colors.surface,
+                        borderRadius: 16,
+                        padding: 18,
+                        borderWidth: 1.5,
+                        borderColor: (answers[q.id] ?? '').trim() ? accentColor + '50' : colors.border,
+                        fontSize: baseFontSize,
+                        color: textPrimary,
+                        lineHeight: baseFontSize * 1.6,
+                        minHeight: 120,
+                      }}
+                    />
+                    <Text style={{ fontSize: 12, color: textSecondary, textAlign: 'right', marginTop: 4 }}>
+                      {(answers[q.id] ?? '').length} caracteres
+                    </Text>
+                  </>
+                )}
               </Animated.View>
             ))}
           </View>
