@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, Modal, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Share, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/auth';
 import { useOnboardingStore } from '../../../store/onboarding';
@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { colors } from '@/lib/colors';
 import { apiFetch } from '../../../lib/api';
-import type { Classroom, Subject, Exam } from '../../../types/classroom';
+import type { Classroom, Subject, Exam, InvitationLinkResponse } from '../../../types/classroom';
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
@@ -169,13 +169,37 @@ function ClassroomCard({ classroom, expanded, selectedSubjectId, onToggle, onSel
   const token = useAuthStore((s) => s.token);
   const { data: exams, isLoading: examsLoading } = useClassroomExams(expanded ? classroom.id : null, token);
   const hasSubjects = classroom.subjects.length > 0;
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
+
+  async function handleShare() {
+    if (!token) return;
+    setIsGeneratingInvite(true);
+    try {
+      const res = await apiFetch<InvitationLinkResponse>('/invitations', {
+        method: 'POST',
+        token,
+        body: { classroomId: classroom.id },
+      });
+      const data = res as any;
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5099';
+      const inviteUrl = data.inviteUrl ?? data.InviteUrl ?? `${baseUrl}/i/${data.token}`;
+      setInviteUrl(inviteUrl);
+      Share.share({ message: inviteUrl, title: `Entre na turma "${classroom.title}"` }).catch(() => {});
+    } catch (err) {
+      console.error('generateInvite error:', err);
+      Alert.alert('Erro', 'Nao foi possivel gerar o link de convite.');
+    } finally {
+      setIsGeneratingInvite(false);
+    }
+  }
 
   return (
     <Card variant="elevated" onPress={onToggle}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flex: 1 }}>
           <CardHeader title={classroom.title} subtitle={
-            classroom.description ?? `${classroom.subjects.length} matéria${classroom.subjects.length !== 1 ? 's' : ''}`
+            !expanded && inviteUrl ? 'Link de convite ativo' : (classroom.description ?? `${classroom.subjects.length} matéria${classroom.subjects.length !== 1 ? 's' : ''}`)
           } />
         </View>
         <Text style={{ fontSize: 18, color: colors.text.tertiary }}>{expanded ? '▾' : '▸'}</Text>
@@ -247,6 +271,26 @@ function ClassroomCard({ classroom, expanded, selectedSubjectId, onToggle, onSel
               style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, alignItems: 'center', borderWidth: 1.5, borderColor: colors.primaryLight, borderStyle: 'dashed' }}>
               <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '600' }}>+ Nova atividade</Text>
             </TouchableOpacity>
+          )}
+
+          <TouchableOpacity onPress={handleShare}
+            style={{ backgroundColor: colors.surfaceAlt, borderRadius: 12, padding: 16, alignItems: 'center', gap: 8 }}>
+            {isGeneratingInvite ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '600' }}>
+                {inviteUrl ? 'Compartilhar novamente' : 'Compartilhar turma'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {inviteUrl && (
+            <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.borderLight }}>
+              <Text style={{ fontSize: 12, color: colors.text.tertiary, marginBottom: 4 }}>Link de convite:</Text>
+              <TouchableOpacity onPress={() => Share.share({ message: inviteUrl!, title: `Entre na turma "${classroom.title}"` })}>
+                <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }} numberOfLines={2}>{inviteUrl}</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       )}

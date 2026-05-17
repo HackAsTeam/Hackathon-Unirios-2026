@@ -26,4 +26,15 @@ interface Exam {
   createdAt: string;
 }
 
-export type { Classroom, Subject, Exam };
+interface InvitationLinkResponse {
+  id: string;
+  token: string;
+  inviteUrl: string;
+  classroomId: string;
+  expiresAt: string | null;
+  useCount: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type { Classroom, Subject, Exam, InvitationLinkResponse };
