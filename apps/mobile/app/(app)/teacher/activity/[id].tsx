@@ -13,6 +13,8 @@ import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
 import type { ExamDetail } from '@/types/classroom';
+import type { ActivityAttemptSummary, AttemptStatus } from '@/types/attempt';
+import { AttemptStatusBadge } from '@/components/student/AttemptStatusBadge';
 
 export default function TeacherActivityDetailScreen() {
   const { id, subjectId, classroomId, name } = useLocalSearchParams<{ id: string; subjectId: string; classroomId: string; name: string }>();
@@ -28,6 +30,12 @@ export default function TeacherActivityDetailScreen() {
   const { data: activity, isLoading, isError } = useQuery({
     queryKey: ['activity', id],
     queryFn: () => apiFetch<ExamDetail>(`/activities/${id}`, { token: token! }),
+    enabled: !!id && !!token,
+  });
+
+  const { data: attempts, isLoading: attemptsLoading } = useQuery({
+    queryKey: ['activity', id, 'attempts'],
+    queryFn: () => apiFetch<ActivityAttemptSummary[]>(`/activities/${id}/attempts`, { token: token! }),
     enabled: !!id && !!token,
   });
 
@@ -178,6 +186,42 @@ export default function TeacherActivityDetailScreen() {
                 )}
               </View>
             ))}
+
+          <View style={{ marginTop: 8 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text.primary, marginBottom: 12 }}>
+              Respostas dos Alunos
+            </Text>
+            {attemptsLoading && <ActivityIndicator color={colors.primary} size="small" />}
+            {!attemptsLoading && (!attempts || attempts.length === 0) && (
+              <View style={{ backgroundColor: colors.surfaceAlt, borderRadius: 16, padding: 20, alignItems: 'center', gap: 6 }}>
+                <Ionicons name="people-outline" size={28} color={colors.text.tertiary} />
+                <Text style={{ fontSize: 14, color: colors.text.tertiary, textAlign: 'center' }}>
+                  Nenhuma resposta submetida ainda
+                </Text>
+              </View>
+            )}
+            {attempts?.map((a) => (
+              <TouchableOpacity
+                key={a.id}
+                onPress={() => router.push(`/teacher/attempt/${a.id}?activityId=${id}&studentName=${encodeURIComponent(a.studentName ?? 'Aluno')}`)}
+                style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: colors.borderLight, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.primary }}>
+                    {(a.studentName ?? 'A')[0].toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text.primary }}>{a.studentName ?? 'Aluno'}</Text>
+                  <Text style={{ fontSize: 12, color: colors.text.tertiary, marginTop: 2 }}>
+                    Enviado em {new Date(a.submittedAt ?? a.startedAt).toLocaleDateString('pt-BR')}
+                  </Text>
+                </View>
+                <AttemptStatusBadge status={a.status as AttemptStatus} />
+                <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
       )}
     </View>
