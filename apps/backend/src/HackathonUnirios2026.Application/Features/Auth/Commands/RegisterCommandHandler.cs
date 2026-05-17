@@ -34,7 +34,7 @@ public sealed class RegisterCommandHandler(
             throw new AuthValidationException(string.Join(" ", result.Errors.Select(error => error.Description)));
         }
 
-        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user));
+        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role.ToString());
     }
 
     private static void Validate(RegisterCommand cmd)

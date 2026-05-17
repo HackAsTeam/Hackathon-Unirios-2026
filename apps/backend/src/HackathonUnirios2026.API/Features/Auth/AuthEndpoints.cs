@@ -2,6 +2,8 @@ using HackathonUnirios2026.Application.Features.Auth.Commands;
 using HackathonUnirios2026.Application.Features.Auth.DTOs;
 using HackathonUnirios2026.Domain.Auth;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace HackathonUnirios2026.API.Features.Auth;
 
@@ -28,6 +30,13 @@ public sealed class AuthEndpoints : IEndpoint
             .Produces<AuthResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
+
+        group.MapPut("/me/role", SetRoleAsync)
+            .WithName("SetRole")
+            .RequireAuthorization()
+            .Produces<AuthResponse>()
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized);
     }
 
     private static async Task<IResult> RegisterAsync(
@@ -83,5 +92,28 @@ public sealed class AuthEndpoints : IEndpoint
         }
     }
 
+    private static async Task<IResult> SetRoleAsync(
+        SetRoleRequest request,
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        try
+        {
+            return Results.Ok(await sender.Send(new SetRoleCommand(userId, request.Role), ct));
+        }
+        catch (AuthValidationException ex)
+        {
+            return Results.BadRequest(new ErrorResponse(ex.Message));
+        }
+    }
+
+    private sealed record SetRoleRequest(string Role);
     private sealed record ErrorResponse(string Message);
 }

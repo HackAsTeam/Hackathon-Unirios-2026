@@ -16,5 +16,10 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
 
         builder.Property(user => user.AvatarUrl)
             .HasColumnType("text");
+
+        builder.Property(user => user.Role)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(UserRole.Student);
     }
 }

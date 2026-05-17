@@ -9,6 +9,11 @@ All responses share the same shape (`AuthResponse`):
 | displayName | string | Public display name, when available. |
 | avatarUrl | string | Profile avatar URL, when available. |
 | token | string | API JWT bearer token. |
+| role | string | Global user role: `"Student"` or `"Teacher"`. |
+
+The JWT includes a `ClaimTypes.Role` claim with the same value, enabling `[Authorize(Roles = "Teacher")]` on endpoints.
+
+New users always start with `role: "Student"`. Use `PUT /auth/me/role` to change it.
 
 ---
 
@@ -49,7 +54,8 @@ Content-Type: application/json
   "email": "user@example.com",
   "displayName": "User Example",
   "avatarUrl": null,
-  "token": "<jwt>"
+  "token": "<jwt>",
+  "role": "Student"
 }
 ```
 
@@ -91,7 +97,8 @@ Content-Type: application/json
   "email": "user@example.com",
   "displayName": "User Example",
   "avatarUrl": null,
-  "token": "<jwt>"
+  "token": "<jwt>",
+  "role": "Teacher"
 }
 ```
 
@@ -131,6 +138,51 @@ Content-Type: application/json
   "email": "user@example.com",
   "displayName": "User Example",
   "avatarUrl": "https://lh3.googleusercontent.com/a/example",
-  "token": "<jwt>"
+  "token": "<jwt>",
+  "role": "Student"
+}
+```
+
+---
+
+## PUT /auth/me/role
+
+**Command:** `src/HackathonUnirios2026.Application/Features/Auth/Commands/SetRoleCommand.cs`
+
+Requires authentication. Sets the calling user's global role and returns a fresh JWT with the updated claim. Intended to be called immediately after registration or first Google sign-in (onboarding step).
+
+### Request
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| role | string | Yes | `"Student"` or `"Teacher"` (case-insensitive). |
+
+### Error responses
+
+| Status | Condition |
+|--------|-----------|
+| 400 | `role` is missing or is not a valid value. |
+| 401 | No bearer token provided or token is invalid. |
+
+### Example
+
+```http
+PUT /auth/me/role
+Content-Type: application/json
+Authorization: Bearer <jwt>
+
+{
+  "role": "teacher"
+}
+```
+
+```json
+{
+  "userId": "4ce1a6e6-0f7a-4f40-95c6-fbb258fd490d",
+  "email": "user@example.com",
+  "displayName": "User Example",
+  "avatarUrl": null,
+  "token": "<new-jwt>",
+  "role": "Teacher"
 }
 ```
