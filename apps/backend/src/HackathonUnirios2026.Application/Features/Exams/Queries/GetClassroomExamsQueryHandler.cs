@@ -10,18 +10,18 @@ public sealed class GetClassroomExamsQueryHandler(AppDbContext db)
 {
     public async Task<List<ExamResponse>> Handle(GetClassroomExamsQuery query, CancellationToken ct)
     {
-        return await db.ClassroomExams
-            .Where(ce => ce.ClassroomId == query.ClassroomId)
-            .Include(ce => ce.Exam)
-                .ThenInclude(e => e.Questions)
-            .Select(ce => new ExamResponse(
-                ce.Exam.Id,
-                ce.Exam.SubjectId,
-                ce.Exam.ClassroomId,
-                ce.Exam.Title,
-                ce.Exam.Description,
-                ce.Exam.Questions.Count,
-                ce.Exam.CreatedAt))
+        return await db.Exams
+            .Where(e => e.ClassroomId == query.ClassroomId)
+            .OrderBy(e => e.SubjectId)
+            .ThenByDescending(e => e.CreatedAt)
+            .Select(e => new ExamResponse(
+                e.Id,
+                e.SubjectId,
+                e.ClassroomId,
+                e.Title,
+                e.Description,
+                e.Questions.Count,
+                e.CreatedAt))
             .ToListAsync(ct);
     }
 }
