@@ -69,15 +69,15 @@ export const formatLabels: Record<string, string> = {
 };
 
 export const formatIcons: Record<string, string> = {
-  text: "✍️",
-  audio: "🎤",
-  video: "🎬",
-  drawing: "🎨",
-  mindmap: "🧠",
-  presentation: "📽️",
-  quiz: "❓",
-  podcast: "🎙️",
-  oral: "🗣️",
+  text: "create-outline",
+  audio: "mic-outline",
+  video: "videocam-outline",
+  drawing: "brush-outline",
+  mindmap: "git-network-outline",
+  presentation: "easel-outline",
+  quiz: "help-circle-outline",
+  podcast: "radio-outline",
+  oral: "chatbubble-ellipses-outline",
 };
 
 export const formatDescriptions: Record<string, string> = {
@@ -102,4 +102,62 @@ export const formatMotivations: Record<string, string> = {
   quiz: "Se você aprende respondendo perguntas",
   podcast: "Se você gosta de conversar e debater",
   oral: "Se você prefere falar do que escrever",
+};
+
+export const highContrastColors: typeof colors = {
+  primary: "#4ade80",
+  primaryLight: "#166534",
+  primaryDark: "#86efac",
+
+  background: "#000000",
+  surface: "#111111",
+  surfaceAlt: "#1a1a1a",
+
+  text: {
+    primary: "#ffffff",
+    secondary: "#cccccc",
+    tertiary: "#999999",
+    inverse: "#000000",
+    link: "#4ade80",
+  },
+
+  border: "#555555",
+  borderLight: "#333333",
+  divider: "#222222",
+
+  success: "#4ade80",
+  successLight: "#052e16",
+  warning: "#fbbf24",
+  warningLight: "#451a03",
+  error: "#f87171",
+  errorLight: "#450a0a",
+  info: "#60a5fa",
+  infoLight: "#1e3a5f",
+
+  formats: {
+    text: "#3B82F6",
+    audio: "#8B5CF6",
+    video: "#EF4444",
+    drawing: "#F97316",
+    mindmap: "#22C55E",
+    presentation: "#6366F1",
+    quiz: "#EAB308",
+    podcast: "#EC4899",
+    oral: "#06B6D4",
+  },
+
+  formatsLight: {
+    text: "#1e3a5f",
+    audio: "#2e1a47",
+    video: "#450a0a",
+    drawing: "#431407",
+    mindmap: "#052e16",
+    presentation: "#1e1b4b",
+    quiz: "#451a03",
+    podcast: "#500724",
+    oral: "#083344",
+  },
+
+  cardShadow: "transparent",
+  overlay: "rgba(0,0,0,0.7)",
 };
