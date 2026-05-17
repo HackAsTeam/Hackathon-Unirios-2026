@@ -9,7 +9,7 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 
-import { apiFetch } from "./api";
+import { apiFetch, ApiError } from "./api";
 import { useAuthStore } from "../store/auth";
 
 const placeholderClientId = "000000000000-placeholder.apps.googleusercontent.com";
@@ -21,6 +21,11 @@ type AuthResponse = {
   avatarUrl: string | null;
   token: string;
   role?: string | null;
+};
+
+export type GooglePendingDeletion = {
+  restoreUntil: string;
+  idToken: string;
 };
 
 // Required for the web OAuth redirect to close the popup automatically.
@@ -46,12 +51,11 @@ export function useGoogleSignIn(onSuccess?: () => void) {
   const signIn = useAuthStore((state) => state.signIn);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [pendingDeletion, setPendingDeletion] = useState<GooglePendingDeletion | null>(null);
 
   const configured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 
   // ── Web flow ─────────────────────────────────────────────────────────────
-  // useIdTokenAuthRequest requests ResponseType.IdToken on web (implicit flow)
-  // so the token arrives in response.params.id_token without a backend exchange.
   const [, webResponse, promptAsync] = Google.useIdTokenAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || placeholderClientId,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || placeholderClientId,
@@ -63,7 +67,6 @@ export function useGoogleSignIn(onSuccess?: () => void) {
     if (webResponse?.type !== "success") return;
 
     const idToken =
-      // Implicit IdToken flow on web puts the token in params.id_token
       (webResponse.params as Record<string, string>)["id_token"] ??
       webResponse.authentication?.idToken ??
       null;
@@ -84,9 +87,14 @@ export function useGoogleSignIn(onSuccess?: () => void) {
         onSuccess?.();
       })
       .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : "Erro ao entrar com Google";
-        setError(message);
+        if (err instanceof ApiError && err.status === 403) {
+          const body = err.body as { error?: string; restoreUntil?: string };
+          if (body?.error === "ACCOUNT_PENDING_DELETION" && body.restoreUntil && idToken) {
+            setPendingDeletion({ restoreUntil: body.restoreUntil, idToken });
+            return;
+          }
+        }
+        setError(err instanceof Error ? err.message : "Erro ao entrar com Google");
       })
       .finally(() => setLoading(false));
   }, [webResponse]);
@@ -94,6 +102,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
   // ── Native flow ──────────────────────────────────────────────────────────
   async function signInWithGoogleNative(): Promise<AuthResponse | null> {
     setError("");
+    setPendingDeletion(null);
     setLoading(true);
 
     try {
@@ -114,6 +123,14 @@ export function useGoogleSignIn(onSuccess?: () => void) {
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
       return data;
     } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 403) {
+        const body = err.body as { error?: string; restoreUntil?: string };
+        if (body?.error === "ACCOUNT_PENDING_DELETION" && body.restoreUntil) {
+          const idToken = (await GoogleSignin.getTokens().catch(() => null))?.idToken ?? "";
+          setPendingDeletion({ restoreUntil: body.restoreUntil, idToken });
+          return null;
+        }
+      }
       if (isErrorWithCode(err)) {
         if (err.code === statusCodes.SIGN_IN_CANCELLED) {
           return null;
@@ -123,9 +140,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
           return null;
         }
       }
-      const message =
-        err instanceof Error ? err.message : "Erro ao entrar com Google";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Erro ao entrar com Google");
       return null;
     } finally {
       setLoading(false);
@@ -133,13 +148,12 @@ export function useGoogleSignIn(onSuccess?: () => void) {
   }
 
   // ── Unified entry point ──────────────────────────────────────────────────
-  // On web: triggers promptAsync (the response is handled in the useEffect above).
-  // On native: runs the GoogleSignin flow end-to-end and returns the result.
   async function signInWithGoogle(): Promise<AuthResponse | null> {
     setError("");
+    setPendingDeletion(null);
     if (Platform.OS === "web") {
       await promptAsync({ prompt: Prompt.SelectAccount });
-      return null; // result delivered via useEffect / onSuccess callback
+      return null;
     }
     return signInWithGoogleNative();
   }
@@ -148,6 +162,8 @@ export function useGoogleSignIn(onSuccess?: () => void) {
     configured,
     loading,
     error,
+    pendingDeletion,
+    setPendingDeletion,
     signInWithGoogle,
   };
 }

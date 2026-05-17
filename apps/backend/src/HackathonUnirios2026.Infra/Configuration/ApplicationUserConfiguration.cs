@@ -2,6 +2,7 @@ using HackathonUnirios2026.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+
 namespace HackathonUnirios2026.Infra.Configuration;
 
 public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
@@ -21,5 +22,16 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
             .HasConversion<string>()
             .HasMaxLength(20)
             .HasDefaultValue(UserRole.Student);
+
+        builder.Property(user => user.Status)
+            .HasConversion<string>()
+            .HasMaxLength(30)
+            .HasDefaultValue(UserStatus.Active);
+
+        builder.Property(user => user.DeletedAt)
+            .HasColumnType("timestamptz");
+
+        builder.Property(user => user.PurgeAfter)
+            .HasColumnType("timestamptz");
     }
 }

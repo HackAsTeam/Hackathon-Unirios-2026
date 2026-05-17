@@ -1,13 +1,27 @@
-import { View, Text } from "react-native";
+import { Alert, View, Text } from "react-native";
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/auth";
 import { useOnboardingStore } from "../../store/onboarding";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, ApiError } from "../../lib/api";
 import { useGoogleSignIn } from "../../lib/googleAuth";
 import { AppScreen } from "../../components/AppScreen";
 import { AppButton } from "../../components/AppButton";
 import { AppInput } from "../../components/AppInput";
+
+type AuthData = {
+  userId: string;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  token: string;
+  role: string;
+};
+
+type PendingDeletionBody = {
+  error: "ACCOUNT_PENDING_DELETION";
+  restoreUntil: string;
+};
 
 export default function SignInScreen() {
   const { signIn } = useAuthStore();
@@ -32,22 +46,113 @@ export default function SignInScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Format ISO date string to Brazilian locale for display.
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  }
+
+  // Called when the server confirms restore was successful.
+  // Pass syncOnboarding=true for account restores so the user's pre-existing role
+  // is re-applied and they bypass the onboarding role-picker.
+  async function finishSignIn(data: AuthData, syncOnboarding = false) {
+    await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
+    if (syncOnboarding && data.role) {
+      await useOnboardingStore.getState().setRole(data.role.toLowerCase() as "teacher" | "student");
+    }
+    redirectAfterLogin();
+  }
+
+  async function restoreWithPassword(restoreUntil: string) {
+    Alert.alert(
+      "Conta agendada para exclusão",
+      `Sua conta está marcada para exclusão. Você pode restaurá-la até ${formatDate(restoreUntil)}.\n\nDeseja restaurar o acesso agora?`,
+      [
+        { text: "Não", style: "cancel" },
+        {
+          text: "Restaurar conta",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const data = await apiFetch<AuthData>("/auth/me/restore", {
+                method: "POST",
+                body: { email, password },
+              });
+              await finishSignIn(data, true);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Erro ao restaurar conta.");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  async function restoreWithGoogle(restoreUntil: string, idToken: string) {
+    Alert.alert(
+      "Conta agendada para exclusão",
+      `Sua conta Google está marcada para exclusão. Você pode restaurá-la até ${formatDate(restoreUntil)}.\n\nDeseja restaurar o acesso agora?`,
+      [
+        {
+          text: "Não",
+          style: "cancel",
+          onPress: () => google.setPendingDeletion(null),
+        },
+        {
+          text: "Restaurar conta",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const data = await apiFetch<AuthData>("/auth/me/restore/google", {
+                method: "POST",
+                body: { idToken },
+              });
+              google.setPendingDeletion(null);
+              await finishSignIn(data, true);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Erro ao restaurar conta.");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  }
+
   async function handleSignIn() {
     setError("");
     setLoading(true);
     try {
-      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string; role: string }>(
+      const data = await apiFetch<AuthData>(
         "/auth/login",
         { method: "POST", body: { email, password } },
       );
-      await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
-      redirectAfterLogin();
+      await finishSignIn(data);
     } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 403) {
+        const body = err.body as PendingDeletionBody;
+        if (body?.error === "ACCOUNT_PENDING_DELETION" && body.restoreUntil) {
+          setLoading(false);
+          restoreWithPassword(body.restoreUntil);
+          return;
+        }
+      }
       setError(err instanceof Error ? err.message : "Erro ao fazer login");
     } finally {
       setLoading(false);
     }
   }
+
+  // React state updates are async: reading google.pendingDeletion immediately after
+  // signInWithGoogle() returns would see the old (null) value. A useEffect that reacts
+  // to the state change fires after the re-render and always sees the current value.
+  useEffect(() => {
+    if (google.pendingDeletion) {
+      restoreWithGoogle(google.pendingDeletion.restoreUntil, google.pendingDeletion.idToken);
+    }
+  }, [google.pendingDeletion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleGoogleSignIn() {
     const data = await google.signInWithGoogle();
