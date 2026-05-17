@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
@@ -23,6 +23,7 @@ export default function TeacherAttemptDetailScreen() {
   const { id, studentName } = useLocalSearchParams<{ id: string; studentName: string }>();
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
 
   const { data: attempt, isLoading } = useQuery({
     queryKey: ['attempt-teacher', id],
@@ -31,35 +32,43 @@ export default function TeacherAttemptDetailScreen() {
   });
 
   const [feedbacks, setFeedbacks] = useState<Record<string, string>>({});
+  const [scores, setScores] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (attempt?.answers) {
-      const initial: Record<string, string> = {};
+      const initFeedbacks: Record<string, string> = {};
+      const initScores: Record<string, string> = {};
       for (const answer of attempt.answers) {
-        initial[answer.id] = answer.feedback ?? '';
+        initFeedbacks[answer.id] = answer.feedback ?? '';
+        if (answer.score !== null && answer.score !== undefined) {
+          initScores[answer.id] = String(answer.score);
+        }
       }
-      setFeedbacks(initial);
+      setFeedbacks(initFeedbacks);
+      setScores(initScores);
     }
   }, [attempt]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!attempt) return;
-      await Promise.all(
-        attempt.answers.map((answer) =>
-          apiFetch(`/attempts/${id}/answers/${answer.id}/grade`, {
-            method: 'POST',
-            token: token!,
-            body: { score: null, feedback: feedbacks[answer.id] || null },
-          })
-        )
-      );
+      for (const answer of attempt.answers) {
+        const scoreStr = scores[answer.id];
+        const scoreVal = scoreStr ? parseFloat(scoreStr) : null;
+        const feedback = feedbacks[answer.id] || null;
+        await apiFetch(`/attempts/${id}/answers/${answer.id}/grade`, {
+          method: 'POST',
+          token: token!,
+          body: { score: scoreVal, feedback },
+        });
+      }
     },
     onSuccess: () => {
-      Alert.alert('Salvo', 'Comentários salvos com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['attempt-teacher', id] });
+      Alert.alert('Salvo', 'Correção salva com sucesso.');
     },
     onError: () => {
-      Alert.alert('Erro', 'Não foi possível salvar os comentários.');
+      Alert.alert('Erro', 'Não foi possível salvar.');
     },
   });
 
@@ -68,7 +77,6 @@ export default function TeacherAttemptDetailScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Header */}
       <View
         style={{
           paddingTop: 56,
@@ -102,7 +110,6 @@ export default function TeacherAttemptDetailScreen() {
         )}
       </View>
 
-      {/* Body */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -121,9 +128,7 @@ export default function TeacherAttemptDetailScreen() {
               }}
             >
               <Ionicons name="document-text-outline" size={32} color={colors.text.tertiary} />
-              <Text
-                style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary, marginTop: 4 }}
-              >
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary, marginTop: 4 }}>
                 Nenhuma resposta ainda
               </Text>
               <Text style={{ fontSize: 14, color: colors.text.secondary, textAlign: 'center' }}>
@@ -144,11 +149,9 @@ export default function TeacherAttemptDetailScreen() {
                     gap: 12,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
-                      Questão {index + 1}
-                    </Text>
-                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>
+                    Questão {index + 1}
+                  </Text>
 
                   <Text style={{ fontSize: 15, color: colors.text.primary, lineHeight: 22 }}>
                     {answer.questionText}
@@ -163,16 +166,54 @@ export default function TeacherAttemptDetailScreen() {
                       borderColor: colors.borderLight,
                     }}
                   >
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text.tertiary, marginBottom: 4 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text.tertiary, marginBottom: 6 }}>
                       RESPOSTA DO ALUNO
                     </Text>
-                    <Text style={{ fontSize: 14, color: answer.answerText ? colors.text.primary : colors.text.tertiary }}>
-                      {answer.answerText
-                        ? answer.answerText
-                        : answer.selectedOptionId
-                          ? '[Múltipla escolha]'
-                          : '—'}
+                    {answer.selectedOptionId ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Ionicons
+                          name={answer.isCorrectOption ? 'checkmark-circle' : 'close-circle'}
+                          size={18}
+                          color={answer.isCorrectOption ? colors.primary : colors.error}
+                        />
+                        <Text style={{ fontSize: 14, color: colors.text.primary, flex: 1 }}>
+                          {answer.selectedOptionText ?? '(opção removida)'}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 14, color: answer.answerText ? colors.text.primary : colors.text.tertiary }}>
+                        {answer.answerText ?? '(sem resposta)'}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={{ gap: 6 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text.tertiary }}>
+                      NOTA
                     </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <TextInput
+                        value={scores[answer.id] ?? ''}
+                        onChangeText={(v) => {
+                          if (/^\d*\.?\d*$/.test(v)) setScores((prev) => ({ ...prev, [answer.id]: v }));
+                        }}
+                        keyboardType="decimal-pad"
+                        placeholder="0–10"
+                        placeholderTextColor={colors.text.tertiary}
+                        style={{
+                          width: 64,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          borderRadius: 8,
+                          padding: 8,
+                          textAlign: 'center',
+                          color: colors.text.primary,
+                          fontSize: 15,
+                          backgroundColor: colors.background,
+                        }}
+                      />
+                      <Text style={{ color: colors.text.secondary, fontSize: 13 }}>/ 10</Text>
+                    </View>
                   </View>
 
                   <View style={{ gap: 6 }}>
@@ -215,14 +256,14 @@ export default function TeacherAttemptDetailScreen() {
                   marginBottom: 16,
                   opacity: saveMutation.isPending ? 0.6 : 1,
                 }}
-                accessibilityLabel="Salvar comentários"
+                accessibilityLabel="Salvar correção"
                 accessibilityRole="button"
               >
                 {saveMutation.isPending ? (
                   <ActivityIndicator color={colors.text.inverse} />
                 ) : (
                   <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text.inverse }}>
-                    Salvar comentários
+                    Salvar correção
                   </Text>
                 )}
               </TouchableOpacity>
