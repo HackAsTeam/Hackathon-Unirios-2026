@@ -7,7 +7,6 @@ public record AttemptDetailResponse(
     Guid ExamId,
     string ExamTitle,
     string ClassroomName,
-    string StudentId,
     DateTime StartedAt,
     DateTime? SubmittedAt,
     string Status,

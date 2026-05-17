@@ -5,7 +5,6 @@ export interface AttemptSummary {
   examId: string;
   examTitle: string;
   classroomName: string;
-  studentId: string;
   startedAt: string;
   submittedAt: string | null;
   status: AttemptStatus;

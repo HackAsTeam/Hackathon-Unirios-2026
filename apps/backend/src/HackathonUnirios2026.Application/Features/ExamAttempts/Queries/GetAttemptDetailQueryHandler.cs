@@ -35,7 +35,6 @@ public sealed class GetAttemptDetailQueryHandler(AppDbContext db, IHttpContextAc
             attempt.ExamId,
             attempt.Exam.Title,
             attempt.Exam.Classroom.Title,
-            attempt.StudentId,
             attempt.StartedAt,
             attempt.SubmittedAt,
             attempt.Status.ToString(),
