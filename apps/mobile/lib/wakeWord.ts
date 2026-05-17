@@ -4,8 +4,9 @@ import { requestSTTPermission } from './stt';
 // Covers STT variations of "dillo" in pt-BR:
 // dillo, dila, dilu, dile, dilos, dilo, dilu
 const WAKE_PATTERNS = [
-  /\b(?:hey|ei|oi|ey|e)\s+dill?[aoue]s?\b/i,
-  /\bdill?[aoue]s?\b/i, // fallback: "dillo"/"dilu" sem saudação
+  // Cobre "d" e "b" (STT ouve "Bilu" em vez de "Dillo"), e "n" final ("Dilon")
+  /\b(?:hey|ei|oi|ey|e)\s+[db]ill?[aoue][ns]?\b/i,
+  /\b[db]ill?[aoue][ns]?\b/i,
 ];
 
 function matchesWakeWord(text: string): boolean {

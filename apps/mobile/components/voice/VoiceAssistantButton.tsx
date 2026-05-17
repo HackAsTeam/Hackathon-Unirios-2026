@@ -13,7 +13,7 @@ import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
 import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voiceCommand';
 import { useAccessibilityStore } from '../../store/acessibility';
 import { startWakeWordDetection, stopWakeWordDetection } from '../../lib/wakeWord';
-import { speak } from '../../lib/tts';
+import { speak, isSpeaking } from '../../lib/tts';
 import { colors } from '../../lib/colors';
 
 const ACCENT = colors.formats.oral;
@@ -61,11 +61,22 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     }
 
     let cancelled = false;
-    const startTimer = setTimeout(async () => {
+
+    async function waitForTtsThenStart() {
+      // Poll until TTS finishes (max 10 s), then add 500 ms buffer
+      const deadline = Date.now() + 10_000;
+      while (!cancelled && Date.now() < deadline) {
+        if (!(await isSpeaking())) break;
+        await new Promise<void>((r) => setTimeout(r, 200));
+      }
+      if (cancelled) return;
+      await new Promise<void>((r) => setTimeout(r, 500));
       if (cancelled) return;
       const ok = await startWakeWordDetection(handleWakeWordDetected);
       if (!cancelled) setWakeWordActive(ok);
-    }, 1500);
+    }
+
+    const startTimer = setTimeout(waitForTtsThenStart, 300);
 
     return () => {
       cancelled = true;

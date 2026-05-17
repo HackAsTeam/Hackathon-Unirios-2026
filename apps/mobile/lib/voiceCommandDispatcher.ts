@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { apiFetch } from './api';
 import { speak } from './tts';
+import { signOutFromGoogle } from './googleAuth';
 import { useAccessibilityStore } from '../store/acessibility';
 import { useAuthStore } from '../store/auth';
 import { useVoiceCommandStore } from '../store/voiceCommand';
@@ -8,20 +9,21 @@ import type { ScreenContext, VoiceCommandResponse } from '../store/voiceCommand'
 
 // ─── Tier 1: local keyword matching ──────────────────────────────────────────
 
-const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandResponse }> = [
+const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandResponse | Promise<VoiceCommandResponse> }> = [
   // ── Navigation ────────────────────────────────────────────────────────────
+  {
+    // Must be before GO_BACK so "voltar para o início" routes to home, not back
+    pattern: /\b(início|inicio|home|tela inicial)\b/i,
+    handler: () => {
+      router.push('/(app)/(tabs)');
+      return { type: 'COMMAND', command: 'GO_HOME', speak: 'Indo para o início.' };
+    },
+  },
   {
     pattern: /\b(volta|voltar|back)\b/i,
     handler: () => {
       router.back();
       return { type: 'COMMAND', command: 'GO_BACK', speak: 'Voltando.' };
-    },
-  },
-  {
-    pattern: /\b(início|inicio|home|tela inicial)\b/i,
-    handler: () => {
-      router.push('/(app)/(tabs)');
-      return { type: 'COMMAND', command: 'GO_HOME', speak: 'Indo para o início.' };
     },
   },
   {
@@ -42,14 +44,14 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
   // ── Confirmation (must come before sign-out) ──────────────────────────────
   {
     pattern: /^(confirmar?|sim|yes|pode|ok|confirmo)\b/i,
-    handler: () => {
+    handler: async () => {
       const pending = useVoiceCommandStore.getState().pendingConfirmAction;
       if (!pending) {
         return { type: 'UNKNOWN', speak: 'Não há nada para confirmar.' };
       }
       useVoiceCommandStore.getState().setPendingConfirmAction(null);
       if (pending === 'SIGN_OUT') {
-        useAuthStore.getState().signOut();
+        await Promise.all([useAuthStore.getState().signOut(), signOutFromGoogle()]);
         router.replace('/(auth)/sign-in');
         return { type: 'COMMAND', command: 'SIGN_OUT', speak: 'Até logo!' };
       }
@@ -159,7 +161,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
   },
 ];
 
-function tryLocalDispatch(transcript: string): VoiceCommandResponse | null {
+async function tryLocalDispatch(transcript: string): Promise<VoiceCommandResponse | null> {
   const t = transcript.trim().toLowerCase();
   for (const { pattern, handler } of LOCAL_PATTERNS) {
     if (pattern.test(t)) return handler();
@@ -198,8 +200,8 @@ async function dispatchToAI(
 function postProcessAI(
   result: VoiceCommandResponse,
   onScreenAction?: (cmd: VoiceCommandResponse) => void,
-): void {
-  if (result.type !== 'COMMAND') return;
+): VoiceCommandResponse | null {
+  if (result.type !== 'COMMAND') return null;
   switch (result.command) {
     case 'GO_BACK':
       router.back();
@@ -215,10 +217,19 @@ function postProcessAI(
     case 'OPEN_RESULTS':
       router.push('/(app)/(tabs)/results');
       break;
+    case 'NAVIGATE_TO_CLASSROOM_AND_INVITE': {
+      const classroomId = result.payload?.classroomId as string | undefined;
+      if (classroomId) {
+        router.push(`/teacher/classroom/${classroomId}` as Parameters<typeof router.push>[0]);
+        return { type: 'COMMAND', command: 'GENERATE_INVITE_LINK', speak: result.speak };
+      }
+      break;
+    }
     default:
       onScreenAction?.(result);
       break;
   }
+  return null;
 }
 
 // ─── Public dispatcher ────────────────────────────────────────────────────────
@@ -231,7 +242,7 @@ export async function dispatch(
 ): Promise<VoiceCommandResponse> {
   console.log(`[Dispatcher] transcript: "${transcript}" | tela: ${context?.screen ?? '(sem contexto)'} | token: ${token ? 'ok' : 'AUSENTE'}`);
 
-  const local = tryLocalDispatch(transcript);
+  const local = await tryLocalDispatch(transcript);
   if (local) {
     console.log('[Dispatcher] tier1 → match local:', local.command);
     speak(local.speak);
@@ -248,8 +259,9 @@ export async function dispatch(
 
   const result = await dispatchToAI(transcript, context ?? { screen: 'home' }, token);
 
-  postProcessAI(result, onScreenAction);
+  const override = postProcessAI(result, onScreenAction);
+  const final = override ?? result;
 
-  speak(result.speak);
-  return result;
+  speak(final.speak);
+  return final;
 }
