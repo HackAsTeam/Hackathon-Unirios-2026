@@ -58,7 +58,7 @@ public sealed class AttemptEndpoints : IEndpoint
         group.MapGet("/{id:guid}/teacher-view", GetAttemptDetailAsTeacherAsync)
             .WithName("GetAttemptDetailAsTeacher")
             .RequireAuthorization()
-            .Produces<AttemptDetailResponse>()
+            .Produces<TeacherAttemptDetailResponse>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
     }

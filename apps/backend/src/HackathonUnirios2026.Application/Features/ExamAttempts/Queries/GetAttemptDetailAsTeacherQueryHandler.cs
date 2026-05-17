@@ -8,13 +8,14 @@ using Microsoft.EntityFrameworkCore;
 namespace HackathonUnirios2026.Application.Features.ExamAttempts.Queries;
 
 public sealed class GetAttemptDetailAsTeacherQueryHandler(AppDbContext db)
-    : IRequestHandler<GetAttemptDetailAsTeacherQuery, AttemptDetailResponse>
+    : IRequestHandler<GetAttemptDetailAsTeacherQuery, TeacherAttemptDetailResponse>
 {
-    public async Task<AttemptDetailResponse> Handle(GetAttemptDetailAsTeacherQuery query, CancellationToken ct)
+    public async Task<TeacherAttemptDetailResponse> Handle(GetAttemptDetailAsTeacherQuery query, CancellationToken ct)
     {
         var attempt = await db.ExamAttempts
             .Include(a => a.Answers)
                 .ThenInclude(ans => ans.Question)
+                    .ThenInclude(q => q.Options)
             .Include(a => a.Exam)
                 .ThenInclude(e => e.Classroom)
             .Include(a => a.Exam)
@@ -30,27 +31,36 @@ public sealed class GetAttemptDetailAsTeacherQueryHandler(AppDbContext db)
             ? attempt.Answers.Sum(a => a.Score ?? 0)
             : null;
 
-        return new AttemptDetailResponse(
+        return new TeacherAttemptDetailResponse(
             attempt.Id,
             attempt.ExamId,
             attempt.Exam.Title,
             attempt.Exam.Classroom.Title,
+            attempt.Student.DisplayName,
             attempt.StartedAt,
             attempt.SubmittedAt,
             attempt.Status.ToString(),
             score,
             attempt.Answers
                 .OrderBy(a => a.Question.OrderIndex)
-                .Select(a => new AnswerDetailResponse(
-                    a.Id,
-                    a.QuestionId,
-                    a.Question.Text,
-                    a.AnswerText,
-                    a.Format,
-                    a.SelectedOptionId,
-                    a.Score,
-                    a.Feedback,
-                    a.AnsweredAt))
+                .Select(a =>
+                {
+                    var selectedOption = a.SelectedOptionId.HasValue
+                        ? a.Question.Options.FirstOrDefault(o => o.Id == a.SelectedOptionId.Value)
+                        : null;
+                    return new TeacherAnswerDetailResponse(
+                        a.Id,
+                        a.QuestionId,
+                        a.Question.Text,
+                        a.AnswerText,
+                        a.Format,
+                        a.SelectedOptionId,
+                        selectedOption?.Text,
+                        selectedOption?.IsCorrect,
+                        a.Score,
+                        a.Feedback,
+                        a.AnsweredAt);
+                })
                 .ToList());
     }
 }
