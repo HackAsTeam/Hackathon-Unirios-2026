@@ -57,10 +57,27 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{opts.Model}:generateContent?key={opts.ApiKey}";
         using var response = await client.PostAsJsonAsync(url, requestBody, ct);
 
-        if (!response.IsSuccessStatusCode)
-            return UnknownResult("Não consegui processar. Tente novamente.");
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
 
-        using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.Error.WriteLine($"[GeminiClient] HTTP {(int)response.StatusCode}: {responseBody[..Math.Min(200, responseBody.Length)]}");
+            return UnknownResult("Não consegui processar. Tente novamente.");
+        }
+
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(responseBody);
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"[GeminiClient] resposta não-JSON: {responseBody[..Math.Min(200, responseBody.Length)]} | {ex.Message}");
+            return UnknownResult("Não consegui processar. Tente novamente.");
+        }
+
+        using (doc)
+        {
 
         var text = doc.RootElement
             .GetProperty("candidates")[0]
@@ -82,6 +99,8 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
         var confidence = root.TryGetProperty("confidence", out var c) ? c.GetDouble() : 0.5;
 
         return new GeminiCommandResult(action, parameters, spokenFeedback, confidence);
+
+        } // using doc
     }
 
     private static string BuildPrompt(string transcript, string screen, string? contextJson)
