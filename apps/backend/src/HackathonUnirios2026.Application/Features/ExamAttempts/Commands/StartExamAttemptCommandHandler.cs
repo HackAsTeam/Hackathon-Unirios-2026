@@ -20,6 +20,7 @@ public sealed class StartExamAttemptCommandHandler(AppDbContext db, IHttpContext
         var exam = await db.Exams
             .Include(e => e.Questions)
             .Include(e => e.ClassroomExams)
+            .Include(e => e.Classroom)
             .FirstOrDefaultAsync(e => e.Id == cmd.ExamId, ct);
 
         if (exam is null)
@@ -42,13 +43,15 @@ public sealed class StartExamAttemptCommandHandler(AppDbContext db, IHttpContext
             return new AttemptResponse(
                 existing.Id,
                 existing.ExamId,
+                exam.Title,
+                exam.Classroom.Title,
                 existing.StudentId,
                 existing.StartedAt,
-                    existing.SubmittedAt,
-                    existing.Status.ToString(),
-                    existing.Answers.Count,
-                    exam.Questions.Count,
-                    existing.Answers.Sum(a => a.Score ?? 0));
+                existing.SubmittedAt,
+                existing.Status.ToString(),
+                existing.Answers.Count,
+                exam.Questions.Count,
+                existing.Answers.Sum(a => a.Score ?? 0));
         }
 
         var attempt = new ExamAttempt
@@ -65,6 +68,8 @@ public sealed class StartExamAttemptCommandHandler(AppDbContext db, IHttpContext
         return new AttemptResponse(
             attempt.Id,
             attempt.ExamId,
+            exam.Title,
+            exam.Classroom.Title,
             attempt.StudentId,
             attempt.StartedAt,
             attempt.SubmittedAt,

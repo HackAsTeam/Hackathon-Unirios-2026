@@ -18,6 +18,8 @@ public sealed class GetMyAttemptsQueryHandler(AppDbContext db, IHttpContextAcces
             .Include(a => a.Answers)
             .Include(a => a.Exam)
                 .ThenInclude(e => e.Questions)
+            .Include(a => a.Exam)
+                .ThenInclude(e => e.Classroom)
             .Where(a => a.StudentId == studentId)
             .AsQueryable();
 
@@ -28,6 +30,8 @@ public sealed class GetMyAttemptsQueryHandler(AppDbContext db, IHttpContextAcces
             .Select(a => new AttemptResponse(
                 a.Id,
                 a.ExamId,
+                a.Exam.Title,
+                a.Exam.Classroom.Title,
                 a.StudentId,
                 a.StartedAt,
                 a.SubmittedAt,
