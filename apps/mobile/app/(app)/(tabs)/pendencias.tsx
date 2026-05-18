@@ -17,7 +17,7 @@ function TeacherPendencias() {
   const router = useRouter();
   const c = useColors();
   const scale = useScale();
-  const { data, isLoading } = useTeacherPendingAttempts();
+  const { data, isLoading, isError } = useTeacherPendingAttempts();
 
   const grouped = useMemo(() => {
     const map = new Map<string, { subjectName: string; classroomTitle: string; items: PendingAttemptItem[] }>();
@@ -36,6 +36,17 @@ function TeacherPendencias() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.background }}>
         <ActivityIndicator size="large" color={c.primary} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.background, padding: 32, gap: 12 }}>
+        <Ionicons name="alert-circle-outline" size={56} color={c.text.tertiary} />
+        <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.primary, textAlign: 'center' }}>
+          Não foi possível carregar as correções pendentes.
+        </Text>
       </View>
     );
   }
@@ -78,6 +89,8 @@ function TeacherPendencias() {
             <TouchableOpacity
               key={item.attemptId}
               onPress={() => router.push(`/teacher/attempt/${item.attemptId}?activityId=${item.activityId}&studentName=${encodeURIComponent(item.studentName)}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Corrigir tentativa de ${item.studentName} em ${item.activityTitle}`}
               style={{
                 backgroundColor: c.surface,
                 borderRadius: 16,
@@ -88,7 +101,6 @@ function TeacherPendencias() {
                 alignItems: 'center',
                 gap: 14,
               }}
-              accessibilityLabel={`Corrigir tentativa de ${item.studentName}`}
             >
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.primary }}>
@@ -121,7 +133,7 @@ function StudentPendencias() {
   const router = useRouter();
   const c = useColors();
   const scale = useScale();
-  const { data, isLoading } = useStudentActivityStatuses();
+  const { data, isLoading, isError } = useStudentActivityStatuses();
 
   const grouped = useMemo(() => {
     const map = new Map<string, { subjectName: string; classroomTitle: string; items: StudentActivityStatus[] }>();
@@ -140,6 +152,17 @@ function StudentPendencias() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.background }}>
         <ActivityIndicator size="large" color={c.primary} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.background, padding: 32, gap: 12 }}>
+        <Ionicons name="alert-circle-outline" size={56} color={c.text.tertiary} />
+        <Text style={{ fontSize: scale(16), fontWeight: '600', color: c.text.primary, textAlign: 'center' }}>
+          Não foi possível carregar as atividades pendentes.
+        </Text>
       </View>
     );
   }
@@ -183,6 +206,8 @@ function StudentPendencias() {
               <TouchableOpacity
                 key={item.activityId}
                 onPress={onPress}
+                accessibilityRole="button"
+                accessibilityLabel={`Atividade ${item.activityTitle}, ${progressText}`}
                 style={{
                   backgroundColor: c.surface,
                   borderRadius: 16,
@@ -193,7 +218,6 @@ function StudentPendencias() {
                   alignItems: 'center',
                   gap: 14,
                 }}
-                accessibilityLabel={`Atividade ${item.activityTitle}`}
               >
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary }}>

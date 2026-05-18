@@ -65,6 +65,12 @@ public sealed class AttemptEndpoints : IEndpoint
             .Produces<TeacherAttemptDetailResponse>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
+
+        app.MapGet("/activities/{id:guid}/attempts", GetActivityAttemptsAsync)
+            .WithTags("Activities")
+            .RequireAuthorization()
+            .Produces<List<ActivityAttemptSummaryResponse>>()
+            .Produces(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<IResult> StartAttemptAsync(
@@ -220,6 +226,24 @@ public sealed class AttemptEndpoints : IEndpoint
         catch (AttemptNotFoundException)
         {
             return Results.NotFound();
+        }
+    }
+
+    private static async Task<IResult> GetActivityAttemptsAsync(
+        Guid id,
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var teacherId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        try
+        {
+            var result = await sender.Send(new GetActivityAttemptsQuery(id, teacherId), ct);
+            return Results.Ok(result);
+        }
+        catch (NotTeacherException)
+        {
+            return Results.Forbid();
         }
     }
 

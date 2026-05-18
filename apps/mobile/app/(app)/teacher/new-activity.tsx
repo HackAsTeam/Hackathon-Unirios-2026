@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { useScreenContext } from '@/hooks/useScreenContext';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
 import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
@@ -284,6 +285,8 @@ export default function NewActivityScreen() {
     router.replace(`/teacher/classroom/${classroomId}/subject/${subjectId}?name=${encodeURIComponent(name ?? '')}`);
   }
 
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
+
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [questions, setQuestions] = useState<LocalQuestion[]>([emptyQuestion()]);
@@ -371,6 +374,13 @@ export default function NewActivityScreen() {
     },
   });
 
+  useEffect(() => {
+    if (lastCommand?.command === 'CREATE_ACTIVITY' && !createActivity.isPending) {
+      handleSubmit();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastCommand]);
+
   function handleSubmit() {
     setSubmitError(null);
     const error = validate(title, questions);
@@ -411,6 +421,8 @@ export default function NewActivityScreen() {
       >
         <TouchableOpacity
           onPress={() => goBack()}
+          accessibilityLabel="Voltar para a matéria"
+          accessibilityRole="button"
           style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
           <Ionicons name="chevron-back" size={20} color={c.primary} />
@@ -455,6 +467,8 @@ export default function NewActivityScreen() {
 
           <TouchableOpacity
             onPress={addQuestion}
+            accessibilityLabel="Adicionar questão"
+            accessibilityRole="button"
             style={{
               borderWidth: 1.5,
               borderColor: c.primaryLight,
@@ -494,6 +508,8 @@ export default function NewActivityScreen() {
           <TouchableOpacity
             onPress={() => goBack()}
             disabled={createActivity.isPending}
+            accessibilityLabel="Cancelar criação da atividade"
+            accessibilityRole="button"
             style={{
               flex: 1,
               paddingVertical: 14,
@@ -510,6 +526,9 @@ export default function NewActivityScreen() {
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={createActivity.isPending}
+            accessibilityLabel="Criar atividade"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: createActivity.isPending }}
             style={{
               flex: 2,
               paddingVertical: 14,

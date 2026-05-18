@@ -14,6 +14,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
+import { useScreenContext } from '@/hooks/useScreenContext';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
 import { apiFetch } from '@/lib/api';
 import { colors } from '@/lib/colors';
 import { AttemptStatusBadge } from '@/components/student/AttemptStatusBadge';
@@ -21,8 +23,10 @@ import type { AttemptDetail } from '@/types/attempt';
 
 export default function TeacherAttemptDetailScreen() {
   const { id, studentName } = useLocalSearchParams<{ id: string; studentName: string }>();
+  useScreenContext({ screen: 'teacher-grade-attempt', attemptId: id, role: 'teacher' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const queryClient = useQueryClient();
 
   const { data: attempt, isLoading } = useQuery({
@@ -48,6 +52,13 @@ export default function TeacherAttemptDetailScreen() {
       setScores(initScores);
     }
   }, [attempt]);
+
+  useEffect(() => {
+    if (lastCommand?.command === 'SAVE_GRADE' && !saveMutation.isPending) {
+      saveMutation.mutate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastCommand]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {

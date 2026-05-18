@@ -40,6 +40,20 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
       return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo resultados.' };
     },
   },
+  {
+    pattern: /\b(pendência|pendências|pendencias|pendencia|minhas pendências|atividades pendentes)\b/i,
+    handler: () => {
+      router.push('/(app)/(tabs)/pendencias');
+      return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo pendências.' };
+    },
+  },
+  {
+    pattern: /\b(turmas?|minhas turmas?|sala de aula)\b/i,
+    handler: () => {
+      router.push('/(app)/(tabs)');
+      return { type: 'COMMAND', command: 'GO_HOME', speak: 'Abrindo turmas.' };
+    },
+  },
 
   // ── Confirmation (must come before sign-out) ──────────────────────────────
   {
