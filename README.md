@@ -2,7 +2,7 @@
 
 ## Descrição do projeto
 
-**Dillo** é uma plataforma educacional mobile criada para aproximar professores e alunos em um ambiente virtual acessível, inclusivo e interativo. Seu principal objetivo é construir uma ponte entre diferentes perfis de estudantes — incluindo alunos com deficiência sensorial ou limitações de interação — e a prática pedagógica do professor, garantindo que todos possam participar do processo de aprendizagem de forma mais igualitária e autônoma.
+**Dillo** é uma plataforma educacional mobile criada para aproximar professores e alunos em um ambiente virtual acessível, inclusivo e interativo. Seu principal objetivo é construir uma ponte entre diferentes perfis de estudantes, incluindo alunos com deficiência sensorial ou limitações de interação e a prática pedagógica do professor, garantindo que todos possam participar do processo de aprendizagem de forma mais igualitária e autônoma.
 
 A plataforma permite que professores criem turmas, organizem matérias e publiquem atividades e avaliações com questões objetivas ou dissertativas, enquanto os alunos acompanham seu desempenho em tempo real diretamente pelo aplicativo. Como diferencial, o Dillo integra o assistente de voz “Hey Dillo”, uma solução baseada em IA que interpreta comandos em português, navega pelas telas automaticamente e responde em voz alta, reduzindo a dependência do toque na tela. Essa abordagem amplia significativamente a acessibilidade para pessoas com deficiência visual, baixa visão ou mobilidade reduzida, além de oferecer mais praticidade em contextos educacionais dinâmicos.
 
