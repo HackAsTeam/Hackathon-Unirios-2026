@@ -1,3 +1,4 @@
+using HackathonUnirios2026.Domain.Auth;
 using HackathonUnirios2026.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;

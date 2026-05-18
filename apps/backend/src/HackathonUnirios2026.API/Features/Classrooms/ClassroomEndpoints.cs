@@ -17,7 +17,7 @@ public sealed class ClassroomEndpoints : IEndpoint
 
         group.MapPost("/", CreateClassroomAsync)
             .WithName("CreateClassroom")
-            .Produces<ClassroomResponse>();
+            .Produces<ClassroomResponse>(StatusCodes.Status201Created);
 
         group.MapGet("/", GetMyClassroomsAsync)
             .WithName("GetMyClassrooms")
@@ -35,30 +35,36 @@ public sealed class ClassroomEndpoints : IEndpoint
     }
 
     private static async Task<IResult> CreateClassroomAsync(
-        CreateClassroomCommand command,
+        CreateClassroomRequest body,
+        ClaimsPrincipal principal,
         ISender sender,
         CancellationToken ct)
     {
-        var result = await sender.Send(command, ct);
-        return Results.Ok(result);
+        var teacherId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await sender.Send(new CreateClassroomCommand(body.Title, body.Description, teacherId), ct);
+        return Results.Created($"/classrooms/{result.Id}", result);
     }
 
     private static async Task<IResult> GetMyClassroomsAsync(
+        ClaimsPrincipal principal,
         ISender sender,
         CancellationToken ct)
     {
-        var result = await sender.Send(new GetMyClassroomsQuery(), ct);
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await sender.Send(new GetMyClassroomsQuery(userId), ct);
         return Results.Ok(result);
     }
 
     private static async Task<IResult> GetClassroomByIdAsync(
         Guid id,
+        ClaimsPrincipal principal,
         ISender sender,
         CancellationToken ct)
     {
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
         try
         {
-            var result = await sender.Send(new GetClassroomByIdQuery(id), ct);
+            var result = await sender.Send(new GetClassroomByIdQuery(id, userId), ct);
             return Results.Ok(result);
         }
         catch (ClassroomNotFoundException ex)
@@ -69,11 +75,11 @@ public sealed class ClassroomEndpoints : IEndpoint
 
     private static async Task<IResult> GetClassroomMembersAsync(
         Guid id,
-        HttpContext httpContext,
+        ClaimsPrincipal principal,
         ISender sender,
         CancellationToken ct)
     {
-        var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
         try
         {
             var result = await sender.Send(new GetClassroomMembersQuery(id, userId), ct);
@@ -84,4 +90,6 @@ public sealed class ClassroomEndpoints : IEndpoint
             return Results.NotFound(new { Message = ex.Message });
         }
     }
+
+    private sealed record CreateClassroomRequest(string Title, string? Description);
 }

@@ -32,7 +32,7 @@ services:
       Authentication__Google__WebClientId: ${GOOGLE_WEB_CLIENT_ID:-}
       Authentication__Google__AndroidClientId: ${GOOGLE_ANDROID_CLIENT_ID:-}
       Authentication__Google__IosClientId: ${GOOGLE_IOS_CLIENT_ID:-}
-      App__BaseUrl: ${APP_BASE_URL:-http://localhost:5099}
+      App__BaseUrl: ${APP_BASE_URL:-http://192.168.1.111:5099}
       App__MobileScheme: ${APP_MOBILE_SCHEME:-hackathon-app}
       Gemini__ApiKey: ${Gemini__ApiKey}
       Gemini__Model: ${Gemini__Model:-gemini-2.0-flash}

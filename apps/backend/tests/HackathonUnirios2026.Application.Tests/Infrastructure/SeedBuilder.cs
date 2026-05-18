@@ -55,7 +55,6 @@ public static class SeedBuilder
             Id = Guid.NewGuid(),
             ClassroomId = classroomId,
             StudentId = studentId,
-            JoinedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = studentId,
         };

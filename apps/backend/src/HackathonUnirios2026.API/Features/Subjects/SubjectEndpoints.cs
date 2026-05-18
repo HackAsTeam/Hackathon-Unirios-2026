@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Subjects.Commands;
 using HackathonUnirios2026.Application.Features.Subjects.DTOs;
@@ -16,7 +17,7 @@ public sealed class SubjectEndpoints : IEndpoint
 
         group.MapPost("/", CreateSubjectAsync)
             .WithName("CreateSubject")
-            .Produces<SubjectResponse>(StatusCodes.Status200OK)
+            .Produces<SubjectResponse>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
 
@@ -29,13 +30,15 @@ public sealed class SubjectEndpoints : IEndpoint
     private static async Task<IResult> CreateSubjectAsync(
         Guid classroomId,
         CreateSubjectRequest body,
+        ClaimsPrincipal principal,
         ISender sender,
         CancellationToken ct)
     {
+        var teacherId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
         try
         {
-            var result = await sender.Send(new CreateSubjectCommand(classroomId, body.Name, body.Description), ct);
-            return Results.Ok(result);
+            var result = await sender.Send(new CreateSubjectCommand(classroomId, body.Name, body.Description, teacherId), ct);
+            return Results.Created($"/classrooms/{classroomId}/subjects/{result.Id}", result);
         }
         catch (ClassroomNotFoundException ex)
         {
@@ -49,12 +52,14 @@ public sealed class SubjectEndpoints : IEndpoint
 
     private static async Task<IResult> GetSubjectsAsync(
         Guid classroomId,
+        ClaimsPrincipal principal,
         ISender sender,
         CancellationToken ct)
     {
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
         try
         {
-            var result = await sender.Send(new GetSubjectsQuery(classroomId), ct);
+            var result = await sender.Send(new GetSubjectsQuery(classroomId, userId), ct);
             return Results.Ok(result);
         }
         catch (ClassroomNotFoundException ex)

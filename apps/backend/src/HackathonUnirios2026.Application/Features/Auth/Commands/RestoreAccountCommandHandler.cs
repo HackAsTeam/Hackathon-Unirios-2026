@@ -1,4 +1,5 @@
 using HackathonUnirios2026.Application.Features.Auth.DTOs;
+using HackathonUnirios2026.Domain.Auth;
 using HackathonUnirios2026.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -9,12 +10,22 @@ public sealed class RestoreAccountCommandHandler(
     UserManager<ApplicationUser> userManager,
     IJwtTokenIssuer jwtTokenIssuer) : IRequestHandler<RestoreAccountCommand, AuthResponse>
 {
+    // Pre-computed hash used for dummy verification when the email does not exist,
+    // so timing is uniform and does not reveal whether an email is registered.
+    private static readonly string DummyPasswordHash =
+        new PasswordHasher<ApplicationUser>().HashPassword(new ApplicationUser(), "dummy_sentinel");
+
     public async Task<AuthResponse> Handle(RestoreAccountCommand cmd, CancellationToken ct)
     {
         var user = await userManager.FindByEmailAsync(cmd.Email.Trim());
 
-        // Verify credentials before allowing restoration — generic message to avoid enumeration.
-        if (user is null || !await userManager.CheckPasswordAsync(user, cmd.Password))
+        if (user is null)
+        {
+            userManager.PasswordHasher.VerifyHashedPassword(new ApplicationUser(), DummyPasswordHash, cmd.Password);
+            throw new AuthUnauthorizedException("Invalid credentials.");
+        }
+
+        if (!await userManager.CheckPasswordAsync(user, cmd.Password))
         {
             throw new AuthUnauthorizedException("Invalid credentials.");
         }

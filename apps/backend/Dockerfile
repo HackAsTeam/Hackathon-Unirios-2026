@@ -6,6 +6,7 @@ COPY src/HackathonUnirios2026.API/HackathonUnirios2026.API.csproj src/HackathonU
 COPY src/HackathonUnirios2026.Application/HackathonUnirios2026.Application.csproj src/HackathonUnirios2026.Application/
 COPY src/HackathonUnirios2026.Domain/HackathonUnirios2026.Domain.csproj src/HackathonUnirios2026.Domain/
 COPY src/HackathonUnirios2026.Infra/HackathonUnirios2026.Infra.csproj src/HackathonUnirios2026.Infra/
+COPY tests/HackathonUnirios2026.Application.Tests/HackathonUnirios2026.Application.Tests.csproj tests/HackathonUnirios2026.Application.Tests/
 RUN dotnet restore
 
 COPY . .

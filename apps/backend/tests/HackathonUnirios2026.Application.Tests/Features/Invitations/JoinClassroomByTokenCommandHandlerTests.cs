@@ -20,8 +20,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var token = Guid.NewGuid().ToString("N");
         db.AddInvitationLink(classroom.Id, token);
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var result = await handler.Handle(new JoinClassroomByTokenCommand(token), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var result = await handler.Handle(new JoinClassroomByTokenCommand(token, studentId), default);
 
         result.StudentId.Should().Be(studentId);
         result.ClassroomId.Should().Be(classroom.Id);
@@ -41,8 +41,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var accessor = ClaimsHelper.ForUser(studentId);
         using var db = DbContextFactory.Create(accessor);
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var act = () => handler.Handle(new JoinClassroomByTokenCommand("nonexistent"), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var act = () => handler.Handle(new JoinClassroomByTokenCommand("nonexistent", studentId), default);
 
         await act.Should().ThrowAsync<InvitationNotFoundException>();
     }
@@ -61,8 +61,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var token = Guid.NewGuid().ToString("N");
         db.AddInvitationLink(classroom.Id, token, isActive: false);
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token, studentId), default);
 
         await act.Should().ThrowAsync<InvitationNotFoundException>();
     }
@@ -81,8 +81,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var token = Guid.NewGuid().ToString("N");
         db.AddInvitationLink(classroom.Id, token, expiresAt: DateTime.UtcNow.AddMinutes(-1));
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token, studentId), default);
 
         await act.Should().ThrowAsync<InvitationExpiredException>();
     }
@@ -99,8 +99,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var token = Guid.NewGuid().ToString("N");
         db.AddInvitationLink(classroom.Id, token);
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token, teacherId), default);
 
         await act.Should().ThrowAsync<AlreadyClassroomTeacherException>();
     }
@@ -120,8 +120,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var token = Guid.NewGuid().ToString("N");
         db.AddInvitationLink(classroom.Id, token);
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var act = () => handler.Handle(new JoinClassroomByTokenCommand(token, studentId), default);
 
         await act.Should().ThrowAsync<AlreadyEnrolledException>();
     }
@@ -140,8 +140,8 @@ public class JoinClassroomByTokenCommandHandlerTests
         var token = Guid.NewGuid().ToString("N");
         db.AddInvitationLink(classroom.Id, token, expiresAt: null);
 
-        var handler = new JoinClassroomByTokenCommandHandler(db, accessor);
-        var result = await handler.Handle(new JoinClassroomByTokenCommand(token), default);
+        var handler = new JoinClassroomByTokenCommandHandler(db);
+        var result = await handler.Handle(new JoinClassroomByTokenCommand(token, studentId), default);
 
         result.Should().NotBeNull();
     }

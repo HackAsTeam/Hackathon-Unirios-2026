@@ -1,4 +1,4 @@
 namespace HackathonUnirios2026.Application.Features.Classrooms;
 
-public class ClassroomNotFoundException() : Exception("Classroom not found.");
-public class NotTeacherException() : Exception("Only the teacher of this classroom can perform this action.");
+public sealed class ClassroomNotFoundException() : Exception("Classroom not found.");
+public sealed class NotTeacherException() : Exception("Only the teacher of this classroom can perform this action.");

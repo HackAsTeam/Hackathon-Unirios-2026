@@ -17,8 +17,8 @@ public class GetMyClassroomsQueryHandlerTests
         db.AddClassroom(teacherId, "My Classroom", teacher);
         db.AddClassroom(otherId, "Other Classroom", other);
 
-        var handler = new GetMyClassroomsQueryHandler(db, accessor);
-        var result = await handler.Handle(new GetMyClassroomsQuery(), default);
+        var handler = new GetMyClassroomsQueryHandler(db);
+        var result = await handler.Handle(new GetMyClassroomsQuery(teacherId), default);
 
         result.Should().HaveCount(1);
         result[0].Title.Should().Be("My Classroom");
@@ -37,8 +37,8 @@ public class GetMyClassroomsQueryHandlerTests
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
         db.AddEnrollment(classroom.Id, studentId);
 
-        var handler = new GetMyClassroomsQueryHandler(db, accessor);
-        var result = await handler.Handle(new GetMyClassroomsQuery(), default);
+        var handler = new GetMyClassroomsQueryHandler(db);
+        var result = await handler.Handle(new GetMyClassroomsQuery(studentId), default);
 
         result.Should().HaveCount(1);
         result[0].Title.Should().Be("Math");
@@ -52,8 +52,8 @@ public class GetMyClassroomsQueryHandlerTests
         using var db = DbContextFactory.Create(accessor);
         db.AddUser(userId, "user@test.com");
 
-        var handler = new GetMyClassroomsQueryHandler(db, accessor);
-        var result = await handler.Handle(new GetMyClassroomsQuery(), default);
+        var handler = new GetMyClassroomsQueryHandler(db);
+        var result = await handler.Handle(new GetMyClassroomsQuery(userId), default);
 
         result.Should().BeEmpty();
     }
@@ -70,8 +70,8 @@ public class GetMyClassroomsQueryHandlerTests
         db.AddUser(userId, "user@test.com");
         db.AddClassroom(teacherId, "Not Mine", teacher);
 
-        var handler = new GetMyClassroomsQueryHandler(db, accessor);
-        var result = await handler.Handle(new GetMyClassroomsQuery(), default);
+        var handler = new GetMyClassroomsQueryHandler(db);
+        var result = await handler.Handle(new GetMyClassroomsQuery(userId), default);
 
         result.Should().BeEmpty();
     }
