@@ -24,7 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { useScreenContext } from '../../../../hooks/useScreenContext';
@@ -46,6 +46,7 @@ export default function OralResponseScreen() {
   const c = useColors();
   const scale = useScale();
 
+  const queryClient = useQueryClient();
   const [stage, setStage] = useState<Stage>('idle');
   const [transcript, setTranscript] = useState('');
   const [duration, setDuration] = useState(0);
@@ -78,7 +79,11 @@ export default function OralResponseScreen() {
       }
       await apiFetch(`/attempts/${attempt.id}/submit`, { method: 'POST', token: token! });
     },
-    onSuccess: () => setStage('done'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['student-activity-statuses'] });
+      setStage('done');
+    },
     onError: () => Alert.alert('Erro', 'Não foi possível enviar.'),
   });
 
@@ -186,7 +191,7 @@ export default function OralResponseScreen() {
             Sua resposta oral foi registrada com sucesso.
           </Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => exam?.subjectId ? router.replace(`/subject/${exam.subjectId}`) : router.back()}
             accessibilityLabel="Voltar"
             accessibilityRole="button"
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40 }}

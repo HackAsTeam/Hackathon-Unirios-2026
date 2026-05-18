@@ -20,7 +20,7 @@ import Animated, {
 import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { useScreenContext } from '../../../../hooks/useScreenContext';
@@ -50,6 +50,7 @@ export default function AudioResponseScreen() {
   const c = useColors();
   const scale = useScale();
 
+  const queryClient = useQueryClient();
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
   const [playPosition, setPlayPosition] = useState(0);
@@ -90,7 +91,11 @@ export default function AudioResponseScreen() {
         token: token!,
       });
     },
-    onSuccess: () => setState('done'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['student-activity-statuses'] });
+      setState('done');
+    },
     onError: () => Alert.alert('Erro', 'Não foi possível enviar. Tente novamente.'),
   });
 
@@ -224,7 +229,7 @@ export default function AudioResponseScreen() {
             Seu áudio foi registrado com sucesso.
           </Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => exam?.subjectId ? router.replace(`/subject/${exam.subjectId}`) : router.back()}
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40, alignItems: 'center' }}
           >
             <Text style={{ fontSize: scale(16), fontWeight: '700', color: '#fff' }}>Voltar</Text>

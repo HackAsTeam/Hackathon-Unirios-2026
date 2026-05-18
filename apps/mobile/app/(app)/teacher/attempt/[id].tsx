@@ -65,7 +65,8 @@ export default function TeacherAttemptDetailScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attempt-teacher', id] });
-      Alert.alert('Salvo', 'Correção salva com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['teacher-pending-attempts'] });
+      Alert.alert('Salvo', 'Correção salva com sucesso.', [{ text: 'OK', onPress: () => router.back() }]);
     },
     onError: () => {
       Alert.alert('Erro', 'Não foi possível salvar.');
