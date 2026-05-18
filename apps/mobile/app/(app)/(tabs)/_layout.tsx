@@ -2,10 +2,13 @@ import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { useOnboardingStore } from "@/store/onboarding";
+import { useAuthStore } from "@/store/auth";
 import { useColors } from "@/hooks/useColors";
 
 export default function TabsLayout() {
-  const role = useOnboardingStore((s) => s.role);
+  const onboardingRole = useOnboardingStore((s) => s.role);
+  const authRole = useAuthStore((s) => s.role?.toLowerCase() ?? null);
+  const role = onboardingRole ?? authRole;
   const c = useColors();
 
   return (
