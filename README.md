@@ -79,6 +79,16 @@ O fluxo de voz funciona em três etapas no cliente: (1) `expo-speech-recognition
 
 Suporte a dois fluxos: **email/senha** com hash gerenciado pelo ASP.NET Core Identity, e **Google OAuth** via token de ID do cliente mobile validado pelo `Google.Apis.Auth`. Em ambos os casos a resposta é um **JWT** assinado com HMAC-SHA256, válido por 7 dias.
 
+### Testes 
+Para garantir a confiabilidade, a estabilidade e a segurança da plataforma, o projeto conta com uma suíte de testes automatizados robusta. A cobertura de testes foi desenhada seguindo a lógica das fatias verticais do sistema, isolando e validando desde os fluxos mais críticos de identidade até as regras de negócio complexas que envolvem a execução e correção de avaliações.
+| Funcionalidade | Testes |
+|---------|-------|
+| Auth (Login, Register, DeleteAccount, RestoreAccount, SetRole) | 29 |
+| Classrooms (Create, GetMy, GetById) | 9 |
+| Invitations (Generate, Join) | 13 |
+| Exams (Create + all validation paths) | 10 |
+| ExamAttempts (Start, Submit, Grade) | 26 |
+| **Total** | **87** |
 ---
 
 ## Como executar o projeto
