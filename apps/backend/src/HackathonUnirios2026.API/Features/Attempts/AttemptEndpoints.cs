@@ -40,6 +40,10 @@ public sealed class AttemptEndpoints : IEndpoint
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status400BadRequest);
 
+        group.MapGet("/teacher/pending", GetTeacherPendingAttemptsAsync)
+            .WithName("GetTeacherPendingAttempts")
+            .Produces<List<PendingAttemptResponse>>();
+
         group.MapGet("/", GetMyAttemptsAsync)
             .WithName("GetMyAttempts")
             .Produces<List<AttemptResponse>>();
@@ -58,7 +62,7 @@ public sealed class AttemptEndpoints : IEndpoint
         group.MapGet("/{id:guid}/teacher-view", GetAttemptDetailAsTeacherAsync)
             .WithName("GetAttemptDetailAsTeacher")
             .RequireAuthorization()
-            .Produces<AttemptDetailResponse>()
+            .Produces<TeacherAttemptDetailResponse>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
     }
@@ -154,6 +158,16 @@ public sealed class AttemptEndpoints : IEndpoint
     {
         var result = await sender.Send(new GetAttemptDetailQuery(id), ct);
         return result is null ? Results.NotFound() : Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetTeacherPendingAttemptsAsync(
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var teacherId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await sender.Send(new GetTeacherPendingAttemptsQuery(teacherId), ct);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetMyAttemptsAsync(

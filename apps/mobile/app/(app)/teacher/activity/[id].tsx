@@ -190,39 +190,85 @@ export default function TeacherActivityDetailScreen() {
             ))}
 
           <View style={{ marginTop: 8 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: c.text.primary, marginBottom: 12 }}>
-              Respostas dos Alunos
-            </Text>
-            {attemptsLoading && <ActivityIndicator color={c.primary} size="small" />}
-            {!attemptsLoading && (!attempts || attempts.length === 0) && (
-              <View style={{ backgroundColor: c.surfaceAlt, borderRadius: 16, padding: 20, alignItems: 'center', gap: 6 }}>
-                <Ionicons name="people-outline" size={28} color={c.text.tertiary} />
-                <Text style={{ fontSize: 14, color: c.text.tertiary, textAlign: 'center' }}>
-                  Nenhuma resposta submetida ainda
-                </Text>
-              </View>
-            )}
-            {attempts?.map((a) => (
-              <TouchableOpacity
-                key={a.id}
-                onPress={() => router.push(`/teacher/attempt/${a.id}?activityId=${id}&studentName=${encodeURIComponent(a.studentName ?? 'Aluno')}`)}
-                style={{ backgroundColor: c.surface, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: c.borderLight, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}
-              >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: c.primary }}>
-                    {(a.studentName ?? 'A')[0].toUpperCase()}
+            {(() => {
+              const pending = attempts?.filter((a) => a.status === 'Submitted') ?? [];
+              const corrected = attempts?.filter((a) => a.status === 'Graded') ?? [];
+              const total = attempts?.length ?? 0;
+              return (
+                <>
+                  <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.text.primary, marginBottom: 12 }}>
+                    {attemptsLoading || total === 0
+                      ? 'Respostas dos Alunos'
+                      : `Respostas dos Alunos (${corrected.length}/${total} corrigidas)`}
                   </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: c.text.primary }}>{a.studentName ?? 'Aluno'}</Text>
-                  <Text style={{ fontSize: 12, color: c.text.tertiary, marginTop: 2 }}>
-                    Enviado em {new Date(a.submittedAt ?? a.startedAt).toLocaleDateString('pt-BR')}
-                  </Text>
-                </View>
-                <AttemptStatusBadge status={a.status as AttemptStatus} />
-                <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
-              </TouchableOpacity>
-            ))}
+                  {attemptsLoading && <ActivityIndicator color={c.primary} size="small" />}
+                  {!attemptsLoading && total === 0 && (
+                    <View style={{ backgroundColor: c.surfaceAlt, borderRadius: 16, padding: 20, alignItems: 'center', gap: 6 }}>
+                      <Ionicons name="people-outline" size={28} color={c.text.tertiary} />
+                      <Text style={{ fontSize: scale(14), color: c.text.tertiary, textAlign: 'center' }}>
+                        Nenhuma resposta submetida ainda
+                      </Text>
+                    </View>
+                  )}
+                  {!attemptsLoading && pending.length > 0 && (
+                    <>
+                      <Text style={{ fontSize: scale(13), fontWeight: '700', color: c.warning, marginBottom: 8, marginTop: 4 }}>
+                        Pendentes ({pending.length})
+                      </Text>
+                      {pending.map((a) => (
+                        <TouchableOpacity
+                          key={a.id}
+                          onPress={() => router.push(`/teacher/attempt/${a.id}?activityId=${id}&studentName=${encodeURIComponent(a.studentName ?? 'Aluno')}`)}
+                          style={{ backgroundColor: c.surface, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: c.borderLight, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}
+                        >
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.primary }}>
+                              {(a.studentName ?? 'A')[0].toUpperCase()}
+                            </Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary }}>{a.studentName ?? 'Aluno'}</Text>
+                            <Text style={{ fontSize: scale(12), color: c.text.tertiary, marginTop: 2 }}>
+                              Enviado em {new Date(a.submittedAt ?? a.startedAt).toLocaleDateString('pt-BR')}
+                            </Text>
+                          </View>
+                          <AttemptStatusBadge status={a.status as AttemptStatus} />
+                          <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
+                        </TouchableOpacity>
+                      ))}
+                    </>
+                  )}
+                  {!attemptsLoading && corrected.length > 0 && (
+                    <>
+                      <Text style={{ fontSize: scale(13), fontWeight: '700', color: c.primary, marginBottom: 8, marginTop: pending.length > 0 ? 8 : 4 }}>
+                        Corrigidas ({corrected.length})
+                      </Text>
+                      {corrected.map((a) => (
+                        <TouchableOpacity
+                          key={a.id}
+                          onPress={() => router.push(`/teacher/attempt/${a.id}?activityId=${id}&studentName=${encodeURIComponent(a.studentName ?? 'Aluno')}`)}
+                          style={{ backgroundColor: c.surface, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: c.borderLight, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}
+                        >
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.primary }}>
+                              {(a.studentName ?? 'A')[0].toUpperCase()}
+                            </Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: scale(15), fontWeight: '600', color: c.text.primary }}>{a.studentName ?? 'Aluno'}</Text>
+                            <Text style={{ fontSize: scale(12), color: c.text.tertiary, marginTop: 2 }}>
+                              Enviado em {new Date(a.submittedAt ?? a.startedAt).toLocaleDateString('pt-BR')}
+                            </Text>
+                          </View>
+                          <AttemptStatusBadge status={a.status as AttemptStatus} />
+                          <Ionicons name="chevron-forward" size={18} color={c.text.tertiary} />
+                        </TouchableOpacity>
+                      ))}
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </View>
         </ScrollView>
       )}

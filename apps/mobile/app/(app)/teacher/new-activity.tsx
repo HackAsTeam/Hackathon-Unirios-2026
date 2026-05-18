@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -361,7 +363,8 @@ export default function NewActivityScreen() {
     onSuccess: () => {
       setSubmitError(null);
       queryClient.invalidateQueries({ queryKey: ['activities', subjectId] });
-      goBack();
+      Alert.alert('Atividade criada', 'A atividade foi criada com sucesso.', [{ text: 'OK', onPress: () => goBack() }]);
+      if (Platform.OS === 'web') goBack();
     },
     onError: (err: any) => {
       setSubmitError(err?.message ?? 'Não foi possível criar a atividade.');

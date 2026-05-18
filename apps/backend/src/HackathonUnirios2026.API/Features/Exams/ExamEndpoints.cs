@@ -69,6 +69,10 @@ public sealed class ExamEndpoints : IEndpoint
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
 
+        activitiesGroup.MapGet("/my-status", GetStudentActivityStatusesAsync)
+            .WithName("GetStudentActivityStatuses")
+            .Produces<List<StudentActivityStatusResponse>>();
+
         activitiesGroup.MapGet("/{id:guid}/attempts", GetActivityAttemptsAsync)
             .WithName("GetActivityAttempts")
             .RequireAuthorization()
@@ -192,6 +196,16 @@ public sealed class ExamEndpoints : IEndpoint
         {
             return Results.Forbid();
         }
+    }
+
+    private static async Task<IResult> GetStudentActivityStatusesAsync(
+        HttpContext httpContext,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var studentId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await sender.Send(new GetStudentActivityStatusesQuery(studentId), ct);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetActivityAttemptsAsync(

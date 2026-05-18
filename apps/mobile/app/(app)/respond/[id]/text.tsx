@@ -13,7 +13,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { useVoiceCommandStore } from '../../../../store/voiceCommand';
@@ -34,6 +34,7 @@ export default function TextResponseScreen() {
   const c = useColors();
   const scale = useScale();
 
+  const queryClient = useQueryClient();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [mcAnswers, setMcAnswers] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
@@ -71,7 +72,11 @@ export default function TextResponseScreen() {
       }
       await apiFetch(`/attempts/${attempt.id}/submit`, { method: 'POST', token: token! });
     },
-    onSuccess: () => setDone(true),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['student-activity-statuses'] });
+      setDone(true);
+    },
     onError: () => Alert.alert('Erro', 'Não foi possível enviar.'),
   });
 
@@ -103,7 +108,7 @@ export default function TextResponseScreen() {
             Sua resposta em texto foi registrada.
           </Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => exam?.subjectId ? router.replace(`/subject/${exam.subjectId}`) : router.back()}
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40 }}
           >
             <Text style={{ fontSize: scale(16), fontWeight: '700', color: '#fff' }}>Voltar</Text>
