@@ -1,4 +1,4 @@
-import { Redirect, Stack } from "expo-router";
+import { Redirect, Stack, usePathname } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { useAuthStore } from "../../store/auth";
@@ -8,6 +8,8 @@ import { VoiceAssistantButton } from "../../components/voice/VoiceAssistantButto
 
 export default function AppLayout() {
   const { isSignedIn, hydrated } = useAuthStore();
+  const pathname = usePathname();
+  const hideVoiceButton = pathname === '/onboarding';
 
   useEffect(() => {
     useAccessibilityStore.getState().load();
@@ -20,7 +22,7 @@ export default function AppLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }} />
-      <VoiceAssistantButton />
+      {!hideVoiceButton && <VoiceAssistantButton />}
     </View>
   );
 }
