@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
+import { useVoiceCommandStore } from '../../../../store/voiceCommand';
 import { useScreenContext } from '../../../../hooks/useScreenContext';
 import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
@@ -51,6 +52,7 @@ export default function AudioResponseScreen() {
   const scale = useScale();
 
   const queryClient = useQueryClient();
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
   const [playPosition, setPlayPosition] = useState(0);
@@ -108,6 +110,12 @@ export default function AudioResponseScreen() {
       if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
     };
   }, []);
+
+  useEffect(() => {
+    if (lastCommand?.command === 'SUBMIT_ANSWER' && (state === 'recorded' || state === 'playing') && !submitMutation.isPending) {
+      submitMutation.mutate();
+    }
+  }, [lastCommand]);
 
   function startTimer() {
     startTime.current = Date.now() - duration;
@@ -247,6 +255,8 @@ export default function AudioResponseScreen() {
       >
         <TouchableOpacity
           onPress={() => router.back()}
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 24 }}
         >
           <Ionicons name="arrow-back" size={20} color={accentColor} />
@@ -310,6 +320,8 @@ export default function AudioResponseScreen() {
             >
               <TouchableOpacity
                 onPress={resetRecording}
+                accessibilityLabel="Regravar resposta"
+                accessibilityRole="button"
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 16, borderWidth: 1.5, borderColor: c.border, alignItems: 'center', gap: 6, flexDirection: 'row', justifyContent: 'center' }}
               >
                 <Ionicons name="refresh-outline" size={18} color={c.text.secondary} />
@@ -317,6 +329,8 @@ export default function AudioResponseScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={state === 'playing' ? stopPlayback : playRecording}
+                accessibilityLabel={state === 'playing' ? 'Parar reprodução' : 'Ouvir gravação'}
+                accessibilityRole="button"
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: accentColor + '18', borderWidth: 1.5, borderColor: accentColor + '40', alignItems: 'center', gap: 6, flexDirection: 'row', justifyContent: 'center' }}
               >
                 <Ionicons name={state === 'playing' ? 'stop-outline' : 'play-outline'} size={18} color={accentColor} />

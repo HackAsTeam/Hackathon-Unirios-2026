@@ -249,6 +249,9 @@ export default function TextResponseScreen() {
         <TouchableOpacity
           onPress={() => submitMutation.mutate()}
           disabled={submitMutation.isPending || !allAnswered}
+          accessibilityLabel="Enviar resposta"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: submitMutation.isPending || !allAnswered }}
           style={{
             backgroundColor: accentColor,
             borderRadius: 18,

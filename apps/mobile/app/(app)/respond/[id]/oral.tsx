@@ -27,6 +27,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
+import { useVoiceCommandStore } from '../../../../store/voiceCommand';
 import { useScreenContext } from '../../../../hooks/useScreenContext';
 import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
@@ -47,6 +48,7 @@ export default function OralResponseScreen() {
   const scale = useScale();
 
   const queryClient = useQueryClient();
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const [stage, setStage] = useState<Stage>('idle');
   const [transcript, setTranscript] = useState('');
   const [duration, setDuration] = useState(0);
@@ -96,6 +98,12 @@ export default function OralResponseScreen() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (lastCommand?.command === 'SUBMIT_ANSWER' && stage === 'editing' && transcript.trim() && !submitMutation.isPending) {
+      submitMutation.mutate();
+    }
+  }, [lastCommand]);
 
   function startTimer() {
     startTimeRef.current = Date.now();

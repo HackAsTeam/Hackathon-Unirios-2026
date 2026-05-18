@@ -11,35 +11,22 @@ public sealed class GetTeacherPendingAttemptsQueryHandler(AppDbContext db)
 {
     public async Task<List<PendingAttemptResponse>> Handle(GetTeacherPendingAttemptsQuery query, CancellationToken ct)
     {
-        var raw = await db.ExamAttempts
+        return await db.ExamAttempts
             .AsNoTracking()
             .Where(a => a.Status == AttemptStatus.Submitted
+                && a.SubmittedAt != null
                 && a.Exam.Classroom.TeacherId == query.TeacherId
                 && a.Exam.SubjectId != null)
-            .Select(a => new
-            {
-                AttemptId = a.Id,
-                StudentName = a.Student.DisplayName ?? a.Student.Email!,
-                SubmittedAt = a.SubmittedAt,
-                ActivityId = a.ExamId,
-                ActivityTitle = a.Exam.Title,
-                SubjectId = a.Exam.SubjectId,
-                SubjectName = a.Exam.Subject!.Name,
-                ClassroomId = a.Exam.ClassroomId,
-                ClassroomTitle = a.Exam.Classroom.Title,
-            })
+            .Select(a => new PendingAttemptResponse(
+                a.Id,
+                a.Student.DisplayName ?? a.Student.Email!,
+                a.SubmittedAt!.Value,
+                a.ExamId,
+                a.Exam.Title,
+                a.Exam.SubjectId!.Value,
+                a.Exam.Subject!.Name,
+                a.Exam.ClassroomId,
+                a.Exam.Classroom.Title))
             .ToListAsync(ct);
-
-        return raw.Select(r => new PendingAttemptResponse(
-            r.AttemptId,
-            r.StudentName,
-            r.SubmittedAt!.Value,
-            r.ActivityId,
-            r.ActivityTitle,
-            r.SubjectId!.Value,
-            r.SubjectName,
-            r.ClassroomId,
-            r.ClassroomTitle))
-        .ToList();
     }
 }
