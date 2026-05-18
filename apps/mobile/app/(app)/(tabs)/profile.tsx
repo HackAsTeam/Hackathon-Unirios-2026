@@ -235,6 +235,7 @@ export default function ProfileScreen() {
         <View style={{ borderWidth: 1, borderColor: c.border, borderRadius: 12, overflow: 'hidden' }}>
           <TouchableOpacity
             activeOpacity={0.6}
+            onPress={() => router.push('/privacy')}
             accessibilityLabel="Política de Privacidade"
             accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
@@ -245,6 +246,7 @@ export default function ProfileScreen() {
           <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
           <TouchableOpacity
             activeOpacity={0.6}
+            onPress={() => router.push('/terms')}
             accessibilityLabel="Termos de Uso"
             accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}
@@ -255,6 +257,7 @@ export default function ProfileScreen() {
           <View style={{ height: 1, backgroundColor: c.borderLight, marginHorizontal: 16 }} />
           <TouchableOpacity
             activeOpacity={0.6}
+            onPress={() => router.push('/consent')}
             accessibilityLabel="Consentimento de Dados"
             accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}

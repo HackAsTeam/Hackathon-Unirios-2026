@@ -120,6 +120,13 @@ export default function SignUpScreen() {
         <Link href="/(auth)/sign-in" className="text-center text-green-700">
           Já tem conta? Entre
         </Link>
+
+        <Text className="text-gray-400 text-xs text-center mt-6 leading-5">
+          Ao se cadastrar, você concorda com nossos{' '}
+          <Link href="/terms" className="text-green-600 underline">Termos de Uso</Link>
+          {' '}e{' '}
+          <Link href="/privacy" className="text-green-600 underline">Política de Privacidade</Link>.
+        </Text>
       </View>
     </AppScreen>
   );

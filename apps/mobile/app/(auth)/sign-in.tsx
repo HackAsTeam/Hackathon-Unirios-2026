@@ -228,6 +228,13 @@ export default function SignInScreen() {
         <Link href="/(auth)/sign-up" className="text-center text-green-700">
           Não tem conta? Cadastre-se
         </Link>
+
+        <Text className="text-gray-400 text-xs text-center mt-6 leading-5">
+          Ao fazer login, você concorda com nossos{' '}
+          <Link href="/terms" className="text-green-600 underline">Termos de Uso</Link>
+          {' '}e{' '}
+          <Link href="/privacy" className="text-green-600 underline">Política de Privacidade</Link>.
+        </Text>
       </View>
     </AppScreen>
   );
