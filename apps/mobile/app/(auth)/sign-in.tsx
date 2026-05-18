@@ -36,7 +36,8 @@ export default function SignInScreen() {
       router.replace(`/invite/${t}` as never);
     } else {
       const { completed } = useOnboardingStore.getState();
-      router.replace(completed ? "/(app)/(tabs)" : "/onboarding");
+      const { role } = useAuthStore.getState();
+      router.replace(completed || role ? "/(app)/(tabs)" : "/onboarding");
     }
   }
 
@@ -51,12 +52,10 @@ export default function SignInScreen() {
     return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
   }
 
-  // Called when the server confirms restore was successful.
-  // Pass syncOnboarding=true for account restores so the user's pre-existing role
-  // is re-applied and they bypass the onboarding role-picker.
-  async function finishSignIn(data: AuthData, syncOnboarding = false) {
+  async function finishSignIn(data: AuthData) {
     await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
-    if (syncOnboarding && data.role) {
+    const { completed } = useOnboardingStore.getState();
+    if (data.role && !completed) {
       await useOnboardingStore.getState().setRole(data.role.toLowerCase() as "teacher" | "student");
     }
     redirectAfterLogin();
@@ -77,7 +76,7 @@ export default function SignInScreen() {
                 method: "POST",
                 body: { email, password },
               });
-              await finishSignIn(data, true);
+              await finishSignIn(data);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Erro ao restaurar conta.");
             } finally {
@@ -109,7 +108,7 @@ export default function SignInScreen() {
                 body: { idToken },
               });
               google.setPendingDeletion(null);
-              await finishSignIn(data, true);
+              await finishSignIn(data);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Erro ao restaurar conta.");
             } finally {
@@ -157,6 +156,10 @@ export default function SignInScreen() {
   async function handleGoogleSignIn() {
     const data = await google.signInWithGoogle();
     if (data) {
+      const { completed } = useOnboardingStore.getState();
+      if (data.role && !completed) {
+        await useOnboardingStore.getState().setRole(data.role.toLowerCase() as "teacher" | "student");
+      }
       redirectAfterLogin();
     }
   }
