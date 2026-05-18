@@ -5,8 +5,6 @@ using HackathonUnirios2026.Application.Features.Exams.DTOs;
 using HackathonUnirios2026.Application.Features.Exams.Queries;
 using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Subjects;
-using HackathonUnirios2026.Application.Features.ExamAttempts.DTOs;
-using HackathonUnirios2026.Application.Features.ExamAttempts.Queries;
 using MediatR;
 
 namespace HackathonUnirios2026.API.Features.Exams;
@@ -72,12 +70,6 @@ public sealed class ExamEndpoints : IEndpoint
         activitiesGroup.MapGet("/my-status", GetStudentActivityStatusesAsync)
             .WithName("GetStudentActivityStatuses")
             .Produces<List<StudentActivityStatusResponse>>();
-
-        activitiesGroup.MapGet("/{id:guid}/attempts", GetActivityAttemptsAsync)
-            .WithName("GetActivityAttempts")
-            .RequireAuthorization()
-            .Produces<List<ActivityAttemptSummaryResponse>>()
-            .Produces(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<IResult> CreateExamAsync(
@@ -206,24 +198,6 @@ public sealed class ExamEndpoints : IEndpoint
         var studentId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var result = await sender.Send(new GetStudentActivityStatusesQuery(studentId), ct);
         return Results.Ok(result);
-    }
-
-    private static async Task<IResult> GetActivityAttemptsAsync(
-        Guid id,
-        HttpContext httpContext,
-        ISender sender,
-        CancellationToken ct)
-    {
-        var teacherId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        try
-        {
-            var result = await sender.Send(new GetActivityAttemptsQuery(id, teacherId), ct);
-            return Results.Ok(result);
-        }
-        catch (NotTeacherException)
-        {
-            return Results.Forbid();
-        }
     }
 
     private sealed record CreateSubjectActivityRequest(string Title, string? Description, List<CreateQuestionDto> Questions);

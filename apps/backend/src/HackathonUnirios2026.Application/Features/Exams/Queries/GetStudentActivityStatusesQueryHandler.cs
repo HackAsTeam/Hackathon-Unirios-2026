@@ -17,23 +17,43 @@ public sealed class GetStudentActivityStatusesQueryHandler(AppDbContext db)
             .Select(e => e.ClassroomId)
             .ToListAsync(ct);
 
-        var exams = await db.Exams
+        if (enrolledClassroomIds.Count == 0)
+            return [];
+
+        var examRows = await db.Exams
             .AsNoTracking()
-            .Include(e => e.Subject)
-            .Include(e => e.Classroom)
-            .Include(e => e.Questions)
-            .Where(e => enrolledClassroomIds.Contains(e.ClassroomId) && e.SubjectId != null)
+            .Where(e => e.SubjectId != null && enrolledClassroomIds.Contains(e.ClassroomId))
+            .Select(e => new
+            {
+                e.Id,
+                e.Title,
+                e.SubjectId,
+                SubjectName = e.Subject!.Name,
+                e.ClassroomId,
+                ClassroomTitle = e.Classroom.Title,
+                TotalQuestions = e.Questions.Count(),
+            })
             .ToListAsync(ct);
 
-        var examIds = exams.Select(e => e.Id).ToList();
+        if (examRows.Count == 0)
+            return [];
+
+        var examIds = examRows.Select(e => e.Id).ToList();
 
         var attempts = await db.ExamAttempts
             .AsNoTracking()
-            .Include(a => a.Answers)
             .Where(a => a.StudentId == query.StudentId && examIds.Contains(a.ExamId))
+            .Select(a => new
+            {
+                a.Id,
+                a.ExamId,
+                a.Status,
+                a.StartedAt,
+                AnsweredCount = a.Answers.Count(),
+            })
             .ToListAsync(ct);
 
-        return exams
+        return examRows
             .Select(e =>
             {
                 var attempt = attempts
@@ -47,13 +67,13 @@ public sealed class GetStudentActivityStatusesQueryHandler(AppDbContext db)
                 x.exam.Id,
                 x.exam.Title,
                 x.exam.SubjectId!.Value,
-                x.exam.Subject!.Name,
+                x.exam.SubjectName,
                 x.exam.ClassroomId,
-                x.exam.Classroom.Title,
+                x.exam.ClassroomTitle,
                 x.attempt?.Status.ToString(),
                 x.attempt?.Id,
-                x.attempt?.Answers.Count ?? 0,
-                x.exam.Questions.Count))
+                x.attempt?.AnsweredCount ?? 0,
+                x.exam.TotalQuestions))
             .ToList();
     }
 }
