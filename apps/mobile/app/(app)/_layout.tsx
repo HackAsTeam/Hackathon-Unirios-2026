@@ -9,7 +9,8 @@ import { VoiceAssistantButton } from "../../components/voice/VoiceAssistantButto
 export default function AppLayout() {
   const { isSignedIn, hydrated } = useAuthStore();
   const pathname = usePathname();
-  const hideVoiceButton = pathname === '/onboarding';
+  const isLegalRoute = pathname === '/privacy' || pathname === '/terms' || pathname === '/consent';
+  const hideVoiceButton = pathname === '/onboarding' || isLegalRoute;
 
   useEffect(() => {
     useAccessibilityStore.getState().load();
@@ -17,7 +18,7 @@ export default function AppLayout() {
   }, []);
 
   if (!hydrated) return null;
-  if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
+  if (!isSignedIn && !isLegalRoute) return <Redirect href="/(auth)/sign-in" />;
 
   return (
     <View style={{ flex: 1 }}>
