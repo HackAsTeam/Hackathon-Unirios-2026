@@ -1,12 +1,47 @@
 # Dillo — Plataforma Educacional com Assistente de Voz
 
-## Descrição do projeto
+## Demonstração
 
-**Dillo** é uma plataforma educacional mobile criada para aproximar professores e alunos em um ambiente virtual acessível, inclusivo e interativo. Seu principal objetivo é construir uma ponte entre diferentes perfis de estudantes, incluindo alunos com deficiência sensorial ou limitações de interação e a prática pedagógica do professor, garantindo que todos possam participar do processo de aprendizagem de forma mais igualitária e autônoma.
-
-A plataforma permite que professores criem turmas, organizem matérias e publiquem atividades e avaliações com questões objetivas ou dissertativas, enquanto os alunos acompanham seu desempenho em tempo real diretamente pelo aplicativo. Como diferencial, o Dillo integra o assistente de voz “Hey Dillo”, uma solução baseada em IA que interpreta comandos em português, navega pelas telas automaticamente e responde em voz alta, reduzindo a dependência do toque na tela. Essa abordagem amplia significativamente a acessibilidade para pessoas com deficiência visual, baixa visão ou mobilidade reduzida, além de oferecer mais praticidade em contextos educacionais dinâmicos.
-
-O Dillo propõe uma experiência educacional centrada na inclusão, na comunicação e na aproximação entre aluno e professor, utilizando tecnologia para tornar o aprendizado mais acessível, humano e conectado às necessidades reais dos usuários.
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/login.jpeg" width="200" alt="Login" />
+        <br /><em>Login</em>
+      </td>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/register.jpeg" width="200" alt="Cadastro" />
+        <br /><em>Cadastro</em>
+      </td>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/onboarding-welcome.jpeg" width="200" alt="Onboarding — Boas-vindas" />
+        <br /><em>Onboarding — Boas-vindas</em>
+      </td>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/onboarding-continue.jpeg" width="200" alt="Onboarding — Continuar" />
+        <br /><em>Onboarding — Continuar</em>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/onboarding-role.jpeg" width="200" alt="Onboarding — Escolha de perfil" />
+        <br /><em>Onboarding — Escolha de perfil</em>
+      </td>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/index.jpeg" width="200" alt="Home" />
+        <br /><em>Home</em>
+      </td>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/new-classroom.jpeg" width="200" alt="Nova turma" />
+        <br /><em>Nova turma</em>
+      </td>
+      <td align="center" width="25%">
+        <img src="apps/mobile/screenshots/new-activity.jpeg" width="200" alt="Nova atividade" />
+        <br /><em>Nova atividade</em>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
