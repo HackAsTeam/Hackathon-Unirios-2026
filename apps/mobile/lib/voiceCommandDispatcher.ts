@@ -9,7 +9,7 @@ import type { ScreenContext, VoiceCommandResponse } from '../store/voiceCommand'
 
 // ─── Tier 1: local keyword matching ──────────────────────────────────────────
 
-const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandResponse | Promise<VoiceCommandResponse> }> = [
+const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray) => VoiceCommandResponse | Promise<VoiceCommandResponse> }> = [
   // ── Navigation ────────────────────────────────────────────────────────────
   {
     // Must be before GO_BACK so "voltar para o início" routes to home, not back
@@ -41,14 +41,32 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
     },
   },
   {
-    pattern: /\b(pendência|pendências|pendencias|pendencia|minhas pendências|atividades pendentes)\b/i,
+    // Anchored so action phrases like "listar atividades pendentes" fall through to tier2
+    pattern: /^(?:(?:ir\s+para|abrir?|ver|acessar?|mostrar?)\s+)?(?:(?:as\s+|minhas\s+)?(?:pendências?|pendencias?)|atividades?\s+pendentes?)$/i,
     handler: () => {
       router.push('/(app)/(tabs)/pendencias');
       return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo pendências.' };
     },
   },
   {
-    pattern: /\b(turmas?|minhas turmas?|sala de aula)\b/i,
+    // "entra na matéria de X" / "abrir matéria X" / "ir para matéria X" — navigates by name inside a classroom
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)mat[eé]ria\s+(?:de\s+)?(.+)/i,
+    handler: (match) => {
+      const name = match[1].trim();
+      return { type: 'COMMAND', command: 'NAVIGATE_TO_SUBJECT', payload: { name }, speak: `Abrindo matéria ${name}.` };
+    },
+  },
+  {
+    // "entra na turma X" / "abrir turma X" / "ir para turma X" / "ver turma X" — navigates by name
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)turma\s+(.+)/i,
+    handler: (match) => {
+      const name = match[1].trim();
+      return { type: 'COMMAND', command: 'NAVIGATE_TO_CLASSROOM', payload: { name }, speak: `Abrindo turma ${name}.` };
+    },
+  },
+  {
+    // Anchored so action phrases like "criar turma chamada X" fall through to tier2
+    pattern: /^(?:(?:ver|abrir?|mostrar?|ir para|acessar?|listar?)\s+)?(?:as\s+|minhas\s+)?turmas?$|^sala de aula$/i,
     handler: () => {
       router.push('/(app)/(tabs)');
       return { type: 'COMMAND', command: 'GO_HOME', speak: 'Abrindo turmas.' };
@@ -82,6 +100,31 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
         type: 'CONFIRM',
         command: 'SIGN_OUT',
         speak: 'Tem certeza que quer sair? Diga confirmar para continuar.',
+      };
+    },
+  },
+
+  // ── Submit answer ─────────────────────────────────────────────────────────
+  {
+    pattern: /\b(enviar?\s+resposta|submeter?\s+resposta|mandar?\s+resposta|enviar?)\b/i,
+    handler: () => ({
+      type: 'COMMAND',
+      command: 'SUBMIT_ANSWER',
+      speak: 'Enviando resposta.',
+    }),
+  },
+
+  // ── Select alternative (MCQ) ─────────────────────────────────────────────
+  {
+    // Matches: "alternativa A", "letra B", "marcar alternativa C", "escolho a letra D", etc.
+    pattern: /\b(?:alternativa|letra|opção)\s+([abcd])\b/i,
+    handler: (match) => {
+      const letter = match[1].toUpperCase();
+      return {
+        type: 'COMMAND',
+        command: 'SELECT_ALTERNATIVE',
+        payload: { optionLetter: letter, questionIndex: 0 },
+        speak: `Alternativa ${letter} selecionada.`,
       };
     },
   },
@@ -178,7 +221,8 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: () => VoiceCommandRespon
 async function tryLocalDispatch(transcript: string): Promise<VoiceCommandResponse | null> {
   const t = transcript.trim().toLowerCase();
   for (const { pattern, handler } of LOCAL_PATTERNS) {
-    if (pattern.test(t)) return handler();
+    const match = t.match(pattern);
+    if (match) return handler(match);
   }
   return null;
 }

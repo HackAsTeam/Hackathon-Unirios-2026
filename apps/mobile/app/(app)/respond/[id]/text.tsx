@@ -18,6 +18,7 @@ import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { useVoiceCommandStore } from '../../../../store/voiceCommand';
 import { useScreenContext } from '../../../../hooks/useScreenContext';
+import { speak } from '../../../../lib/tts';
 import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
 import { useScale } from '../../../../hooks/useScale';
@@ -81,9 +82,48 @@ export default function TextResponseScreen() {
   });
 
   useEffect(() => {
-    if (lastCommand?.command === 'SUBMIT_ANSWER' && !done && !submitMutation.isPending) {
-      const allAnswered = exam?.questions.every((q) => answers[q.id]?.trim());
-      if (allAnswered) submitMutation.mutate();
+    if (!lastCommand) return;
+
+    if (lastCommand.command === 'SUBMIT_ANSWER' && !done && !submitMutation.isPending) {
+      if (allAnswered) {
+        submitMutation.mutate();
+      } else {
+        speak('Responda todas as questões antes de enviar.');
+      }
+    }
+
+    if (lastCommand.command === 'SELECT_ALTERNATIVE' && exam) {
+      const letter = (lastCommand.payload?.optionLetter as string | undefined)?.toUpperCase();
+      const qIdx = (lastCommand.payload?.questionIndex as number | undefined) ?? 0;
+      const letterMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+      const optIndex = letter !== undefined ? letterMap[letter] : undefined;
+      if (optIndex !== undefined) {
+        const mcqQuestions = exam.questions.filter((q) => q.options.length > 0);
+        const targetQ = mcqQuestions[qIdx] ?? mcqQuestions[0];
+        if (targetQ) {
+          const sorted = [...targetQ.options].sort((a, b) => a.orderIndex - b.orderIndex);
+          const option = sorted[optIndex];
+          if (option) {
+            setMcAnswers((prev) => ({ ...prev, [targetQ.id]: option.id }));
+            speak(`Alternativa ${letter} selecionada.`);
+          } else {
+            speak(`Esta questão não tem alternativa ${letter}.`);
+          }
+        }
+      }
+    }
+
+    if (lastCommand.command === 'READ_ALOUD' && exam) {
+      const letters = ['A', 'B', 'C', 'D'];
+      const parts: string[] = [];
+      exam.questions.forEach((q, i) => {
+        parts.push(`Questão ${i + 1}: ${q.text}`);
+        if (q.options.length > 0) {
+          const sorted = [...q.options].sort((a, b) => a.orderIndex - b.orderIndex);
+          sorted.forEach((opt, j) => parts.push(`${letters[j] ?? j + 1}: ${opt.text}`));
+        }
+      });
+      speak(parts.join('. '));
     }
   }, [lastCommand]);
 

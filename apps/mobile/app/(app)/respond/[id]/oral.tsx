@@ -29,6 +29,7 @@ import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { useVoiceCommandStore } from '../../../../store/voiceCommand';
 import { useScreenContext } from '../../../../hooks/useScreenContext';
+import { speak } from '../../../../lib/tts';
 import { apiFetch } from '../../../../lib/api';
 import { useColors } from '../../../../hooks/useColors';
 import { useScale } from '../../../../hooks/useScale';
@@ -100,8 +101,14 @@ export default function OralResponseScreen() {
   }, []);
 
   useEffect(() => {
-    if (lastCommand?.command === 'SUBMIT_ANSWER' && stage === 'editing' && transcript.trim() && !submitMutation.isPending) {
+    if (!lastCommand) return;
+
+    if (lastCommand.command === 'SUBMIT_ANSWER' && stage === 'editing' && transcript.trim() && !submitMutation.isPending) {
       submitMutation.mutate();
+    }
+
+    if (lastCommand.command === 'READ_ALOUD' && exam) {
+      speak(exam.questions.map((q, i) => `Questão ${i + 1}: ${q.text}`).join('. '));
     }
   }, [lastCommand]);
 

@@ -12,6 +12,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../../store/auth';
+import { speak } from '../../../lib/tts';
+import { normalizeStr } from '../../../lib/normalize';
 import { useScreenContext } from '../../../hooks/useScreenContext';
 import { useVoiceCommandStore } from '../../../store/voiceCommand';
 import { Header } from '@/components/ui/Header';
@@ -132,6 +134,14 @@ function TeacherHome({
       createClassroom.mutate({ t, d });
     } else if (lastCommand.command === 'OPEN_CREATE_CLASSROOM_MODAL') {
       setShowCreate(true);
+    } else if (lastCommand.command === 'NAVIGATE_TO_CLASSROOM' && lastCommand.payload?.name) {
+      const query = normalizeStr(lastCommand.payload.name as string);
+      const found = classrooms?.find((c) => normalizeStr(c.title).includes(query) || query.includes(normalizeStr(c.title)));
+      if (found) {
+        router.push(`/teacher/classroom/${found.id}`);
+      } else {
+        speak(`Não encontrei nenhuma turma chamada ${lastCommand.payload.name}.`);
+      }
     }
   }, [lastCommand]);
 
@@ -358,6 +368,7 @@ function StudentHome({
   displayName: string | null;
   roleLabel: string;
 }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const c = useColors();
   const scale = useScale();
@@ -408,7 +419,18 @@ function StudentHome({
   });
 
   useEffect(() => {
-    if (lastCommand?.command === 'OPEN_JOIN_MODAL') setShowJoin(true);
+    if (!lastCommand) return;
+    if (lastCommand.command === 'OPEN_JOIN_MODAL') {
+      setShowJoin(true);
+    } else if (lastCommand.command === 'NAVIGATE_TO_CLASSROOM' && lastCommand.payload?.name) {
+      const query = normalizeStr(lastCommand.payload.name as string);
+      const found = classrooms?.find((c) => normalizeStr(c.title).includes(query) || query.includes(normalizeStr(c.title)));
+      if (found) {
+        router.push(`/student/classroom/${found.id}`);
+      } else {
+        speak(`Não encontrei nenhuma turma chamada ${lastCommand.payload.name}.`);
+      }
+    }
   }, [lastCommand]);
 
   function handleJoinConfirm() {

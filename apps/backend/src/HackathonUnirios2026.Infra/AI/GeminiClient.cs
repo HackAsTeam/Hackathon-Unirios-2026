@@ -157,8 +157,13 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
             - LIST_PENDING_ACTIVITIES: Lista atividades pendentes do aluno
             - LIST_CLASSROOMS: Lista turmas do usuário
             - LIST_ATTEMPTS: Lista tentativas/resultados do aluno
-            - READ_ALOUD: Lê o conteúdo da tela em voz alta
-            - SELECT_ALTERNATIVE: Seleciona uma alternativa. Parâmetros: optionId
+            - READ_ALOUD: Lê o enunciado da questão em voz alta.
+              Use quando o aluno disser "leia", "repita a questão", "qual é a pergunta", "não ouvi", etc.
+              Disponível apenas nas telas respond-text e respond-oral.
+            - SELECT_ALTERNATIVE: Seleciona uma alternativa de múltipla escolha.
+              Parâmetros: optionLetter (A, B, C ou D), questionIndex (inteiro 0-based, padrão 0)
+              Use quando o aluno disser "alternativa A", "letra B", "escolho C", "marcar D", etc.
+              Disponível apenas na tela respond-text.
 
             - UNKNOWN: Não entendeu ou não pode realizar o comando
 
@@ -172,12 +177,14 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
             7. Responda sempre em português brasileiro no spokenFeedback.
             8. Se o usuário for professor e pedir para criar uma turma (independente da tela atual), use CREATE_CLASSROOM.
             9. Se o professor pedir para gerar/criar link de convite mencionando o nome de uma turma e não estiver na tela teacher-classroom, use SEMPRE NAVIGATE_TO_CLASSROOM_AND_INVITE — nunca retorne UNKNOWN nesse caso.
+            10. SELECT_ALTERNATIVE só deve ser usado na tela respond-text. Em qualquer outra tela, retorne UNKNOWN.
+            11. READ_ALOUD só deve ser usado nas telas respond-text e respond-oral. Em qualquer outra tela, retorne UNKNOWN.
 
             === COMANDO DO USUÁRIO ===
             "{{transcript}}"
 
             Retorne exatamente este formato JSON:
-            {"action":"<ação>","parameters":{"route":"","title":"","description":"","name":"","text":"","questionId":"","optionId":"","answerText":""},"spokenFeedback":"<texto em português>","confidence":0.9}
+            {"action":"<ação>","parameters":{"route":"","title":"","description":"","name":"","text":"","questionId":"","optionLetter":"","questionIndex":0,"answerText":""},"spokenFeedback":"<texto em português>","confidence":0.9}
             """;
     }
 
