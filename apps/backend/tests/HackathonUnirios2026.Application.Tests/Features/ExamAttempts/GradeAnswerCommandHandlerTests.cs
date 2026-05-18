@@ -48,7 +48,7 @@ public class GradeAnswerCommandHandlerTests
         var attempt = db.AddAttempt(exam.Id, studentId, AttemptStatus.Submitted);
 
         var questions = exam.Questions.ToList();
-        var answer1 = db.AddAnswer(attempt.Id, questions[0].Id, score: 1m);
+        db.AddAnswer(attempt.Id, questions[0].Id, score: 1m);
         var answer2 = db.AddAnswer(attempt.Id, questions[1].Id);
 
         var handler = new GradeAnswerCommandHandler(db, accessor);
@@ -75,7 +75,7 @@ public class GradeAnswerCommandHandlerTests
 
         var questions = exam.Questions.ToList();
         var answer1 = db.AddAnswer(attempt.Id, questions[0].Id);
-        var answer2 = db.AddAnswer(attempt.Id, questions[1].Id);
+        db.AddAnswer(attempt.Id, questions[1].Id);
 
         var handler = new GradeAnswerCommandHandler(db, accessor);
         await handler.Handle(new GradeAnswerCommand(attempt.Id, answer1.Id, 1m, null), default);

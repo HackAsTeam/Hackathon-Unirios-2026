@@ -13,7 +13,7 @@ public class CreateClassroomCommandHandlerTests
         var accessor = ClaimsHelper.ForUser(teacherId);
         using var db = DbContextFactory.Create(accessor);
 
-        var teacher = db.AddUser(teacherId, "teacher@test.com");
+        db.AddUser(teacherId, "teacher@test.com");
 
         var handler = new CreateClassroomCommandHandler(db, accessor);
         var result = await handler.Handle(new CreateClassroomCommand("Math 101", "A classroom"), default);
