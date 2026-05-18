@@ -163,11 +163,11 @@ public sealed class GeminiClient(IHttpClientFactory httpClientFactory, IOptions<
             - UNKNOWN: Não entendeu ou não pode realizar o comando
 
             === REGRAS ===
-            1. Se o aluno pedir atividades pendentes mas "não está matriculado em nenhuma turma", use UNKNOWN e diga no spokenFeedback: "Você ainda não está em nenhuma turma. Peça ao professor um link de convite para ingressar."
-            2. Se o aluno pedir atividades pendentes e não houver nenhuma, use UNKNOWN e diga: "Você não tem atividades pendentes no momento."
+            1. Se o aluno pedir atividades pendentes mas o contexto diz "não está matriculado em nenhuma turma", use UNKNOWN e diga no spokenFeedback: "Você ainda não está em nenhuma turma. Peça ao professor um link de convite para ingressar."
+            2. Se o aluno pedir atividades e o contexto diz "Todas as N atividade(s) foram concluídas", use LIST_PENDING_ACTIVITIES e diga: "Parabéns! Você concluiu todas as suas atividades."
             3. Para CREATE_CLASSROOM, extraia o nome do título mesmo que diga "chamada X", "com nome X", "de X", etc. CREATE_CLASSROOM pode ser usado de qualquer tela quando o usuário for professor.
             4. Para CREATE_SUBJECT, só use se estiver na tela teacher-classroom.
-            5. Para LIST_PENDING_ACTIVITIES, inclua o número e nomes das atividades no spokenFeedback se disponível.
+            5. Para LIST_PENDING_ACTIVITIES (pedidos como "lista atividades", "quais atividades tenho", "atividades pendentes", etc.): use os dados "Por matéria" do contexto para compor o spokenFeedback matéria a matéria. Exemplo: se contexto diz "Matemática: 2 atividade(s); Português: 1 atividade(s)", responda: "Você tem 3 atividades pendentes: 2 em Matemática e 1 em Português."
             6. Ações de configuração de acessibilidade (fonte, contraste, etc.) são tratadas localmente — use UNKNOWN se o usuário pedir isso.
             7. Responda sempre em português brasileiro no spokenFeedback.
             8. Se o usuário for professor e pedir para criar uma turma (independente da tela atual), use CREATE_CLASSROOM.
