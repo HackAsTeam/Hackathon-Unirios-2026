@@ -122,6 +122,14 @@ GEMINI_API_KEY=
 GOOGLE_WEB_CLIENT_ID=
 GOOGLE_ANDROID_CLIENT_ID=
 ```
+> [!IMPORTANT]
+> Para que o assistente de voz "Hey Dillo" funcione corretamente, você precisa obter uma chave de API gratuita do Google Gemini e adicioná-la às suas variáveis de ambiente.
+> 1. Acesse o console do Google AI Studio.
+> 2. Faça login com a sua conta Google.
+> 3. No menu lateral ou no topo da página, clique no botão "Get API key" (Obter chave de API).
+> 4. Clique em "Create API key" (Criar chave de API).
+> 5. Se solicitado, selecione ou crie um projeto do Google Cloud para associar à chave.
+> 6. Copie a chave gerada (ela começará com algo como AIzaSy...) e cole em seu `.env` no campo `GEMINI_API_KEY=`.
 
 ```bash
 docker-compose up -d
