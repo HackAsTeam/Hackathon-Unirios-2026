@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { useScreenContext } from '@/hooks/useScreenContext';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
 import { apiFetch } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
@@ -284,6 +285,8 @@ export default function NewActivityScreen() {
     router.replace(`/teacher/classroom/${classroomId}/subject/${subjectId}?name=${encodeURIComponent(name ?? '')}`);
   }
 
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
+
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [questions, setQuestions] = useState<LocalQuestion[]>([emptyQuestion()]);
@@ -370,6 +373,13 @@ export default function NewActivityScreen() {
       setSubmitError(err?.message ?? 'Não foi possível criar a atividade.');
     },
   });
+
+  useEffect(() => {
+    if (lastCommand?.command === 'CREATE_ACTIVITY' && !createActivity.isPending) {
+      handleSubmit();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastCommand]);
 
   function handleSubmit() {
     setSubmitError(null);

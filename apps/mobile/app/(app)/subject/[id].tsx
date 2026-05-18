@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +16,7 @@ import { useScale } from '@/hooks/useScale';
 import { useMyAttempts } from '@/hooks/useMyAttempts';
 import { AttemptStatusBadge } from '@/components/student/AttemptStatusBadge';
 import { useScreenContext } from '@/hooks/useScreenContext';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
 import type { Exam } from '@/types/classroom';
 
 export default function StudentSubjectScreen() {
@@ -27,6 +29,7 @@ export default function StudentSubjectScreen() {
   useScreenContext({ screen: 'student-subject', subjectId: id, classroomId: classroomId, role: 'student' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const c = useColors();
   const scale = useScale();
 
@@ -37,6 +40,22 @@ export default function StudentSubjectScreen() {
   });
 
   const { data: attempts, isLoading: attemptsLoading } = useMyAttempts();
+
+  useEffect(() => {
+    if (lastCommand?.command === 'OPEN_ACTIVITY') {
+      const activityId = lastCommand.payload?.activityId as string | undefined;
+      if (activityId) {
+        router.push(`/activity/${activityId}`);
+        return;
+      }
+      const title = (lastCommand.payload?.title as string | undefined)?.toLowerCase();
+      if (title && activities) {
+        const match = activities.find((a) => a.title.toLowerCase().includes(title));
+        if (match) router.push(`/activity/${match.id}`);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastCommand]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
