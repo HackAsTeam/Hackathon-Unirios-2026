@@ -15,8 +15,8 @@ public class GetClassroomByIdQueryHandlerTests
         var teacher = db.AddUser(teacherId, "teacher@test.com");
         var classroom = db.AddClassroom(teacherId, "Science", teacher);
 
-        var handler = new GetClassroomByIdQueryHandler(db, accessor);
-        var result = await handler.Handle(new GetClassroomByIdQuery(classroom.Id), default);
+        var handler = new GetClassroomByIdQueryHandler(db);
+        var result = await handler.Handle(new GetClassroomByIdQuery(classroom.Id, teacherId), default);
 
         result.Id.Should().Be(classroom.Id);
         result.Title.Should().Be("Science");
@@ -35,8 +35,8 @@ public class GetClassroomByIdQueryHandlerTests
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
         db.AddEnrollment(classroom.Id, studentId);
 
-        var handler = new GetClassroomByIdQueryHandler(db, accessor);
-        var result = await handler.Handle(new GetClassroomByIdQuery(classroom.Id), default);
+        var handler = new GetClassroomByIdQueryHandler(db);
+        var result = await handler.Handle(new GetClassroomByIdQuery(classroom.Id, studentId), default);
 
         result.Id.Should().Be(classroom.Id);
         result.EnrollmentCount.Should().Be(1);
@@ -49,8 +49,8 @@ public class GetClassroomByIdQueryHandlerTests
         var accessor = ClaimsHelper.ForUser(userId);
         using var db = DbContextFactory.Create(accessor);
 
-        var handler = new GetClassroomByIdQueryHandler(db, accessor);
-        var act = () => handler.Handle(new GetClassroomByIdQuery(Guid.NewGuid()), default);
+        var handler = new GetClassroomByIdQueryHandler(db);
+        var act = () => handler.Handle(new GetClassroomByIdQuery(Guid.NewGuid(), userId), default);
 
         await act.Should().ThrowAsync<ClassroomNotFoundException>();
     }
@@ -67,8 +67,8 @@ public class GetClassroomByIdQueryHandlerTests
         db.AddUser(userId, "user@test.com");
         var classroom = db.AddClassroom(teacherId, "Private", teacher);
 
-        var handler = new GetClassroomByIdQueryHandler(db, accessor);
-        var act = () => handler.Handle(new GetClassroomByIdQuery(classroom.Id), default);
+        var handler = new GetClassroomByIdQueryHandler(db);
+        var act = () => handler.Handle(new GetClassroomByIdQuery(classroom.Id, userId), default);
 
         await act.Should().ThrowAsync<ClassroomNotFoundException>();
     }

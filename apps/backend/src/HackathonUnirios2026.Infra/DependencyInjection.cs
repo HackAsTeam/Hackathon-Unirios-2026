@@ -17,7 +17,7 @@ public static class DependencyInjection
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
         services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
 
-        services.AddScoped<IJwtTokenIssuer, JwtTokenIssuer>();
+        services.AddSingleton<IJwtTokenIssuer, JwtTokenIssuer>();
         services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
 
         services.AddHttpClient("gemini");

@@ -28,8 +28,8 @@ public class GenerateInvitationLinkCommandHandlerTests
         var teacher = db.AddUser(teacherId, "teacher@test.com");
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig("https://app.test"));
-        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig("https://app.test"));
+        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null, teacherId), default);
 
         result.ClassroomId.Should().Be(classroom.Id);
         result.IsActive.Should().BeTrue();
@@ -47,8 +47,8 @@ public class GenerateInvitationLinkCommandHandlerTests
         var teacher = db.AddUser(teacherId, "teacher@test.com");
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig("https://app.test"));
-        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig("https://app.test"));
+        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null, teacherId), default);
 
         result.InviteUrl.Should().StartWith("https://app.test/i/");
     }
@@ -63,8 +63,8 @@ public class GenerateInvitationLinkCommandHandlerTests
         var teacher = db.AddUser(teacherId, "teacher@test.com");
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig());
-        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig());
+        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null, teacherId), default);
 
         result.InviteUrl.Should().StartWith("http://localhost:5099/i/");
     }
@@ -80,23 +80,23 @@ public class GenerateInvitationLinkCommandHandlerTests
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
         var expiresAt = DateTime.UtcNow.AddDays(7);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig("https://app.test"));
-        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, expiresAt), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig("https://app.test"));
+        var result = await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, expiresAt, teacherId), default);
 
         result.ExpiresAt.Should().BeCloseTo(expiresAt, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
-    public async Task Handle_ThrowsNotTeacherException_WhenClassroomNotFound()
+    public async Task Handle_ThrowsClassroomNotFoundException_WhenClassroomNotFound()
     {
         var teacherId = Guid.NewGuid().ToString();
         var accessor = ClaimsHelper.ForUser(teacherId);
         using var db = DbContextFactory.Create(accessor);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig());
-        var act = () => handler.Handle(new GenerateInvitationLinkCommand(Guid.NewGuid(), null), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig());
+        var act = () => handler.Handle(new GenerateInvitationLinkCommand(Guid.NewGuid(), null, teacherId), default);
 
-        await act.Should().ThrowAsync<NotTeacherException>();
+        await act.Should().ThrowAsync<ClassroomNotFoundException>();
     }
 
     [Fact]
@@ -111,8 +111,8 @@ public class GenerateInvitationLinkCommandHandlerTests
         db.AddUser(notTeacherId, "other@test.com");
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig());
-        var act = () => handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig());
+        var act = () => handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null, notTeacherId), default);
 
         await act.Should().ThrowAsync<NotTeacherException>();
     }
@@ -127,8 +127,8 @@ public class GenerateInvitationLinkCommandHandlerTests
         var teacher = db.AddUser(teacherId, "teacher@test.com");
         var classroom = db.AddClassroom(teacherId, "Math", teacher);
 
-        var handler = new GenerateInvitationLinkCommandHandler(db, accessor, BuildConfig());
-        await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null), default);
+        var handler = new GenerateInvitationLinkCommandHandler(db, BuildConfig());
+        await handler.Handle(new GenerateInvitationLinkCommand(classroom.Id, null, teacherId), default);
 
         var count = await db.InvitationLinks.CountAsync();
         count.Should().Be(1);

@@ -20,10 +20,6 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
             .HasColumnType("text")
             .IsRequired();
 
-        builder.Property(e => e.JoinedAt)
-            .HasColumnType("timestamp with time zone")
-            .IsRequired();
-
         builder.HasIndex(e => new { e.ClassroomId, e.StudentId }).IsUnique();
 
         builder.HasOne(e => e.Classroom)

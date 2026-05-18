@@ -1,4 +1,5 @@
 using HackathonUnirios2026.Application.Features.Auth.DTOs;
+using HackathonUnirios2026.Domain.Auth;
 using HackathonUnirios2026.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,12 @@ public sealed class SetRoleCommandHandler(
     {
         var user = await userManager.FindByIdAsync(cmd.UserId)
             ?? throw new AuthValidationException("User not found.");
+
+        // Role is a one-time onboarding choice: once Teacher, it cannot be changed.
+        if (user.Role == UserRole.Teacher)
+        {
+            throw new AuthValidationException("Role has already been set and cannot be changed.");
+        }
 
         if (!Enum.TryParse<UserRole>(cmd.Role, ignoreCase: true, out var role))
         {

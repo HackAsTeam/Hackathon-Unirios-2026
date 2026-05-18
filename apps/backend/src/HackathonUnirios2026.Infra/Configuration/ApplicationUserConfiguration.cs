@@ -20,11 +20,13 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
 
         builder.Property(user => user.Role)
             .HasConversion<string>()
+            .HasColumnType("varchar(20)")
             .HasMaxLength(20)
             .HasDefaultValue(UserRole.Student);
 
         builder.Property(user => user.Status)
             .HasConversion<string>()
+            .HasColumnType("varchar(30)")
             .HasMaxLength(30)
             .HasDefaultValue(UserStatus.Active);
 

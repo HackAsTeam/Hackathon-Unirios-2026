@@ -15,8 +15,8 @@ public class CreateClassroomCommandHandlerTests
 
         db.AddUser(teacherId, "teacher@test.com");
 
-        var handler = new CreateClassroomCommandHandler(db, accessor);
-        var result = await handler.Handle(new CreateClassroomCommand("Math 101", "A classroom"), default);
+        var handler = new CreateClassroomCommandHandler(db);
+        var result = await handler.Handle(new CreateClassroomCommand("Math 101", "A classroom", teacherId), default);
 
         result.Title.Should().Be("Math 101");
         result.Description.Should().Be("A classroom");
@@ -32,23 +32,23 @@ public class CreateClassroomCommandHandlerTests
         using var db = DbContextFactory.Create(accessor);
         db.AddUser(teacherId, "teacher@test.com");
 
-        var handler = new CreateClassroomCommandHandler(db, accessor);
-        await handler.Handle(new CreateClassroomCommand("Science", null), default);
+        var handler = new CreateClassroomCommandHandler(db);
+        await handler.Handle(new CreateClassroomCommand("Science", null, teacherId), default);
 
         var count = await db.Classrooms.CountAsync();
         count.Should().Be(1);
     }
 
     [Fact]
-    public async Task Handle_SetsTeacherId_FromHttpContext()
+    public async Task Handle_SetsTeacherId_FromCommand()
     {
         var teacherId = Guid.NewGuid().ToString();
         var accessor = ClaimsHelper.ForUser(teacherId);
         using var db = DbContextFactory.Create(accessor);
         db.AddUser(teacherId, "teacher@test.com");
 
-        var handler = new CreateClassroomCommandHandler(db, accessor);
-        var result = await handler.Handle(new CreateClassroomCommand("History", null), default);
+        var handler = new CreateClassroomCommandHandler(db);
+        var result = await handler.Handle(new CreateClassroomCommand("History", null, teacherId), default);
 
         result.TeacherId.Should().Be(teacherId);
     }

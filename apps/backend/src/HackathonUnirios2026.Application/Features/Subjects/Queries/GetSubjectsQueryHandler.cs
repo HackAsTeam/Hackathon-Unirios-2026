@@ -1,23 +1,19 @@
-using System.Security.Claims;
 using HackathonUnirios2026.Application.Features.Classrooms;
 using HackathonUnirios2026.Application.Features.Subjects.DTOs;
 using HackathonUnirios2026.Infra.Database;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace HackathonUnirios2026.Application.Features.Subjects.Queries;
 
-public sealed class GetSubjectsQueryHandler(AppDbContext db, IHttpContextAccessor httpContextAccessor)
+public sealed class GetSubjectsQueryHandler(AppDbContext db)
     : IRequestHandler<GetSubjectsQuery, List<SubjectResponse>>
 {
     public async Task<List<SubjectResponse>> Handle(GetSubjectsQuery query, CancellationToken ct)
     {
-        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
         var hasAccess = await db.Classrooms.AnyAsync(c =>
             c.Id == query.ClassroomId &&
-            (c.TeacherId == userId || c.Enrollments.Any(e => e.StudentId == userId)), ct);
+            (c.TeacherId == query.UserId || c.Enrollments.Any(e => e.StudentId == query.UserId)), ct);
 
         if (!hasAccess)
             throw new ClassroomNotFoundException();

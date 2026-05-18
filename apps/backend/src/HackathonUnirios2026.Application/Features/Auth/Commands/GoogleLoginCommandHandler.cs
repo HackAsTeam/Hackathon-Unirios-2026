@@ -1,4 +1,5 @@
 using HackathonUnirios2026.Application.Features.Auth.DTOs;
+using HackathonUnirios2026.Domain.Auth;
 using HackathonUnirios2026.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -85,7 +86,7 @@ public sealed class GoogleLoginCommandHandler(
         }
 
         var result = await userManager.AddLoginAsync(user, new UserLoginInfo(LoginProvider, providerKey, LoginProvider));
-        if (!result.Succeeded)
+        if (!result.Succeeded && result.Errors.All(e => e.Code != "LoginAlreadyAssociated"))
         {
             throw new AuthValidationException(string.Join(" ", result.Errors.Select(error => error.Description)));
         }

@@ -16,7 +16,7 @@ public sealed class AuthEndpoints : IEndpoint
 
         group.MapPost("/register", RegisterAsync)
             .WithName("Register")
-            .Produces<AuthResponse>()
+            .Produces<AuthResponse>(StatusCodes.Status201Created)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
 
         group.MapPost("/login", LoginAsync)
@@ -67,7 +67,8 @@ public sealed class AuthEndpoints : IEndpoint
     {
         try
         {
-            return Results.Ok(await sender.Send(command, ct));
+            var response = await sender.Send(command, ct);
+            return Results.Created("/auth/me", response);
         }
         catch (AuthValidationException ex)
         {

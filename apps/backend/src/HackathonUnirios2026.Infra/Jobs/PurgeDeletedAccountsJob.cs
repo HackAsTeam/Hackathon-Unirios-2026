@@ -55,6 +55,7 @@ public sealed class PurgeDeletedAccountsJob(
 
         var candidates = await db.Users
             .Where(u => u.Status == UserStatus.PendingDeletion && u.PurgeAfter != null && u.PurgeAfter <= now)
+            .Take(500)
             .ToListAsync(ct);
 
         if (candidates.Count == 0)
