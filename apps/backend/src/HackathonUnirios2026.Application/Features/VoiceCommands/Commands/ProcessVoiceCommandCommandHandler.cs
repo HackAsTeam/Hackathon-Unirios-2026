@@ -96,29 +96,37 @@ public sealed class ProcessVoiceCommandCommandHandler(IGeminiClient geminiClient
             {
                 lines.Add($"O aluno está matriculado em {classrooms.Count} turma(s): {string.Join(", ", classrooms)}.");
 
-                var pendingCount = await db.ExamAttempts
+                var activityData = await db.Exams
                     .AsNoTracking()
-                    .Where(a => a.StudentId == userId && a.Status == AttemptStatus.InProgress)
-                    .CountAsync(ct);
+                    .Where(e => e.SubjectId != null &&
+                                e.Classroom.Enrollments.Any(en => en.StudentId == userId))
+                    .Select(e => new
+                    {
+                        SubjectName = e.Subject!.Name,
+                        IsDone = db.ExamAttempts.Any(a =>
+                            a.ExamId == e.Id && a.StudentId == userId &&
+                            (a.Status == AttemptStatus.Submitted || a.Status == AttemptStatus.Graded))
+                    })
+                    .ToListAsync(ct);
 
-                var submittedCount = await db.ExamAttempts
-                    .AsNoTracking()
-                    .Where(a => a.StudentId == userId && a.Status == AttemptStatus.Submitted)
-                    .CountAsync(ct);
+                var pendingActivities = activityData.Where(a => !a.IsDone).ToList();
 
-                var gradedCount = await db.ExamAttempts
-                    .AsNoTracking()
-                    .Where(a => a.StudentId == userId && a.Status == AttemptStatus.Graded)
-                    .CountAsync(ct);
-
-                if (pendingCount > 0)
-                    lines.Add($"Atividades em andamento (não enviadas): {pendingCount}.");
-                if (submittedCount > 0)
-                    lines.Add($"Respostas enviadas aguardando avaliação: {submittedCount}.");
-                if (gradedCount > 0)
-                    lines.Add($"Atividades já avaliadas: {gradedCount}.");
-                if (pendingCount == 0 && submittedCount == 0)
-                    lines.Add("Nenhuma atividade pendente.");
+                if (activityData.Count == 0)
+                {
+                    lines.Add("Nenhuma atividade disponível nas matérias.");
+                }
+                else if (pendingActivities.Count == 0)
+                {
+                    lines.Add($"Todas as {activityData.Count} atividade(s) foram concluídas. Nenhuma atividade pendente.");
+                }
+                else
+                {
+                    var bySubject = pendingActivities
+                        .GroupBy(a => a.SubjectName)
+                        .Select(g => $"{g.Key}: {g.Count()} atividade(s)")
+                        .ToList();
+                    lines.Add($"Atividades pendentes: {pendingActivities.Count} de {activityData.Count} no total. Por matéria — {string.Join("; ", bySubject)}.");
+                }
             }
 
             // Subject-level context
