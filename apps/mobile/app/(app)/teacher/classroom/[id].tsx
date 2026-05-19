@@ -16,6 +16,8 @@ import { useAuthStore } from '@/store/auth';
 import { useVoiceCommandStore } from '@/store/voiceCommand';
 import { useScreenContext } from '@/hooks/useScreenContext';
 import { apiFetch } from '@/lib/api';
+import { normalizeStr } from '@/lib/normalize';
+import { speak } from '@/lib/tts';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
 import type { Classroom, InvitationLinkResponse, ClassroomMember } from '@/types/classroom';
@@ -140,6 +142,16 @@ export default function ClassroomDetailScreen() {
       generateInvite.mutate();
     } else if (lastCommand.command === 'OPEN_CREATE_SUBJECT_MODAL') {
       setShowCreate(true);
+    } else if (lastCommand.command === 'NAVIGATE_TO_SUBJECT' && lastCommand.payload?.name) {
+      const query = normalizeStr(lastCommand.payload.name as string);
+      const found = classroom?.subjects.find(
+        (s) => normalizeStr(s.name).includes(query) || query.includes(normalizeStr(s.name)),
+      );
+      if (found) {
+        router.push(`/teacher/classroom/${id}/subject/${found.id}?name=${encodeURIComponent(found.name)}`);
+      } else {
+        speak(`Não encontrei a matéria ${lastCommand.payload.name} nesta turma.`);
+      }
     }
   }, [lastCommand]);
 

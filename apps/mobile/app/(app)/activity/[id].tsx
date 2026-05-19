@@ -22,6 +22,7 @@ import { useAuthStore } from '../../../store/auth';
 import { useAccessibilityStore } from '../../../store/acessibility';
 import { useVoiceCommandStore } from '../../../store/voiceCommand';
 import { useScreenContext } from '../../../hooks/useScreenContext';
+import { speak } from '../../../lib/tts';
 import { apiFetch } from '../../../lib/api';
 import { colors, formatLabels, formatDescriptions, formatMotivations } from '../../../lib/colors';
 import { useColors } from '../../../hooks/useColors';
@@ -59,10 +60,26 @@ export default function ActivityScreen() {
   const [showFormats, setShowFormats] = useState(false);
 
   useEffect(() => {
-    if (lastCommand?.command === 'START_ACTIVITY') {
+    if (!lastCommand) return;
+
+    if (lastCommand.command === 'START_ACTIVITY') {
       setShowFormats(true);
     }
-  }, [lastCommand]);
+
+    if (lastCommand.command === 'READ_ALOUD' && exam) {
+      const parts: string[] = [`Atividade: ${exam.title}.`];
+      if (exam.description) parts.push(exam.description);
+      exam.questions.forEach((q, i) => {
+        parts.push(`Questão ${i + 1}: ${q.text}`);
+        if (q.options.length > 0) {
+          const letters = ['A', 'B', 'C', 'D'];
+          const sorted = [...q.options].sort((a, b) => a.orderIndex - b.orderIndex);
+          sorted.forEach((opt, j) => parts.push(`${letters[j] ?? j + 1}: ${opt.text}`));
+        }
+      });
+      speak(parts.join('. '));
+    }
+  }, [lastCommand, exam]);
 
   const { data: exam, isLoading, isError } = useQuery({
     queryKey: ['exam', id],

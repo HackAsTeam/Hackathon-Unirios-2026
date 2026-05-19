@@ -1,9 +1,13 @@
+import { useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
 import { apiFetch } from '@/lib/api';
+import { normalizeStr } from '@/lib/normalize';
+import { speak } from '@/lib/tts';
 import { useColors } from '@/hooks/useColors';
 import { useScale } from '@/hooks/useScale';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -17,11 +21,26 @@ export default function StudentClassroomScreen() {
   const c = useColors();
   const scale = useScale();
 
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
+
   const { data: classroom, isLoading, isError } = useQuery({
     queryKey: ['classroom', id],
     queryFn: () => apiFetch<Classroom>(`/classrooms/${id}`, { token: token! }),
     enabled: !!id && !!token,
   });
+
+  useEffect(() => {
+    if (lastCommand?.command !== 'NAVIGATE_TO_SUBJECT' || !lastCommand.payload?.name) return;
+    const query = normalizeStr(lastCommand.payload.name as string);
+    const found = classroom?.subjects.find(
+      (s) => normalizeStr(s.name).includes(query) || query.includes(normalizeStr(s.name)),
+    );
+    if (found) {
+      router.push(`/subject/${found.id}?name=${encodeURIComponent(found.name)}&classroomTitle=${encodeURIComponent(classroom!.title)}`);
+    } else {
+      speak(`Não encontrei a matéria ${lastCommand.payload.name} nesta turma.`);
+    }
+  }, [lastCommand]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
