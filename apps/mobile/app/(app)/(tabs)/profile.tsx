@@ -36,9 +36,9 @@ function Avatar({ displayName, avatarUrl }: { displayName: string | null; avatar
 }
 
 const FORMAT_OPTIONS: { value: DefaultResponseFormat; label: string }[] = [
+  { value: 'quiz', label: 'Múltipla Escolha' },
   { value: 'text', label: 'Texto' },
   { value: 'audio', label: 'Áudio' },
-  { value: 'oral', label: 'Oral' },
 ];
 
 const FONT_OPTIONS: { value: number; label: string }[] = [

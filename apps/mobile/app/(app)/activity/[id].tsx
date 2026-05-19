@@ -16,6 +16,7 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../../store/auth';
@@ -33,8 +34,8 @@ import type { ExamDetail } from '../../../types/classroom';
 import type { ResponseFormat } from '../../../types/activity';
 import type { AttemptSummary } from '../../../types/attempt';
 
-type AvailableFormat = 'text' | 'audio' | 'oral';
-const AVAILABLE_FORMATS: AvailableFormat[] = ['text', 'audio', 'oral'];
+type AvailableFormat = 'quiz' | 'text' | 'audio';
+const AVAILABLE_FORMATS: AvailableFormat[] = ['quiz', 'text', 'audio'];
 
 const FORMAT_ICONS: Record<ResponseFormat, keyof typeof Ionicons.glyphMap> = {
   text: 'document-text-outline',
@@ -58,9 +59,10 @@ export default function ActivityScreen() {
   const c = useColors();
   const scale = useScale();
   const [showFormats, setShowFormats] = useState(false);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
-    if (!lastCommand) return;
+    if (!lastCommand || !isFocused) return;
 
     if (lastCommand.command === 'START_ACTIVITY') {
       setShowFormats(true);
@@ -337,7 +339,8 @@ export default function ActivityScreen() {
         onClose={() => setShowFormats(false)}
         onSelect={(fmt) => {
           setShowFormats(false);
-          router.push(`/respond/${id}/${fmt}`);
+          const route = fmt === 'quiz' ? 'text' : fmt;
+          router.push(`/respond/${id}/${route}`);
         }}
       />
 

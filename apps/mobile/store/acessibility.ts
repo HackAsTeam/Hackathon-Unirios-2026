@@ -5,7 +5,7 @@ import { AccessibilityPreferences } from '../types/activity';
 
 const ACCESSIBILITY_KEY = 'hackathon.accessibility';
 
-export type DefaultResponseFormat = 'text' | 'audio' | 'oral';
+export type DefaultResponseFormat = 'quiz' | 'text' | 'audio';
 
 interface AccessibilityState extends AccessibilityPreferences {
   defaultResponseFormat: DefaultResponseFormat;
