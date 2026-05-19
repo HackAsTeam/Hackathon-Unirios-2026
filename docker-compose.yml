@@ -27,7 +27,7 @@ services:
       ConnectionStrings__Default: Host=db;Port=5432;Database=hackathon;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
       Jwt__Issuer: HackathonUnirios2026
       Jwt__Audience: HackathonUnirios2026.Mobile
-      Jwt__ExpiresMinutes: 120
+      Jwt__ExpiresMinutes: 10080
       Jwt__SigningKey: ${JWT_SIGNING_KEY}
       Authentication__Google__WebClientId: ${GOOGLE_WEB_CLIENT_ID:-}
       Authentication__Google__AndroidClientId: ${GOOGLE_ANDROID_CLIENT_ID:-}
@@ -39,6 +39,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  tts:
+    build:
+      context: apps/tts-service
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
     restart: unless-stopped
 
 volumes:
