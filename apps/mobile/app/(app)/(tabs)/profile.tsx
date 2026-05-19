@@ -5,6 +5,7 @@ import { signOutFromGoogle } from "../../../lib/googleAuth";
 import { useAccessibilityStore, type DefaultResponseFormat } from "../../../store/acessibility";
 import { useScreenContext } from "../../../hooks/useScreenContext";
 import { Alert, Image, ScrollView, View, Text, TouchableOpacity, Switch } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiFetch } from "../../../lib/api";
 import { useColors } from "../../../hooks/useColors";
 import { useScale } from "../../../hooks/useScale";
@@ -95,7 +96,8 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
+    <ScrollView>
       <View style={{
         paddingHorizontal: 24,
         paddingTop: 48,
@@ -290,5 +292,6 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
