@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TouchableOpacity, StyleSheet, View, AppState, Image } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -28,6 +28,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [isForegrounded, setIsForegrounded] = useState(true);
+  const isForegoundedRef = useRef(true);
 
   const status = useVoiceCommandStore((s) => s.status);
   const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
@@ -39,6 +40,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   // ─── Track app foreground/background ─────────────────────────────────────
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
+      isForegoundedRef.current = state === 'active';
       setIsForegrounded(state === 'active');
     });
     return () => sub.remove();
@@ -47,7 +49,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   // ─── Wake word callback ───────────────────────────────────────────────────
   const handleWakeWordDetected = useCallback(() => {
     setWakeWordActive(false);
-    speak('Sim?');
+    if (isForegoundedRef.current) speak('Sim?');
     setTimeout(() => setOverlayVisible(true), 400);
   }, []);
 

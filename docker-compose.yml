@@ -36,6 +36,8 @@ services:
       App__MobileScheme: ${APP_MOBILE_SCHEME:-hackathon-app}
       Gemini__ApiKey: ${Gemini__ApiKey}
       Gemini__Model: ${Gemini__Model:-gemini-2.0-flash}
+      Groq__ApiKey: ${Groq__ApiKey}
+      Groq__Model: ${Groq__Model:-llama-3.3-70b-versatile}
     depends_on:
       db:
         condition: service_healthy

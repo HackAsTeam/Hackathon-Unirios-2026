@@ -16,12 +16,17 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
         services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
+        services.Configure<GroqOptions>(configuration.GetSection(GroqOptions.SectionName));
 
         services.AddSingleton<IJwtTokenIssuer, JwtTokenIssuer>();
         services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
 
         services.AddHttpClient("gemini");
-        services.AddScoped<IGeminiClient, AI.GeminiClient>();
+        services.AddHttpClient("groq");
+
+        services.AddScoped<GeminiClient>();
+        services.AddScoped<GroqClient>();
+        services.AddScoped<IGeminiClient, FallbackAIClient>();
 
         return services;
     }
