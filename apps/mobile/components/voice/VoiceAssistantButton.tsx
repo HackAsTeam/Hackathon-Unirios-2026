@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { TouchableOpacity, StyleSheet, View, AppState } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, AppState, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,13 +8,14 @@ import Animated, {
   withSequence,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+// import { Ionicons } from '@expo/vector-icons';
 import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
 import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voiceCommand';
 import { useAccessibilityStore } from '../../store/acessibility';
 import { startWakeWordDetection, stopWakeWordDetection } from '../../lib/wakeWord';
 import { speak, isSpeaking } from '../../lib/tts';
 import { colors } from '../../lib/colors';
+const diloAssistantImage = require('../../assets/dillo-assistant-image.png');
 
 const ACCENT = colors.formats.oral;
 const DOT_COLOR = '#22c55e';
@@ -141,11 +142,12 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
             { backgroundColor: isActive ? ACCENT : '#fff', borderColor: ACCENT },
           ]}
         >
-          <Ionicons
+          {/* <Ionicons
             name={isActive ? 'mic' : 'mic-outline'}
             size={26}
             color={isActive ? '#fff' : ACCENT}
-          />
+          /> */}
+          <Image source={diloAssistantImage} style={{ width: 45, height: 45 }} />
         </TouchableOpacity>
 
         <Animated.View style={[styles.dot, dotStyle]}>
