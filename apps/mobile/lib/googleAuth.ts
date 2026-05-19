@@ -83,6 +83,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
       body: { idToken },
     })
       .then(async (data) => {
+        console.log("[googleAuth] API response (web):", JSON.stringify(data, null, 2));
         await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
         onSuccess?.();
       })
@@ -120,6 +121,7 @@ export function useGoogleSignIn(onSuccess?: () => void) {
         body: { idToken },
       });
 
+      console.log("[googleAuth] API response (native):", JSON.stringify(data, null, 2));
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
       return data;
     } catch (err: unknown) {

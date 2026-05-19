@@ -17,7 +17,7 @@ public class ApplicationUser : IdentityUser
 {
     public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
-    public UserRole Role { get; set; } = UserRole.Student;
+    public UserRole? Role { get; set; } = null;
     public UserStatus Status { get; set; } = UserStatus.Active;
     public DateTime? DeletedAt { get; set; }
     public DateTime? PurgeAfter { get; set; }

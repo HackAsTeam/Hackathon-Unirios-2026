@@ -40,7 +40,10 @@ public sealed class JwtTokenIssuer(IOptions<JwtOptions> options) : IJwtTokenIssu
             claims.Add(new Claim("picture", user.AvatarUrl));
         }
 
-        claims.Add(new Claim(ClaimTypes.Role, user.Role.ToString()));
+        if (user.Role.HasValue)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, user.Role.Value.ToString()));
+        }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey));
         var descriptor = new SecurityTokenDescriptor
