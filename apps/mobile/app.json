@@ -34,13 +34,13 @@
       "expo-router",
       "expo-secure-store",
       "@react-native-google-signin/google-signin",
+      "expo-speech-recognition",
       [
-        "expo-av",
+        "expo-audio",
         {
           "microphonePermission": "Permita o acesso ao microfone para gravar suas respostas."
         }
-      ],
-      "expo-speech-recognition"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

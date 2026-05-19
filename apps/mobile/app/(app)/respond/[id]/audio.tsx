@@ -17,10 +17,17 @@ import Animated, {
   cancelAnimation,
   FadeInDown,
 } from 'react-native-reanimated';
-import { Audio } from 'expo-av';
+import {
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  useAudioRecorder,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  RecordingPresets,
+} from 'expo-audio';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
 import { useAccessibilityStore } from '../../../../store/acessibility';
 import { useVoiceCommandStore } from '../../../../store/voiceCommand';
@@ -31,7 +38,6 @@ import { useScale } from '../../../../hooks/useScale';
 import { WaveformVisualizer } from '../../../../components/response/WaveformVisualizer';
 import { AccessibilityPanel } from '../../../../components/accessibility/AccessibilityPanel';
 import type { AttemptResponse, ExamDetail } from '../../../../types/classroom';
-import { useQuery } from '@tanstack/react-query';
 
 type RecordingState = 'idle' | 'recording' | 'recorded' | 'playing' | 'submitting' | 'done';
 
@@ -56,11 +62,12 @@ export default function AudioResponseScreen() {
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
   const [playPosition, setPlayPosition] = useState(0);
-  const recordingRef = useRef<Audio.Recording | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const recordedUri = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTime = useRef<number>(0);
+
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const player = useAudioPlayer(null);
+  const playerStatus = useAudioPlayerStatus(player);
 
   const pulseScale = useSharedValue(1);
 
@@ -104,12 +111,21 @@ export default function AudioResponseScreen() {
   const accentColor = c.formats.audio;
 
   useEffect(() => {
-    return () => {
-      stopTimer();
-      if (recordingRef.current) recordingRef.current.stopAndUnloadAsync().catch(() => {});
-      if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
-    };
+    return () => { stopTimer(); };
   }, []);
+
+  useEffect(() => {
+    if (playerStatus.didJustFinish && state === 'playing') {
+      setState('recorded');
+      setPlayPosition(0);
+    }
+  }, [playerStatus.didJustFinish]);
+
+  useEffect(() => {
+    if (state === 'playing') {
+      setPlayPosition(Math.round(playerStatus.currentTime * 1000));
+    }
+  }, [playerStatus.currentTime, state]);
 
   useEffect(() => {
     if (lastCommand?.command === 'SUBMIT_ANSWER' && (state === 'recorded' || state === 'playing') && !submitMutation.isPending) {
@@ -134,11 +150,7 @@ export default function AudioResponseScreen() {
   function animatePulse(on: boolean) {
     if (reducedMotion) return;
     if (on) {
-      pulseScale.value = withRepeat(
-        withTiming(1.12, { duration: 700 }),
-        -1,
-        true
-      );
+      pulseScale.value = withRepeat(withTiming(1.12, { duration: 700 }), -1, true);
     } else {
       cancelAnimation(pulseScale);
       pulseScale.value = withSpring(1);
@@ -147,16 +159,14 @@ export default function AudioResponseScreen() {
 
   async function startRecording() {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
+      const { granted } = await requestRecordingPermissionsAsync();
+      if (!granted) {
         Alert.alert('Permissão negada', 'Precisamos do microfone para gravar.');
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      recordingRef.current = recording;
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
       setDuration(0);
       startTimer();
       animatePulse(true);
@@ -170,52 +180,35 @@ export default function AudioResponseScreen() {
     stopTimer();
     animatePulse(false);
     try {
-      await recordingRef.current?.stopAndUnloadAsync();
-      recordedUri.current = recordingRef.current?.getURI() ?? null;
-      recordingRef.current = null;
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      await audioRecorder.stop();
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
       setState('recorded');
     } catch {
       setState('idle');
     }
   }
 
-  async function playRecording() {
-    if (!recordedUri.current) return;
-    try {
-      if (soundRef.current) await soundRef.current.unloadAsync();
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: recordedUri.current },
-        { shouldPlay: true },
-        (status) => {
-          if (status.isLoaded) {
-            setPlayPosition(status.positionMillis ?? 0);
-            if (status.didJustFinish) {
-              setState('recorded');
-              setPlayPosition(0);
-            }
-          }
-        }
-      );
-      soundRef.current = sound;
-      setState('playing');
-    } catch {
-      Alert.alert('Erro', 'Não foi possível reproduzir o áudio.');
-    }
+  function playRecording() {
+    const uri = audioRecorder.uri;
+    if (!uri) return;
+    player.replace({ uri });
+    player.play();
+    setState('playing');
   }
 
-  async function stopPlayback() {
-    await soundRef.current?.stopAsync();
+  function stopPlayback() {
+    player.pause();
     setState('recorded');
     setPlayPosition(0);
   }
 
-  function resetRecording() {
+  async function resetRecording() {
     stopTimer();
     animatePulse(false);
-    if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
-    if (recordingRef.current) recordingRef.current.stopAndUnloadAsync().catch(() => {});
-    recordedUri.current = null;
+    if (state === 'playing') player.pause();
+    if (state === 'recording') {
+      try { await audioRecorder.stop(); } catch {}
+    }
     setDuration(0);
     setPlayPosition(0);
     setState('idle');

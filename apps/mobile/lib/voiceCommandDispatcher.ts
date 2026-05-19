@@ -104,6 +104,24 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     },
   },
 
+  // ── Question navigation ───────────────────────────────────────────────────
+  {
+    pattern: /\b(pr[oó]xima\s+(quest[aã]o|pergunta)|passar?\s+(para\s+)?a?\s*pr[oó]xima|avan[cç]ar?\s*(quest[aã]o|pergunta)?|ir\s+para\s+(a\s+)?pr[oó]xima)\b/i,
+    handler: () => ({
+      type: 'COMMAND',
+      command: 'NEXT_QUESTION',
+      speak: 'Indo para a próxima questão.',
+    }),
+  },
+  {
+    pattern: /\b(quest[aã]o\s+anterior|pergunta\s+anterior|voltar\s+(quest[aã]o|pergunta)|quest[aã]o\s+de\s+antes|ir\s+para\s+(a\s+)?anterior)\b/i,
+    handler: () => ({
+      type: 'COMMAND',
+      command: 'PREV_QUESTION',
+      speak: 'Voltando para a questão anterior.',
+    }),
+  },
+
   // ── Submit answer ─────────────────────────────────────────────────────────
   {
     pattern: /\b(enviar?\s+resposta|submeter?\s+resposta|mandar?\s+resposta|enviar?)\b/i,
@@ -210,10 +228,10 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     },
   },
   {
-    pattern: /\b(formato padrão oral|responder (por |em )?oral|formato oral|resposta oral)\b/i,
+    pattern: /\b(formato padrão múltipla escolha|responder múltipla escolha|formato quiz|múltipla escolha)\b/i,
     handler: () => {
-      useAccessibilityStore.getState().setDefaultResponseFormat('oral');
-      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como oral.' };
+      useAccessibilityStore.getState().setDefaultResponseFormat('quiz');
+      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como múltipla escolha.' };
     },
   },
 ];
@@ -317,9 +335,15 @@ export async function dispatch(
 
   const result = await dispatchToAI(transcript, context ?? { screen: 'home' }, token);
 
-  const override = postProcessAI(result, onScreenAction);
+  let delegatedToScreen = false;
+  const override = postProcessAI(result, (cmd) => {
+    delegatedToScreen = true;
+    onScreenAction?.(cmd);
+  });
   const final = override ?? result;
 
-  speak(final.speak);
+  if (!delegatedToScreen) {
+    speak(final.speak);
+  }
   return final;
 }

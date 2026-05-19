@@ -63,7 +63,7 @@ export const formatLabels: Record<string, string> = {
   drawing: "Desenho",
   mindmap: "Mapa Mental",
   presentation: "Apresentação",
-  quiz: "Quiz",
+  quiz: "Múltipla Escolha",
   podcast: "Podcast",
   oral: "Resposta Oral",
 };
@@ -87,7 +87,7 @@ export const formatDescriptions: Record<string, string> = {
   drawing: "Faça um desenho ou ilustração",
   mindmap: "Crie um mapa mental",
   presentation: "Faça uma apresentação",
-  quiz: "Responda a um quiz",
+  quiz: "Selecione a alternativa correta",
   podcast: "Grave um podcast",
   oral: "Responda falando (com transcrição)",
 };
@@ -99,7 +99,7 @@ export const formatMotivations: Record<string, string> = {
   drawing: "Se você pensa visualmente e desenhando",
   mindmap: "Se você conecta ideias visualmente",
   presentation: "Se você gosta de estruturar conteúdos",
-  quiz: "Se você aprende respondendo perguntas",
+  quiz: "Se a atividade tem alternativas para selecionar",
   podcast: "Se você gosta de conversar e debater",
   oral: "Se você prefere falar do que escrever",
 };
