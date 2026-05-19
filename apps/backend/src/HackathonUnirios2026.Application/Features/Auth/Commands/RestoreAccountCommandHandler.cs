@@ -53,6 +53,6 @@ public sealed class RestoreAccountCommandHandler(
             throw new AuthValidationException(errors);
         }
 
-        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role.ToString());
+        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role?.ToString());
     }
 }

@@ -8,9 +8,17 @@ import { AppScreen } from "../../components/AppScreen";
 import { AppButton } from "../../components/AppButton";
 import { AppInput } from "../../components/AppInput";
 
+type RegisterResponse = {
+  userId: string;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  token: string;
+  role: string | null;
+};
+
 export default function SignUpScreen() {
   const { signIn } = useAuthStore();
-  const google = useGoogleSignIn(() => router.replace("/onboarding"));
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,16 +26,25 @@ export default function SignUpScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function redirectAfterRegister(role: string | null | undefined) {
+    router.replace(role ? "/(app)/(tabs)" : "/onboarding");
+  }
+
+  const google = useGoogleSignIn(() => {
+    const { role } = useAuthStore.getState();
+    redirectAfterRegister(role);
+  });
+
   async function handleSignUp() {
     setError("");
     setLoading(true);
     try {
-      const data = await apiFetch<{ userId: string; email: string | null; displayName: string | null; avatarUrl: string | null; token: string; role: string }>(
+      const data = await apiFetch<RegisterResponse>(
         "/auth/register",
         { method: "POST", body: { email, password, displayName } },
       );
       await signIn(data.userId, data.token, data.email, data.displayName, data.avatarUrl, data.role);
-      router.replace("/onboarding");
+      redirectAfterRegister(data.role);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar");
     } finally {
@@ -38,7 +55,7 @@ export default function SignUpScreen() {
   async function handleGoogleSignIn() {
     const data = await google.signInWithGoogle();
     if (data) {
-      router.replace("/onboarding");
+      redirectAfterRegister(data.role);
     }
   }
 

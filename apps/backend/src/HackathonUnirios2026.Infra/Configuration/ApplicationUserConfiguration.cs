@@ -22,7 +22,7 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
             .HasConversion<string>()
             .HasColumnType("varchar(20)")
             .HasMaxLength(20)
-            .HasDefaultValue(UserRole.Student);
+            .IsRequired(false);
 
         builder.Property(user => user.Status)
             .HasConversion<string>()

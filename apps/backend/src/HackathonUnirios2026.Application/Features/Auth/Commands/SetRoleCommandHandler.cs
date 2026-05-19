@@ -34,6 +34,6 @@ public sealed class SetRoleCommandHandler(
             throw new AuthValidationException(string.Join(" ", result.Errors.Select(e => e.Description)));
         }
 
-        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role.ToString());
+        return new AuthResponse(user.Id, user.Email!, user.DisplayName, user.AvatarUrl, jwtTokenIssuer.CreateToken(user), user.Role?.ToString());
     }
 }
