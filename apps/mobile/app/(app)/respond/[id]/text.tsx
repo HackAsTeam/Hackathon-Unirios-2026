@@ -121,6 +121,7 @@ export default function TextResponseScreen() {
     if (!lastCommand || !isFocused) return;
 
     if (lastCommand.command === 'SUBMIT_ANSWER' && !done && !submitMutation.isPending) {
+      if (!currentQuestion) return;
       if (allAnswered) {
         submitMutation.mutate();
       } else {
