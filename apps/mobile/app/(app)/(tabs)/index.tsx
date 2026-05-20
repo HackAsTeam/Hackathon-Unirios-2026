@@ -523,8 +523,8 @@ function StudentHome({
         animationType="slide"
         onRequestClose={() => { setShowJoin(false); setJoinError(null); }}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => { setShowJoin(false); setJoinError(null); }} />
+        <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <TouchableOpacity style={{ flex:1, zIndex: 0, position: "absolute", width: "100%", height: "100%" }} onPress={() => { setShowJoin(false); setJoinError(null); }} />
           <View style={{
             backgroundColor: c.background,
             borderTopLeftRadius: 28,
@@ -549,6 +549,7 @@ function StudentHome({
               placeholderTextColor={c.text.tertiary}
               autoCapitalize="none"
               autoCorrect={false}
+              autoFocus
               style={{
                 borderWidth: 1,
                 borderColor: joinError ? c.error : c.border,
