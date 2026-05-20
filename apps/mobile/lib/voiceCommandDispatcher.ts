@@ -131,6 +131,11 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     },
   },
   {
+    // "iniciar atividade" / "começar" / "start" — delegates to the active screen via onScreenAction
+    pattern: /^(?:iniciar?|come[cç]ar?|start)\s*(?:a\s+)?(?:atividade)?$|^fazer\s+(?:a\s+)?atividade$/i,
+    handler: () => ({ type: 'COMMAND', command: 'START_ACTIVITY', speak: 'Iniciando a atividade.' }),
+  },
+  {
     // "abrir atividade X" / "entrar na atividade de X" — resolve por título ou matéria
     pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?|fazer?\s+(?:a\s+)?)atividade\s+(?:de\s+|da\s+|do\s+)?(.+)/i,
     handler: (match) => resolveActivityByName(match[1].trim()),
