@@ -132,7 +132,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // "abrir atividade X" / "entrar na atividade de X" — resolve por título ou matéria
-    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?|fazer?\s+(?:a\s+)?)atividade\s+(?:de\s+|da\s+|do\s+)?(.+)/i,
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?|fazer?\s+(?:a\s+)?)atividade\s+(?:de\s+|da\s+|do\s+)?(.+)/i,
     handler: (match) => resolveActivityByName(match[1].trim()),
   },
   {
