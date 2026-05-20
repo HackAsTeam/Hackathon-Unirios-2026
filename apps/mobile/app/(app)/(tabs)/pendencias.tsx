@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useScreenContext } from '@/hooks/useScreenContext';
@@ -160,24 +160,49 @@ function StudentPendencias({
     return map;
   }, [data]);
 
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
+  const pendingScrollSubject = useRef<string | null>(null);
+
+  const attemptScroll = () => {
+    const name = pendingScrollSubject.current;
+    if (!name) return;
+    const query = normalizeStr(name);
+    const entry = [...grouped.entries()].find(
+      ([, group]) =>
+        normalizeStr(group.subjectName).includes(query) ||
+        query.includes(normalizeStr(group.subjectName))
+    );
+    if (!entry) {
+      if (!isLoading) {
+        pendingScrollSubject.current = null;
+        speak(`Não encontrei a matéria ${name}.`);
+      }
+      return;
+    }
+    const [subjectId, group] = entry;
+    const y = sectionOffsets.current[subjectId];
+    if (y == null) return; // seção ainda não medida — repete no onLayout
+    pendingScrollSubject.current = null;
+    scrollRef.current?.scrollTo({ y, animated: true });
+    speak(`Mostrando ${group.subjectName}.`);
+    AccessibilityInfo.announceForAccessibility(`Matéria ${group.subjectName}`);
+  };
+
   useEffect(() => {
     if (!lastCommand) return;
     if (lastCommand.command === 'OPEN_JOIN_MODAL') {
       onOpenJoin();
     } else if (lastCommand.command === 'NAVIGATE_TO_SUBJECT' && lastCommand.payload?.name) {
-      const query = normalizeStr(lastCommand.payload.name as string);
-      const found = [...grouped.entries()].find(
-        ([, group]) =>
-          normalizeStr(group.subjectName).includes(query) ||
-          query.includes(normalizeStr(group.subjectName))
-      );
-      if (found) {
-        speak(`Mostrando ${found[1].subjectName}.`);
-      } else {
-        speak(`Não encontrei a matéria ${lastCommand.payload.name}.`);
-      }
+      pendingScrollSubject.current = lastCommand.payload.name as string;
+      attemptScroll();
     }
   }, [lastCommand]);
+
+  // Reexecuta o scroll pendente quando os dados terminam de carregar.
+  useEffect(() => {
+    attemptScroll();
+  }, [isLoading, data]);
 
   if (isLoading) {
     return (
@@ -229,9 +254,16 @@ function StudentPendencias({
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.background }} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 32 }}>
+    <ScrollView ref={scrollRef} style={{ flex: 1, backgroundColor: c.background }} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 32 }}>
       {[...grouped.entries()].map(([subjectId, group]) => (
-        <View key={subjectId} style={{ gap: 8 }}>
+        <View
+          key={subjectId}
+          style={{ gap: 8 }}
+          onLayout={(e) => {
+            sectionOffsets.current[subjectId] = e.nativeEvent.layout.y;
+            attemptScroll();
+          }}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: scale(13), fontWeight: '700', color: c.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
