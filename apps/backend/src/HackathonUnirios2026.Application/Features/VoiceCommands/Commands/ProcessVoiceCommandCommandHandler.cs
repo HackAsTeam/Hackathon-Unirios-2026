@@ -102,6 +102,7 @@ public sealed class ProcessVoiceCommandCommandHandler(IGeminiClient geminiClient
                                 e.Classroom.Enrollments.Any(en => en.StudentId == userId))
                     .Select(e => new
                     {
+                        Title = e.Title,
                         SubjectName = e.Subject!.Name,
                         IsDone = db.ExamAttempts.Any(a =>
                             a.ExamId == e.Id && a.StudentId == userId &&
@@ -126,6 +127,13 @@ public sealed class ProcessVoiceCommandCommandHandler(IGeminiClient geminiClient
                         .Select(g => $"{g.Key}: {g.Count()} atividade(s)")
                         .ToList();
                     lines.Add($"Atividades pendentes: {pendingActivities.Count} de {activityData.Count} no total. Por matéria — {string.Join("; ", bySubject)}.");
+
+                    var titlesBySubject = pendingActivities
+                        .Take(20)
+                        .GroupBy(a => a.SubjectName)
+                        .Select(g => $"{g.Key}: {string.Join(", ", g.Select(a => a.Title))}")
+                        .ToList();
+                    lines.Add($"Títulos das atividades pendentes por matéria — {string.Join("; ", titlesBySubject)}.");
                 }
             }
 
