@@ -79,7 +79,19 @@ export default function ActivityScreen() {
       });
       speak(parts.join('. '));
     }
-  }, [lastCommand, exam]);
+
+    if (lastCommand.command === 'CHOOSE_RESPONSE_FORMAT') {
+      const fmt = lastCommand.payload?.format as string | undefined;
+      if (!fmt || fmt === 'libras') return;
+      if (fmt === 'text' || fmt === 'audio') {
+        useAccessibilityStore.getState().setDefaultResponseFormat(fmt as 'text' | 'audio');
+      }
+      if (showFormats) {
+        setShowFormats(false);
+        router.push(`/respond/${id}/${fmt}`);
+      }
+    }
+  }, [lastCommand, exam, showFormats]);
 
   const { data: exam, isLoading, isError } = useQuery({
     queryKey: ['exam', id],
