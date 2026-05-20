@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
+  Modal,
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -291,6 +291,7 @@ export default function NewActivityScreen() {
   const [desc, setDesc] = useState('');
   const [questions, setQuestions] = useState<LocalQuestion[]>([emptyQuestion()]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const addQuestion = useCallback(() => {
     setQuestions((prev) => [...prev, emptyQuestion()]);
@@ -366,7 +367,7 @@ export default function NewActivityScreen() {
     onSuccess: () => {
       setSubmitError(null);
       queryClient.invalidateQueries({ queryKey: ['activities', subjectId] });
-      Alert.alert('Atividade criada', 'A atividade foi criada com sucesso.', [{ text: 'OK', onPress: () => goBack() }]);
+      setShowSuccess(true);
       if (Platform.OS === 'web') goBack();
     },
     onError: (err: any) => {
@@ -548,6 +549,64 @@ export default function NewActivityScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal visible={showSuccess} transparent animationType="fade" onRequestClose={() => {}}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            padding: 32,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: c.surface,
+              borderRadius: 28,
+              padding: 32,
+              alignItems: 'center',
+              gap: 16,
+              width: '100%',
+              maxWidth: 320,
+            }}
+          >
+            <View
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 36,
+                backgroundColor: c.success + '18',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="checkmark-circle" size={48} color={c.success} />
+            </View>
+            <Text style={{ fontSize: scale(22), fontWeight: '800', color: c.text.primary, textAlign: 'center' }}>
+              Atividade criada
+            </Text>
+            <Text style={{ fontSize: scale(15), color: c.text.secondary, textAlign: 'center', lineHeight: 22 }}>
+              A atividade foi criada com sucesso.
+            </Text>
+            <TouchableOpacity
+              onPress={() => goBack()}
+              style={{
+                marginTop: 8,
+                width: '100%',
+                paddingVertical: 14,
+                borderRadius: 14,
+                backgroundColor: c.primary,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: scale(16), fontWeight: '700', color: c.text.inverse }}>
+                Ver atividade
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
