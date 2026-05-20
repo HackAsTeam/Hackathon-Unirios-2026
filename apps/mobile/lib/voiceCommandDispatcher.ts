@@ -224,6 +224,12 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     },
   },
 
+  // ── Read question aloud — screen handles TTS, dispatcher must not speak ───
+  {
+    pattern: /\b(?:leia?\s+(?:a\s+)?(?:pergunta|quest[aã]o)|ler?\s+(?:a\s+)?(?:pergunta|quest[aã]o))\b/i,
+    handler: () => ({ type: 'COMMAND', command: 'READ_ALOUD', speak: '' } as VoiceCommandResponse),
+  },
+
   // ── Question navigation ───────────────────────────────────────────────────
   {
     pattern: /\b(pr[oó]xima\s+(quest[aã]o|pergunta)|passar?\s+(para\s+)?a?\s*pr[oó]xima|avan[cç]ar?\s*(quest[aã]o|pergunta)?|ir\s+para\s+(a\s+)?pr[oó]xima)\b/i,
