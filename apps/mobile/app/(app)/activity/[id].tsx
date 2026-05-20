@@ -40,7 +40,6 @@ const diloImage = require('../../../assets/dillo-assistant-image.png');
 
 type AvailableFormat = 'text' | 'audio' | 'libras';
 const AVAILABLE_FORMATS: AvailableFormat[] = ['text', 'audio', 'libras'];
-
 const FORMAT_ICONS: Record<AvailableFormat, keyof typeof Ionicons.glyphMap> = {
   text: 'document-text-outline',
   audio: 'mic-outline',
