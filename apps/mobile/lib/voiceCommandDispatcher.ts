@@ -319,13 +319,6 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
       return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como áudio.' };
     },
   },
-  {
-    pattern: /\b(formato padrão múltipla escolha|responder múltipla escolha|formato quiz|múltipla escolha)\b/i,
-    handler: () => {
-      useAccessibilityStore.getState().setDefaultResponseFormat('quiz');
-      return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como múltipla escolha.' };
-    },
-  },
 ];
 
 // ─── Pending-pick pre-check (activity disambiguation) ────────────────────────
