@@ -82,9 +82,9 @@ export default function ActivityScreen() {
     if (lastCommand.command === 'CHOOSE_RESPONSE_FORMAT') {
       const fmt = lastCommand.payload?.format;
       if (typeof fmt !== 'string' || (fmt !== 'text' && fmt !== 'audio')) return;
-      
+
       useAccessibilityStore.getState().setDefaultResponseFormat(fmt);
-      
+
       if (showFormats) {
         setShowFormats(false);
         router.push(`/respond/${id}/${fmt}`);
