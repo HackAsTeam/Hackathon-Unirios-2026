@@ -18,11 +18,25 @@ import type { PendingAttemptItem, StudentActivityStatus } from '@/types/pending'
 import type { AttemptStatus } from '@/types/attempt';
 
 function TeacherPendencias() {
-  useScreenContext({ screen: 'teacher-pendencias', role: 'teacher' });
+  const { data, isLoading, isError } = useTeacherPendingAttempts();
+  useScreenContext({
+    screen: 'teacher-pendencias',
+    role: 'teacher',
+    screenDescription: (() => {
+      if (!data) return 'Você está na tela de Pendências do Professor. As correções estão carregando.';
+      if (data.length === 0) return 'Você está na tela de Pendências do Professor. Nenhuma correção pendente — tudo em dia!';
+      const map = new Map<string, { subjectName: string; count: number }>();
+      for (const item of data) {
+        const e = map.get(item.subjectId);
+        if (e) e.count++; else map.set(item.subjectId, { subjectName: item.subjectName, count: 1 });
+      }
+      const resumo = [...map.values()].map(s => `${s.count} em ${s.subjectName}`).join(', ');
+      return `Você está na tela de Pendências do Professor. Há ${data.length} tentativa${data.length !== 1 ? 's' : ''} aguardando correção: ${resumo}.`;
+    })(),
+  });
   const router = useRouter();
   const c = useColors();
   const scale = useScale();
-  const { data, isLoading, isError } = useTeacherPendingAttempts();
 
   const grouped = useMemo(() => {
     const map = new Map<string, { subjectName: string; classroomTitle: string; items: PendingAttemptItem[] }>();
@@ -140,12 +154,37 @@ function StudentPendencias({
   onOpenJoin: () => void;
   joinedClassroom: string | null;
 }) {
-  useScreenContext({ screen: 'student-pendencias', role: 'student' });
+  const { data, isLoading, isError } = useStudentActivityStatuses();
+  useScreenContext({
+    screen: 'student-pendencias',
+    role: 'student',
+    screenDescription: (() => {
+      if (!data) return 'Você está na tela de Pendências. As atividades estão carregando.';
+      if (data.length === 0) return 'Você está na tela de Pendências. Você não tem atividades no momento.';
+
+      const concluidas = data.filter(a => a.attemptStatus === 'Submitted' || a.attemptStatus === 'Graded');
+      const pendentes  = data.filter(a => !a.attemptStatus || a.attemptStatus === 'NotStarted' || a.attemptStatus === 'InProgress');
+
+      const subjectMap = new Map<string, { subjectName: string; count: number }>();
+      for (const item of data) {
+        const e = subjectMap.get(item.subjectId);
+        if (e) e.count++; else subjectMap.set(item.subjectId, { subjectName: item.subjectName, count: 1 });
+      }
+      const subjectList = [...subjectMap.values()]
+        .map(s => `${s.subjectName} com ${s.count} atividade${s.count !== 1 ? 's' : ''}`)
+        .join(', ');
+
+      return [
+        `Você está na tela de Pendências, com ${data.length} atividade${data.length !== 1 ? 's' : ''} no total.`,
+        `Matérias: ${subjectList}.`,
+        `${concluidas.length} concluída${concluidas.length !== 1 ? 's' : ''} e ${pendentes.length} pendente${pendentes.length !== 1 ? 's' : ''}.`,
+      ].join(' ');
+    })(),
+  });
   const router = useRouter();
   const c = useColors();
   const scale = useScale();
   const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
-  const { data, isLoading, isError } = useStudentActivityStatuses();
 
   const grouped = useMemo(() => {
     const map = new Map<string, { subjectName: string; classroomTitle: string; items: StudentActivityStatus[] }>();

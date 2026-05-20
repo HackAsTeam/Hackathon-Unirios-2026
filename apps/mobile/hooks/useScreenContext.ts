@@ -8,5 +8,5 @@ export function useScreenContext(ctx: ScreenContext) {
     setContext(ctx);
     return () => setContext(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx.screen]);
+  }, [ctx.screen, ctx.screenDescription]);
 }

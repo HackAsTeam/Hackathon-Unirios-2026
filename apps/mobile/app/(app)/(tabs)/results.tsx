@@ -33,14 +33,27 @@ function Section({ title, items }: { title: string; items: AttemptSummary[] }) {
 }
 
 export default function ResultsScreen() {
-  useScreenContext({ screen: 'results', role: 'student' });
   const { data: attempts, isLoading, isError, refetch } = useMyAttempts();
+  const graded     = attempts?.filter((a) => a.status === 'Graded')     ?? [];
+  const submitted  = attempts?.filter((a) => a.status === 'Submitted')  ?? [];
+  const inProgress = attempts?.filter((a) => a.status === 'InProgress') ?? [];
+
+  useScreenContext({
+    screen: 'results',
+    role: 'student',
+    screenDescription: (() => {
+      if (!attempts) return 'Você está na tela de Resultados. Os dados ainda estão carregando.';
+      if (attempts.length === 0) return 'Você está na tela de Resultados. Você ainda não respondeu nenhuma atividade.';
+      const parts = [`Você está na tela de Resultados com ${attempts.length} tentativa${attempts.length !== 1 ? 's' : ''}.`];
+      if (graded.length     > 0) parts.push(`${graded.length} avaliada${graded.length !== 1 ? 's' : ''}.`);
+      if (submitted.length  > 0) parts.push(`${submitted.length} enviada${submitted.length !== 1 ? 's' : ''} aguardando avaliação.`);
+      if (inProgress.length > 0) parts.push(`${inProgress.length} em andamento.`);
+      return parts.join(' ');
+    })(),
+  });
+
   const c = useColors();
   const scale = useScale();
-
-  const graded = attempts?.filter((a) => a.status === 'Graded') ?? [];
-  const submitted = attempts?.filter((a) => a.status === 'Submitted') ?? [];
-  const inProgress = attempts?.filter((a) => a.status === 'InProgress') ?? [];
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>

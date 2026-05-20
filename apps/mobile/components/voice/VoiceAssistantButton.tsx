@@ -6,7 +6,10 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
+  withDelay,
   cancelAnimation,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 // import { Ionicons } from '@expo/vector-icons';
 import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
@@ -46,6 +49,10 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const pulse = useSharedValue(1);
   const dotOpacity = useSharedValue(0);
   const dotScale = useSharedValue(1);
+
+  const inlineDot1 = useSharedValue(0.3);
+  const inlineDot2 = useSharedValue(0.3);
+  const inlineDot3 = useSharedValue(0.3);
 
   // ─── Track app foreground/background ─────────────────────────────────────
   useEffect(() => {
@@ -165,6 +172,23 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     }
   }, [wakeWordActive, reducedMotion]);
 
+  // ─── Inline dots animation ────────────────────────────────────────────────
+  useEffect(() => {
+    if (inlineActive && !reducedMotion) {
+      const anim = (sv: typeof inlineDot1, delay: number) => {
+        sv.value = withDelay(delay, withRepeat(withTiming(1, { duration: 500 }), -1, true));
+      };
+      anim(inlineDot1, 0);
+      anim(inlineDot2, 160);
+      anim(inlineDot3, 320);
+    } else {
+      [inlineDot1, inlineDot2, inlineDot3].forEach((sv) => {
+        cancelAnimation(sv);
+        sv.value = withTiming(0.3, { duration: 200 });
+      });
+    }
+  }, [inlineActive, reducedMotion]);
+
   // ─── Manual tap ──────────────────────────────────────────────────────────
   function openOverlay() {
     setOverlayVisible(true);
@@ -184,6 +208,9 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     opacity: dotOpacity.value,
     transform: [{ scale: dotScale.value }],
   }));
+  const inlineDot1Style = useAnimatedStyle(() => ({ opacity: inlineDot1.value }));
+  const inlineDot2Style = useAnimatedStyle(() => ({ opacity: inlineDot2.value }));
+  const inlineDot3Style = useAnimatedStyle(() => ({ opacity: inlineDot3.value }));
 
   const isActive = overlayVisible || status === 'listening' || status === 'processing';
 
@@ -216,6 +243,21 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
           <View style={[styles.dotInner, { backgroundColor: DOT_COLOR }]} />
         </Animated.View>
       </Animated.View>
+
+      {inlineActive && (
+        <Animated.View
+          entering={FadeIn.duration(180)}
+          exiting={FadeOut.duration(180)}
+          pointerEvents="none"
+          style={styles.inlinePillContainer}
+        >
+          <View style={styles.inlinePill}>
+            {[inlineDot1Style, inlineDot2Style, inlineDot3Style].map((s, i) => (
+              <Animated.View key={i} style={[styles.inlineDot, s]} />
+            ))}
+          </View>
+        </Animated.View>
+      )}
 
       <VoiceAssistantOverlay
         visible={overlayVisible}
@@ -261,5 +303,32 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+  },
+  inlinePillContainer: {
+    position: 'absolute',
+    bottom: 170,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  inlinePill: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  inlineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: ACCENT,
   },
 });

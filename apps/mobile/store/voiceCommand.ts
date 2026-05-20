@@ -11,6 +11,7 @@ export interface ScreenContext {
   attemptId?: string;
   classroomCount?: number;
   hasEnrollments?: boolean;
+  screenDescription?: string;
 }
 
 export interface VoiceCommandResponse {

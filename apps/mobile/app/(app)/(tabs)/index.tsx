@@ -105,6 +105,13 @@ function TeacherHome({
     screen: 'home-teacher',
     role: 'teacher',
     classroomCount: classrooms?.length ?? 0,
+    screenDescription: (() => {
+      const name = displayName ?? 'Usuário';
+      if (!classrooms) return `Você está na tela inicial como Professor. No topo, temos o seu nome ${name}. As turmas ainda estão carregando.`;
+      if (classrooms.length === 0) return `Você está na tela inicial como Professor. No topo, temos o seu nome ${name}. No centro, um convite para criar a primeira turma, com um botão Criar Turma.`;
+      const nomes = classrooms.map(c => c.title).join(', ');
+      return `Você está na tela inicial como Professor. No topo, temos o seu nome ${name}. No canto superior direito, um indicador de que você é Professor. No centro, uma lista com ${classrooms.length} turma${classrooms.length !== 1 ? 's' : ''}: ${nomes}. No canto superior direito da lista, botão para criar nova turma.`;
+    })(),
   });
 
   const [showCreate, setShowCreate] = useState(false);
@@ -384,6 +391,13 @@ function StudentHome({
     role: 'student',
     classroomCount: classrooms?.length ?? 0,
     hasEnrollments: (classrooms?.length ?? 0) > 0,
+    screenDescription: (() => {
+      const name = displayName ?? 'Usuário';
+      if (!classrooms) return `Você está na tela inicial como Aluno. No topo, temos o seu nome ${name}. As turmas ainda estão carregando.`;
+      if (classrooms.length === 0) return `Você está na tela inicial como Aluno. No topo, temos o seu nome ${name}. No centro, um convite para ingressar em uma turma, com um botão Ingressar com código.`;
+      const nomes = classrooms.map(c => c.title).join(', ');
+      return `Você está na tela inicial como Aluno. No topo, temos o seu nome ${name}. No canto superior direito, um indicador de que você é Aluno. No centro, uma lista com ${classrooms.length} turma${classrooms.length !== 1 ? 's' : ''}: ${nomes}. No canto superior direito da lista, botão para ingressar em nova turma.`;
+    })(),
   });
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
