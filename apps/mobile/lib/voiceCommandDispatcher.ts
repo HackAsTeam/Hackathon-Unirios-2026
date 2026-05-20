@@ -304,16 +304,45 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     },
   },
 
+  // ── Choose response format ───────────────────────────────────────────────
+  {
+    pattern: /\b(?:escolher?\s+texto|quero\s+texto|vou\s+de\s+texto|prefiro\s+texto|usar?\s+texto|responder\s+(?:por\s+|em\s+)?texto)\b/i,
+    handler: () => ({
+      type: 'COMMAND',
+      command: 'CHOOSE_RESPONSE_FORMAT',
+      payload: { format: 'text' },
+      speak: 'Formato texto.',
+    }),
+  },
+  {
+    pattern: /\b(?:escolher?\s+(?:áudio|audio)|quero\s+(?:áudio|audio)|vou\s+de\s+(?:áudio|audio)|prefiro\s+(?:áudio|audio)|usar?\s+(?:áudio|audio)|responder\s+(?:por\s+|em\s+)?(?:áudio|audio))\b/i,
+    handler: () => ({
+      type: 'COMMAND',
+      command: 'CHOOSE_RESPONSE_FORMAT',
+      payload: { format: 'audio' },
+      speak: 'Formato áudio.',
+    }),
+  },
+  {
+    pattern: /\b(?:escolher?\s+libras|quero\s+libras|vou\s+de\s+libras|prefiro\s+libras|usar?\s+libras|libras)\b|\blíngua\s+de\s+sinais\b/i,
+    handler: () => ({
+      type: 'COMMAND',
+      command: 'CHOOSE_RESPONSE_FORMAT',
+      payload: { format: 'libras' },
+      speak: 'Libras ainda não está disponível. Será implementado em breve.',
+    }),
+  },
+
   // ── Default response format ───────────────────────────────────────────────
   {
-    pattern: /\b(formato padrão (texto|escrito?)|responder (por |em )?texto|formato texto)\b/i,
+    pattern: /\b(formato padrão (texto|escrito?)|formato texto)\b/i,
     handler: () => {
       useAccessibilityStore.getState().setDefaultResponseFormat('text');
       return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como texto.' };
     },
   },
   {
-    pattern: /\b(formato padrão áudio|formato padrão audio|responder (por |em )?áudio|responder (por |em )?audio|formato áudio|formato audio)\b/i,
+    pattern: /\b(formato padrão (áudio|audio)|formato (áudio|audio))\b/i,
     handler: () => {
       useAccessibilityStore.getState().setDefaultResponseFormat('audio');
       return { type: 'COMMAND', command: 'ACCESSIBILITY_UPDATE', speak: 'Formato padrão definido como áudio.' };
