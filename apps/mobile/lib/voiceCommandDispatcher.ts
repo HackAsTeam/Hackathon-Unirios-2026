@@ -79,7 +79,7 @@ async function listPendingResponse(subjectFilter?: string): Promise<VoiceCommand
 const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray) => VoiceCommandResponse | Promise<VoiceCommandResponse> }> = [
   // ── Describe screen ───────────────────────────────────────────────────────
   {
-    pattern: /\b(leia\s+(?:a\s+)?tela|o que (?:tem|está|há)\s+(?:na|nessa)\s+tela|descreva\s+(?:a\s+)?(?:tela|interface|página)|onde estou|que tela é essa|me fale (?:sobre|da)\s+(?:a\s+)?tela)\b/i,
+    pattern: /\b(leia\s+(?:a\s+)?tela|o que (?:tem|está|há)\s+(?:na|nessa)\s+(?:minha\s+)?tela|descreva\s+(?:a\s+)?(?:tela|interface|página)|onde estou|que tela é essa|me fale (?:sobre|da)\s+(?:a\s+)?tela)\b/i,
     handler: () => {
       const description = useVoiceCommandStore.getState().currentContext?.screenDescription;
       if (description) {
