@@ -1,4 +1,4 @@
-import { Alert, View, Text } from "react-native";
+import { Alert, View, Text, InteractionManager } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/auth";
@@ -160,7 +160,9 @@ export default function SignInScreen() {
       if (data.role && !completed) {
         await useOnboardingStore.getState().setRole(data.role.toLowerCase() as "teacher" | "student");
       }
-      redirectAfterLogin();
+      InteractionManager.runAfterInteractions(() => {
+        redirectAfterLogin();
+      });
     }
   }
 
