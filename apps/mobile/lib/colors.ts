@@ -38,6 +38,7 @@ export const colors = {
     quiz: "#EAB308",
     podcast: "#EC4899",
     oral: "#06B6D4",
+    libras: "#64748B",
   },
 
   formatsLight: {
@@ -50,6 +51,7 @@ export const colors = {
     quiz: "#FEF9C3",
     podcast: "#FCE7F3",
     oral: "#CFFAFE",
+    libras: "#F1F5F9",
   },
 
   cardShadow: "rgba(22, 163, 74, 0.08)",
@@ -66,6 +68,7 @@ export const formatLabels: Record<string, string> = {
   quiz: "Múltipla Escolha",
   podcast: "Podcast",
   oral: "Resposta Oral",
+  libras: "Libras",
 };
 
 export const formatIcons: Record<string, string> = {
@@ -78,6 +81,7 @@ export const formatIcons: Record<string, string> = {
   quiz: "help-circle-outline",
   podcast: "radio-outline",
   oral: "chatbubble-ellipses-outline",
+  libras: "hand-left-outline",
 };
 
 export const formatDescriptions: Record<string, string> = {
@@ -90,6 +94,7 @@ export const formatDescriptions: Record<string, string> = {
   quiz: "Selecione a alternativa correta",
   podcast: "Grave um podcast",
   oral: "Responda falando (com transcrição)",
+  libras: "Responda em língua de sinais brasileira",
 };
 
 export const formatMotivations: Record<string, string> = {
@@ -102,6 +107,7 @@ export const formatMotivations: Record<string, string> = {
   quiz: "Se a atividade tem alternativas para selecionar",
   podcast: "Se você gosta de conversar e debater",
   oral: "Se você prefere falar do que escrever",
+  libras: "Se você se comunica em Libras",
 };
 
 export const highContrastColors: typeof colors = {
@@ -144,6 +150,7 @@ export const highContrastColors: typeof colors = {
     quiz: "#EAB308",
     podcast: "#EC4899",
     oral: "#06B6D4",
+    libras: "#64748B",
   },
 
   formatsLight: {
@@ -156,6 +163,7 @@ export const highContrastColors: typeof colors = {
     quiz: "#451a03",
     podcast: "#500724",
     oral: "#083344",
+    libras: "#1E293B",
   },
 
   cardShadow: "transparent",
