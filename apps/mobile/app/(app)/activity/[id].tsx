@@ -8,6 +8,7 @@ import {
   Modal,
   Pressable,
   Platform,
+  Image,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -30,9 +31,12 @@ import { useColors } from '../../../hooks/useColors';
 import { useScale } from '../../../hooks/useScale';
 import { AccessibilityPanel } from '../../../components/accessibility/AccessibilityPanel';
 import { AttemptStatusBadge } from '../../../components/student/AttemptStatusBadge';
+import { VoiceAssistantOverlay } from '../../../components/voice/VoiceAssistantOverlay';
 import type { ExamDetail } from '../../../types/classroom';
 import type { ResponseFormat } from '../../../types/activity';
 import type { AttemptSummary } from '../../../types/attempt';
+
+const diloImage = require('../../../assets/dillo-assistant-image.png');
 
 type AvailableFormat = 'text' | 'audio' | 'libras';
 const AVAILABLE_FORMATS: AvailableFormat[] = ['text', 'audio', 'libras'];
@@ -357,6 +361,11 @@ function FormatModal({
   const c = useColors();
   const scale = useScale();
   const { reducedMotion } = useAccessibilityStore();
+  const [voiceOverlayVisible, setVoiceOverlayVisible] = useState(false);
+
+  useEffect(() => {
+    if (visible) speak('Como você quer responder? Diga: texto ou áudio. Libras em breve.');
+  }, [visible]);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -393,9 +402,22 @@ function FormatModal({
                 disabled={fmt === 'libras'}
               />
             ))}
+            <TouchableOpacity
+              onPress={() => setVoiceOverlayVisible(true)}
+              accessibilityLabel="Abrir Dilo por voz"
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10 }}
+            >
+              <Image source={diloImage} style={{ width: 28, height: 28 }} />
+              <Text style={{ color: c.text.secondary, fontSize: scale(13) }}>Responder com Dilo</Text>
+            </TouchableOpacity>
           </View>
         </Pressable>
       </Pressable>
+
+      <VoiceAssistantOverlay
+        visible={voiceOverlayVisible}
+        onClose={() => setVoiceOverlayVisible(false)}
+      />
     </Modal>
   );
 }
