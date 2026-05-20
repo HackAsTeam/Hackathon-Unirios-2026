@@ -76,7 +76,19 @@ async function listPendingResponse(subjectFilter?: string): Promise<VoiceCommand
 
 // ─── Tier 1: local keyword matching ──────────────────────────────────────────
 
-const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray) => VoiceCommandResponse | Promise<VoiceCommandResponse> }> = [
+const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray) => VoiceCommandResponse | Promise<VoiceCommandResponse> | null }> = [
+  // ── Describe screen ───────────────────────────────────────────────────────
+  {
+    pattern: /\b(leia\s+(?:a\s+)?tela|o que (?:tem|está|há)\s+(?:na|nessa)\s+(?:minha\s+)?tela|descreva\s+(?:a\s+)?(?:tela|interface|página)|onde estou|que tela é essa|me fale (?:sobre|da)\s+(?:a\s+)?tela)\b/i,
+    handler: () => {
+      const description = useVoiceCommandStore.getState().currentContext?.screenDescription;
+      if (description) {
+        return { type: 'COMMAND', command: 'DESCRIBE_SCREEN', speak: description };
+      }
+      return { type: 'UNKNOWN', speak: 'Não tenho uma descrição disponível para esta tela no momento.' };
+    },
+  },
+
   // ── Navigation ────────────────────────────────────────────────────────────
   {
     // Must be before GO_BACK so "voltar para o início" routes to home, not back
@@ -112,15 +124,31 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // Anchored so action phrases like "listar atividades pendentes" fall through to tier2
-    pattern: /^(?:(?:ir\s+para|abrir?|ver|acessar?|mostrar?)\s+)?(?:(?:as\s+|minhas\s+)?(?:pendências?|pendencias?)|atividades?\s+pendentes?)$/i,
+    pattern: /^(?:(?:ir\s+para|navegu[e]?\s+(?:para\s+)?|abrir?|ver|acessar?|mostrar?)\s+)?(?:(?:as\s+|minhas\s+)?(?:pendências?|pendencias?)|atividades?\s+pendentes?)$/i,
     handler: () => {
       router.push('/(app)/(tabs)/pendencias');
       return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo pendências.' };
     },
   },
   {
+    // bare "atividade" on the activity screen = start it (STT often drops the verb)
+    pattern: /^atividade$/i,
+    handler: () => {
+      const screen = useVoiceCommandStore.getState().currentContext?.screen;
+      if (screen === 'student-activity') {
+        return { type: 'COMMAND', command: 'START_ACTIVITY', speak: 'Iniciando a atividade.' };
+      }
+      return null;
+    },
+  },
+  {
+    // "iniciar atividade" / "começar" / "start" — delegates to the active screen via onScreenAction
+    pattern: /^(?:iniciar?|come[cç]ar?|start)\s*(?:a\s+)?(?:atividade)?$|^fazer\s+(?:a\s+)?atividade$/i,
+    handler: () => ({ type: 'COMMAND', command: 'START_ACTIVITY', speak: 'Iniciando a atividade.' }),
+  },
+  {
     // "abrir atividade X" / "entrar na atividade de X" — resolve por título ou matéria
-    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?|fazer?\s+(?:a\s+)?)atividade\s+(?:de\s+|da\s+|do\s+)?(.+)/i,
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?|fazer?\s+(?:a\s+)?)atividade\s+(?:de\s+|da\s+|do\s+)?(.+)/i,
     handler: (match) => resolveActivityByName(match[1].trim()),
   },
   {
@@ -130,7 +158,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // "entra na matéria de X" / "abrir matéria X" / "ir para matéria X" — navigates by name inside a classroom
-    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)mat[eé]ria\s+(?:de\s+)?(.+)/i,
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)mat[eé]ria\s+(?:de\s+)?(.+)/i,
     handler: (match) => {
       const name = match[1].trim();
       // Pendências is the only screen that hosts the subject sections to scroll to.
@@ -140,7 +168,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // "entra na turma X" / "abrir turma X" / "ir para turma X" / "ver turma X" — navigates by name
-    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)turma\s+(.+)/i,
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)turma\s+(.+)/i,
     handler: (match) => {
       const name = match[1].trim();
       // Students no longer browse by classroom (refactor removed StudentHome's
@@ -155,7 +183,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // Anchored so action phrases like "criar turma chamada X" fall through to tier2
-    pattern: /^(?:(?:ver|abrir?|mostrar?|ir para|acessar?|listar?)\s+)?(?:as\s+|minhas\s+)?turmas?$|^sala de aula$/i,
+    pattern: /^(?:(?:ver|abrir?|mostrar?|ir\s+para|navegu[e]?\s+(?:para\s+)?|acessar?|listar?)\s+)?(?:as\s+|minhas\s+)?turmas?$|^sala de aula$/i,
     handler: () => {
       const onboardingRole = useOnboardingStore.getState().role;
       const authRole = useAuthStore.getState().role;
@@ -194,6 +222,12 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
         speak: 'Tem certeza que quer sair? Diga confirmar para continuar.',
       };
     },
+  },
+
+  // ── Read question aloud — screen handles TTS, dispatcher must not speak ───
+  {
+    pattern: /\b(?:leia?\s+(?:a\s+)?(?:pergunta|quest[aã]o)|ler?\s+(?:a\s+)?(?:pergunta|quest[aã]o))\b/i,
+    handler: () => ({ type: 'COMMAND', command: 'READ_ALOUD', speak: '' } as VoiceCommandResponse),
   },
 
   // ── Question navigation ───────────────────────────────────────────────────
@@ -402,7 +436,10 @@ async function tryLocalDispatch(transcript: string): Promise<VoiceCommandRespons
 
   for (const { pattern, handler } of LOCAL_PATTERNS) {
     const match = t.match(pattern);
-    if (match) return handler(match);
+    if (match) {
+      const result = await Promise.resolve(handler(match));
+      if (result) return result;
+    }
   }
   return null;
 }
@@ -519,8 +556,6 @@ export async function dispatch(
   });
   const final = override ?? result;
 
-  if (!delegatedToScreen) {
-    speak(final.speak);
-  }
+  speak(final.speak);
   return final;
 }

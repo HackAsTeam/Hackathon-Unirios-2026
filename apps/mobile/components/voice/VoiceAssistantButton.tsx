@@ -6,14 +6,20 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
+  withDelay,
   cancelAnimation,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 // import { Ionicons } from '@expo/vector-icons';
 import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
 import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voiceCommand';
 import { useAccessibilityStore } from '../../store/acessibility';
+import { useAuthStore } from '../../store/auth';
 import { startWakeWordDetection, stopWakeWordDetection } from '../../lib/wakeWord';
+import { startListening } from '../../lib/stt';
 import { speak, isSpeaking } from '../../lib/tts';
+import { dispatch } from '../../lib/voiceCommandDispatcher';
 import { colors } from '../../lib/colors';
 const diloAssistantImage = require('../../assets/dillo-assistant-image.png');
 
@@ -27,16 +33,26 @@ interface Props {
 export function VoiceAssistantButton({ onScreenAction }: Props) {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [wakeWordActive, setWakeWordActive] = useState(false);
+  const [inlineActive, setInlineActive] = useState(false);
   const [isForegrounded, setIsForegrounded] = useState(true);
   const isForegoundedRef = useRef(true);
+  const inlineTranscriptRef = useRef('');
+  const stopInlineSTTRef = useRef<(() => void) | null>(null);
+  // Ref mantém a função sempre atualizada sem invalidar useCallback abaixo
+  const startInlineListeningRef = useRef<() => void>(() => {});
   const {highContrast} = useAccessibilityStore();
 
+  const token = useAuthStore((s) => s.token);
   const status = useVoiceCommandStore((s) => s.status);
   const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
 
   const pulse = useSharedValue(1);
   const dotOpacity = useSharedValue(0);
   const dotScale = useSharedValue(1);
+
+  const inlineDot1 = useSharedValue(0.3);
+  const inlineDot2 = useSharedValue(0.3);
+  const inlineDot3 = useSharedValue(0.3);
 
   // ─── Track app foreground/background ─────────────────────────────────────
   useEffect(() => {
@@ -47,16 +63,66 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     return () => sub.remove();
   }, []);
 
+  // ─── Inline STT (atualizado a cada render para capturar token/onScreenAction frescos) ───
+  startInlineListeningRef.current = () => {
+    setInlineActive(true);
+    inlineTranscriptRef.current = '';
+    console.log('[WakeWord] STT inline aguardando liberação do mic...');
+
+    // 150ms para o AudioRecorder liberar o mic antes do STT tentar abrir
+    setTimeout(() => {
+      console.log('[WakeWord] STT inline iniciado — fale o comando');
+      stopInlineSTTRef.current = startListening(
+        ({ transcript }) => { inlineTranscriptRef.current = transcript; },
+        async () => {
+          stopInlineSTTRef.current = null;
+          const text = inlineTranscriptRef.current.trim();
+          console.log(`[WakeWord] STT inline encerrado — "${text}"`);
+          if (text) {
+            const { currentContext, setLastCommand } = useVoiceCommandStore.getState();
+            // dispatch já chama speak() internamente — não chamar de novo
+            const result = await dispatch(text, currentContext, token ?? null, onScreenAction);
+            setLastCommand(result);
+            // aguarda TTS iniciar (300ms) e terminar antes de rearmar ONNX
+            await new Promise<void>((r) => setTimeout(r, 300));
+            const deadline = Date.now() + 15_000;
+            while (Date.now() < deadline) {
+              if (!isSpeaking()) break;
+              await new Promise<void>((r) => setTimeout(r, 200));
+            }
+          }
+          setInlineActive(false);
+        },
+        (err) => {
+          stopInlineSTTRef.current = null;
+          if (err !== 'no-speech') console.warn(`[WakeWord] STT inline erro: ${err}`);
+          setInlineActive(false);
+        },
+      );
+    }, 150);
+  };
+
   // ─── Wake word callback ───────────────────────────────────────────────────
   const handleWakeWordDetected = useCallback(() => {
     setWakeWordActive(false);
-    if (isForegoundedRef.current) speak('Sim?');
-    setTimeout(() => setOverlayVisible(true), 400);
+    console.log('[WakeWord] ONNX disparou → STT inline');
+    startInlineListeningRef.current();
   }, []);
+
+  // Callback para o modo STT fallback (sem ONNX)
+  const handleInlineCommand = useCallback(async (transcript: string) => {
+    setWakeWordActive(false);
+    console.log(`[WakeWord] STT fallback inline: "${transcript}"`);
+    const { currentContext, setLastCommand } = useVoiceCommandStore.getState();
+    // dispatch já chama speak() internamente
+    const result = await dispatch(transcript, currentContext, token ?? null, onScreenAction);
+    setLastCommand(result);
+  }, [token, onScreenAction]);
 
   // ─── Single effect — única fonte de verdade para o ciclo de wake word ────
   useEffect(() => {
-    const shouldRun = wakeWordEnabled && !overlayVisible && isForegrounded;
+    // inlineActive=true significa que o STT inline está capturando — não re-armar ONNX
+    const shouldRun = wakeWordEnabled && !overlayVisible && isForegrounded && !inlineActive;
 
     if (!shouldRun) {
       stopWakeWordDetection();
@@ -76,7 +142,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
       if (cancelled) return;
       await new Promise<void>((r) => setTimeout(r, 500));
       if (cancelled) return;
-      const ok = await startWakeWordDetection(handleWakeWordDetected);
+      const ok = await startWakeWordDetection(handleWakeWordDetected, handleInlineCommand);
       if (!cancelled) setWakeWordActive(ok);
     }
 
@@ -86,9 +152,11 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
       cancelled = true;
       clearTimeout(startTimer);
       stopWakeWordDetection();
+      stopInlineSTTRef.current?.();
+      stopInlineSTTRef.current = null;
       setWakeWordActive(false);
     };
-  }, [wakeWordEnabled, overlayVisible, isForegrounded, handleWakeWordDetected]);
+  }, [wakeWordEnabled, overlayVisible, isForegrounded, inlineActive, handleWakeWordDetected, handleInlineCommand]);
 
   // ─── Dot animation ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -105,6 +173,23 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
       dotScale.value = 1;
     }
   }, [wakeWordActive, reducedMotion]);
+
+  // ─── Inline dots animation ────────────────────────────────────────────────
+  useEffect(() => {
+    if (inlineActive && !reducedMotion) {
+      const anim = (sv: typeof inlineDot1, delay: number) => {
+        sv.value = withDelay(delay, withRepeat(withTiming(1, { duration: 500 }), -1, true));
+      };
+      anim(inlineDot1, 0);
+      anim(inlineDot2, 160);
+      anim(inlineDot3, 320);
+    } else {
+      [inlineDot1, inlineDot2, inlineDot3].forEach((sv) => {
+        cancelAnimation(sv);
+        sv.value = withTiming(0.3, { duration: 200 });
+      });
+    }
+  }, [inlineActive, reducedMotion]);
 
   // ─── Manual tap ──────────────────────────────────────────────────────────
   function openOverlay() {
@@ -125,6 +210,9 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     opacity: dotOpacity.value,
     transform: [{ scale: dotScale.value }],
   }));
+  const inlineDot1Style = useAnimatedStyle(() => ({ opacity: inlineDot1.value }));
+  const inlineDot2Style = useAnimatedStyle(() => ({ opacity: inlineDot2.value }));
+  const inlineDot3Style = useAnimatedStyle(() => ({ opacity: inlineDot3.value }));
 
   const isActive = overlayVisible || status === 'listening' || status === 'processing';
 
@@ -157,6 +245,21 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
           <View style={[styles.dotInner, { backgroundColor: DOT_COLOR }]} />
         </Animated.View>
       </Animated.View>
+
+      {inlineActive && (
+        <Animated.View
+          entering={FadeIn.duration(180)}
+          exiting={FadeOut.duration(180)}
+          pointerEvents="none"
+          style={styles.inlinePillContainer}
+        >
+          <View style={styles.inlinePill}>
+            {[inlineDot1Style, inlineDot2Style, inlineDot3Style].map((s, i) => (
+              <Animated.View key={i} style={[styles.inlineDot, s]} />
+            ))}
+          </View>
+        </Animated.View>
+      )}
 
       <VoiceAssistantOverlay
         visible={overlayVisible}
@@ -202,5 +305,32 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+  },
+  inlinePillContainer: {
+    position: 'absolute',
+    bottom: 170,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  inlinePill: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  inlineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: ACCENT,
   },
 });

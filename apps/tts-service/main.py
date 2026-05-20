@@ -5,6 +5,7 @@ import soundfile as sf
 import numpy as np
 import threading
 import asyncio
+import time
 import os
 import re
 import io
@@ -22,10 +23,10 @@ async def _startup():
 # ─── Wake word ────────────────────────────────────────────────────────────────
 
 _MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
-_WAKEWORD_MODEL_PATH = os.environ.get(
-    'WAKEWORD_MODEL_PATH',
-    os.path.join(_MODELS_DIR, 'Hey_dilo.onnx')
-)
+_WAKEWORD_MODEL_PATHS = [
+    os.path.join(_MODELS_DIR, 'Hey_dilo.onnx'),
+    os.path.join(_MODELS_DIR, 'dilo.onnx'),
+]
 _oww_model = None
 _oww_lock = threading.Lock()
 
@@ -36,7 +37,7 @@ def _get_oww_model():
         if _oww_model is None:
             from openwakeword.model import Model
             _oww_model = Model(
-                wakeword_models=[_WAKEWORD_MODEL_PATH],
+                wakeword_models=_WAKEWORD_MODEL_PATHS,
                 inference_framework='onnx',
                 melspec_model_path=os.path.join(_MODELS_DIR, 'melspectrogram.onnx'),
                 embedding_model_path=os.path.join(_MODELS_DIR, 'embedding_model.onnx'),
@@ -54,16 +55,30 @@ def _predict_wakeword(audio_bytes: bytes) -> list:
     return [k for k, v in preds.items() if v >= 0.5]
 
 
+_ACTIVATION_COOLDOWN = 2.0  # seconds between activations (per connection)
+
+
+def _reset_oww_buffers():
+    model = _get_oww_model()
+    with _oww_lock:
+        for buf in model.prediction_buffer.values():
+            buf.clear()
+
+
 @app.websocket('/ws/wakeword')
 async def wakeword_ws(websocket: WebSocket):
     await websocket.accept()
     loop = asyncio.get_event_loop()
+    last_activation = 0.0
     try:
         while True:
             data = await websocket.receive_bytes()
             activations = await loop.run_in_executor(None, _predict_wakeword, data)
-            if activations:
+            now = time.monotonic()
+            if activations and (now - last_activation) >= _ACTIVATION_COOLDOWN:
+                last_activation = now
                 await websocket.send_json({'activations': activations})
+                await loop.run_in_executor(None, _reset_oww_buffers)
     except WebSocketDisconnect:
         pass
     except Exception as e:

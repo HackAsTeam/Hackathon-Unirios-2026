@@ -48,7 +48,6 @@ const FORMAT_ICONS: Record<AvailableFormat, keyof typeof Ionicons.glyphMap> = {
 
 export default function ActivityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  useScreenContext({ screen: 'student-activity', activityId: id, role: 'student' });
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const { reducedMotion, defaultResponseFormat } = useAccessibilityStore();
@@ -57,6 +56,52 @@ export default function ActivityScreen() {
   const scale = useScale();
   const [showFormats, setShowFormats] = useState(false);
   const isFocused = useIsFocused();
+
+  const { data: exam, isLoading, isError } = useQuery({
+    queryKey: ['exam', id],
+    queryFn: () => apiFetch<ExamDetail>(`/exams/${id}`, { token: token! }),
+    enabled: !!id && !!token,
+  });
+
+  const { data: attemptList, isLoading: attemptLoading } = useQuery<AttemptSummary[]>({
+    queryKey: ['attempt-status', id],
+    queryFn: () => apiFetch<AttemptSummary[]>(`/attempts?examId=${id}`, { token: token! }),
+    enabled: !!id && !!token,
+  });
+
+  const attempt = attemptList?.[0] ?? null;
+  const hasAttempt = attempt !== null;
+  const isAudioFormat = defaultResponseFormat === 'audio';
+
+  useScreenContext({
+    screen: 'student-activity',
+    role: 'student',
+    screenDescription: (() => {
+      if (!exam) return 'Você está na tela de uma atividade. As informações estão carregando.';
+
+      const parts: string[] = [`Você está na atividade "${exam.title}".`];
+      if (exam.description) parts.push(exam.description);
+      parts.push(`Esta atividade tem ${exam.questions.length} pergunta${exam.questions.length !== 1 ? 's' : ''}.`);
+
+      exam.questions.forEach((q, i) => {
+        parts.push(`Pergunta ${i + 1}: ${q.text}.`);
+      });
+
+      if (attemptLoading) {
+        parts.push('Carregando status da atividade.');
+      } else if (!hasAttempt || attempt?.status === undefined) {
+        parts.push('No botão abaixo, você pode iniciar a atividade.');
+      } else if (attempt.status === 'InProgress') {
+        parts.push(`Você já começou esta atividade: ${attempt.answeredCount} de ${attempt.totalQuestions} questões respondidas. No botão abaixo, você pode continuar.`);
+      } else if (attempt.status === 'Submitted') {
+        parts.push('Você já enviou esta atividade e está aguardando avaliação do professor.');
+      } else if (attempt.status === 'Graded') {
+        parts.push('Esta atividade já foi avaliada. No botão abaixo, você pode ver o resultado.');
+      }
+
+      return parts.join(' ');
+    })(),
+  });
 
   useEffect(() => {
     if (!lastCommand || !isFocused) return;
@@ -91,22 +136,6 @@ export default function ActivityScreen() {
       }
     }
   }, [lastCommand, exam, showFormats]);
-
-  const { data: exam, isLoading, isError } = useQuery({
-    queryKey: ['exam', id],
-    queryFn: () => apiFetch<ExamDetail>(`/exams/${id}`, { token: token! }),
-    enabled: !!id && !!token,
-  });
-
-  const { data: attemptList, isLoading: attemptLoading } = useQuery<AttemptSummary[]>({
-    queryKey: ['attempt-status', id],
-    queryFn: () => apiFetch<AttemptSummary[]>(`/attempts?examId=${id}`, { token: token! }),
-    enabled: !!id && !!token,
-  });
-
-  const attempt = attemptList?.[0] ?? null;
-  const hasAttempt = attempt !== null;
-  const isAudioFormat = defaultResponseFormat === 'audio';
 
   if (isLoading) {
     return (

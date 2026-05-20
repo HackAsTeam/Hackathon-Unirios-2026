@@ -49,7 +49,6 @@ const FONT_OPTIONS: { value: number; label: string }[] = [
 
 export default function ProfileScreen() {
   const { userId, token, email, displayName, avatarUrl, signOut, role } = useAuthStore();
-  useScreenContext({ screen: 'profile', role: role as 'teacher' | 'student' | undefined });
   const {
     defaultResponseFormat,
     setDefaultResponseFormat,
@@ -62,6 +61,24 @@ export default function ProfileScreen() {
     wakeWordEnabled,
     setWakeWordEnabled,
   } = useAccessibilityStore();
+  useScreenContext({
+    screen: 'profile',
+    role: role as 'teacher' | 'student' | undefined,
+    screenDescription: (() => {
+      const name = displayName ?? 'Usuário';
+      const roleLabel = role?.toLowerCase() === 'teacher' ? 'Professor' : 'Aluno';
+      const formatLabel = ({ quiz: 'Múltipla Escolha', text: 'Texto', audio: 'Áudio' } as Record<string, string>)[defaultResponseFormat] ?? defaultResponseFormat;
+      const fontLabel = fontSizeScale <= 0.87 ? 'pequena' : fontSizeScale <= 1.05 ? 'normal' : fontSizeScale <= 1.25 ? 'grande' : 'muito grande';
+      return [
+        `Você está na tela de Perfil, conectado como ${roleLabel}.`,
+        `No topo, foto de perfil e nome ${name}.`,
+        `Abaixo, seção Informações Pessoais: nome "${name}", e-mail "${email ?? '—'}".`,
+        `Seção Acessibilidade: formato padrão ${formatLabel}; fonte ${fontLabel}; alto contraste ${highContrast ? 'ativado' : 'desativado'}; animações reduzidas ${reducedMotion ? 'ativadas' : 'desativadas'}; assistente Hey Dilo ${wakeWordEnabled ? 'ativado' : 'desativado'}.`,
+        `Seção Privacidade com links para Política de Privacidade, Termos de Uso e Consentimento de Dados.`,
+        `Na parte inferior, botão Sair e botão Excluir Conta.`,
+      ].join(' ');
+    })(),
+  });
   const router = useRouter();
   const c = useColors();
   const scale = useScale();
