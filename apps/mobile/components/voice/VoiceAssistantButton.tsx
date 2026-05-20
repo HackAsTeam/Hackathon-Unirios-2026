@@ -11,14 +11,12 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
-// import { Ionicons } from '@expo/vector-icons';
-import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
 import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voiceCommand';
 import { useAccessibilityStore } from '../../store/acessibility';
 import { useAuthStore } from '../../store/auth';
 import { startWakeWordDetection, stopWakeWordDetection } from '../../lib/wakeWord';
 import { startListening } from '../../lib/stt';
-import { speak, isSpeaking } from '../../lib/tts';
+import { isSpeaking } from '../../lib/tts';
 import { dispatch } from '../../lib/voiceCommandDispatcher';
 import { colors } from '../../lib/colors';
 const diloAssistantImage = require('../../assets/dillo-assistant-image.png');
@@ -31,7 +29,6 @@ interface Props {
 }
 
 export function VoiceAssistantButton({ onScreenAction }: Props) {
-  const [overlayVisible, setOverlayVisible] = useState(false);
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [inlineActive, setInlineActive] = useState(false);
   const [isForegrounded, setIsForegrounded] = useState(true);
@@ -43,10 +40,8 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const {highContrast} = useAccessibilityStore();
 
   const token = useAuthStore((s) => s.token);
-  const status = useVoiceCommandStore((s) => s.status);
   const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
 
-  const pulse = useSharedValue(1);
   const dotOpacity = useSharedValue(0);
   const dotScale = useSharedValue(1);
 
@@ -122,7 +117,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   // ─── Single effect — única fonte de verdade para o ciclo de wake word ────
   useEffect(() => {
     // inlineActive=true significa que o STT inline está capturando — não re-armar ONNX
-    const shouldRun = wakeWordEnabled && !overlayVisible && isForegrounded && !inlineActive;
+    const shouldRun = wakeWordEnabled && isForegrounded && !inlineActive;
 
     if (!shouldRun) {
       stopWakeWordDetection();
@@ -156,7 +151,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
       stopInlineSTTRef.current = null;
       setWakeWordActive(false);
     };
-  }, [wakeWordEnabled, overlayVisible, isForegrounded, inlineActive, handleWakeWordDetected, handleInlineCommand]);
+  }, [wakeWordEnabled, isForegrounded, inlineActive, handleWakeWordDetected, handleInlineCommand]);
 
   // ─── Dot animation ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -193,19 +188,9 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
 
   // ─── Manual tap ──────────────────────────────────────────────────────────
   function openOverlay() {
-    setOverlayVisible(true);
-    if (!reducedMotion) {
-      pulse.value = withRepeat(withTiming(1.12, { duration: 900 }), -1, true);
-    }
+    startInlineListeningRef.current();
   }
 
-  function closeOverlay() {
-    setOverlayVisible(false);
-    cancelAnimation(pulse);
-    pulse.value = withTiming(1);
-  }
-
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   const dotStyle = useAnimatedStyle(() => ({
     opacity: dotOpacity.value,
     transform: [{ scale: dotScale.value }],
@@ -214,15 +199,13 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const inlineDot2Style = useAnimatedStyle(() => ({ opacity: inlineDot2.value }));
   const inlineDot3Style = useAnimatedStyle(() => ({ opacity: inlineDot3.value }));
 
-  const isActive = overlayVisible || status === 'listening' || status === 'processing';
-
   const a11yLabel = wakeWordActive
     ? 'Assistente de voz ativo — diga Hey Dillo para ativar'
     : 'Assistente de voz';
 
   return (
     <>
-      <Animated.View style={[styles.fab, pulseStyle]}>
+      <View style={styles.fab}>
         <TouchableOpacity
           onPress={openOverlay}
           accessibilityLabel={a11yLabel}
@@ -233,18 +216,13 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
             { backgroundColor: highContrast ? "#000000" : '#ffffff', borderColor: ACCENT },
           ]}
         >
-          {/* <Ionicons
-            name={isActive ? 'mic' : 'mic-outline'}
-            size={26}
-            color={isActive ? '#fff' : ACCENT}
-          /> */}
           <Image source={diloAssistantImage} style={{ width: 45, height: 45 }} />
         </TouchableOpacity>
 
         <Animated.View style={[styles.dot, dotStyle]}>
           <View style={[styles.dotInner, { backgroundColor: DOT_COLOR }]} />
         </Animated.View>
-      </Animated.View>
+      </View>
 
       {inlineActive && (
         <Animated.View
@@ -260,12 +238,6 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
           </View>
         </Animated.View>
       )}
-
-      <VoiceAssistantOverlay
-        visible={overlayVisible}
-        onClose={closeOverlay}
-        onScreenAction={onScreenAction}
-      />
     </>
   );
 }
