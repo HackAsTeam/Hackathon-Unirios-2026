@@ -76,7 +76,7 @@ async function listPendingResponse(subjectFilter?: string): Promise<VoiceCommand
 
 // ─── Tier 1: local keyword matching ──────────────────────────────────────────
 
-const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray) => VoiceCommandResponse | Promise<VoiceCommandResponse> }> = [
+const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray) => VoiceCommandResponse | Promise<VoiceCommandResponse> | null }> = [
   // ── Describe screen ───────────────────────────────────────────────────────
   {
     pattern: /\b(leia\s+(?:a\s+)?tela|o que (?:tem|está|há)\s+(?:na|nessa)\s+(?:minha\s+)?tela|descreva\s+(?:a\s+)?(?:tela|interface|página)|onde estou|que tela é essa|me fale (?:sobre|da)\s+(?:a\s+)?tela)\b/i,
@@ -128,6 +128,17 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     handler: () => {
       router.push('/(app)/(tabs)/pendencias');
       return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo pendências.' };
+    },
+  },
+  {
+    // bare "atividade" on the activity screen = start it (STT often drops the verb)
+    pattern: /^atividade$/i,
+    handler: () => {
+      const screen = useVoiceCommandStore.getState().currentContext?.screen;
+      if (screen === 'student-activity') {
+        return { type: 'COMMAND', command: 'START_ACTIVITY', speak: 'Iniciando a atividade.' };
+      }
+      return null;
     },
   },
   {
@@ -419,7 +430,10 @@ async function tryLocalDispatch(transcript: string): Promise<VoiceCommandRespons
 
   for (const { pattern, handler } of LOCAL_PATTERNS) {
     const match = t.match(pattern);
-    if (match) return handler(match);
+    if (match) {
+      const result = await Promise.resolve(handler(match));
+      if (result) return result;
+    }
   }
   return null;
 }

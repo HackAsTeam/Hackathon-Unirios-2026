@@ -79,9 +79,10 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
           const text = inlineTranscriptRef.current.trim();
           console.log(`[WakeWord] STT inline encerrado — "${text}"`);
           if (text) {
-            const { currentContext } = useVoiceCommandStore.getState();
+            const { currentContext, setLastCommand } = useVoiceCommandStore.getState();
             // dispatch já chama speak() internamente — não chamar de novo
-            await dispatch(text, currentContext, token ?? null, onScreenAction);
+            const result = await dispatch(text, currentContext, token ?? null, onScreenAction);
+            setLastCommand(result);
             // aguarda TTS iniciar (300ms) e terminar antes de rearmar ONNX
             await new Promise<void>((r) => setTimeout(r, 300));
             const deadline = Date.now() + 15_000;
@@ -112,9 +113,10 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const handleInlineCommand = useCallback(async (transcript: string) => {
     setWakeWordActive(false);
     console.log(`[WakeWord] STT fallback inline: "${transcript}"`);
-    const { currentContext } = useVoiceCommandStore.getState();
+    const { currentContext, setLastCommand } = useVoiceCommandStore.getState();
     // dispatch já chama speak() internamente
-    await dispatch(transcript, currentContext, token ?? null, onScreenAction);
+    const result = await dispatch(transcript, currentContext, token ?? null, onScreenAction);
+    setLastCommand(result);
   }, [token, onScreenAction]);
 
   // ─── Single effect — única fonte de verdade para o ciclo de wake word ────
