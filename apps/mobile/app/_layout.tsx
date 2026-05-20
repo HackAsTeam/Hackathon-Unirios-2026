@@ -8,11 +8,13 @@ import { TamaguiProvider } from 'tamagui';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import tamaguiConfig from '../tamagui.config';
 import { useAuthStore } from '../store/auth';
+import { useAccessibilityStore } from '@/store/acessibility';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const hydrate = useAuthStore((state) => state.hydrate);
+  const {highContrast} = useAccessibilityStore();
 
   useEffect(() => {
     void hydrate();
@@ -22,7 +24,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
+          <StatusBar style={highContrast ? "light" : "dark"} />
           <Stack screenOptions={{ headerShown: false }} />
         </QueryClientProvider>
       </TamaguiProvider>

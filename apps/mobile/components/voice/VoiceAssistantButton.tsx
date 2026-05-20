@@ -29,6 +29,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [isForegrounded, setIsForegrounded] = useState(true);
   const isForegoundedRef = useRef(true);
+  const {highContrast} = useAccessibilityStore();
 
   const status = useVoiceCommandStore((s) => s.status);
   const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
@@ -141,7 +142,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
           accessibilityHint="Toque para dar um comando por voz"
           style={[
             styles.button,
-            { backgroundColor: isActive ? ACCENT : '#fff', borderColor: ACCENT },
+            { backgroundColor: highContrast ? "#000000" : '#ffffff', borderColor: ACCENT },
           ]}
         >
           {/* <Ionicons

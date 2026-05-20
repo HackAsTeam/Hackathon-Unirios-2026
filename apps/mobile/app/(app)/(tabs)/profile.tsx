@@ -147,7 +147,7 @@ export default function ProfileScreen() {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ fontSize: scale(13), fontWeight: '700', color: isActive ? c.primary : c.text.secondary }}>
+                    <Text style={{ fontSize: scale(13), fontWeight: '700', color: isActive ? c.primary : c.text.secondary, textAlign: 'center', marginVertical: "auto" }}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
