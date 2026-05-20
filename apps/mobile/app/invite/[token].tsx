@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuthStore } from "../../store/auth";
+import { useOnboardingStore } from "../../store/onboarding";
 import { apiFetch } from "../../lib/api";
+import { landingRouteForRole } from "../../lib/routes";
 
 type EnrollmentResponse = {
   id: string;
@@ -21,6 +23,8 @@ export default function InviteScreen() {
   const hydrated = useAuthStore((s) => s.hydrated);
   const authToken = useAuthStore((s) => s.token);
   const setPendingInviteToken = useAuthStore((s) => s.setPendingInviteToken);
+  const onboardingRole = useOnboardingStore((s) => s.role);
+  const authRole = useAuthStore((s) => s.role);
 
   const [status, setStatus] = useState<Status>("idle");
   const [classroomTitle, setClassroomTitle] = useState("");
@@ -70,9 +74,9 @@ export default function InviteScreen() {
         </Text>
         <TouchableOpacity
           className="bg-black rounded-lg py-4 px-8 items-center"
-          onPress={() => router.replace("/(app)/(tabs)")}
+          onPress={() => router.replace(landingRouteForRole(onboardingRole ?? authRole))}
         >
-          <Text className="text-white font-semibold text-base">Ver minhas salas</Text>
+          <Text className="text-white font-semibold text-base">Continuar</Text>
         </TouchableOpacity>
       </View>
     );
@@ -84,7 +88,7 @@ export default function InviteScreen() {
       <Text className="text-red-500 mb-8 text-center">{errorMsg}</Text>
       <TouchableOpacity
         className="bg-black rounded-lg py-4 px-8 items-center"
-        onPress={() => router.replace("/(app)/(tabs)")}
+        onPress={() => router.replace(landingRouteForRole(onboardingRole ?? authRole))}
       >
         <Text className="text-white font-semibold text-base">Ir para início</Text>
       </TouchableOpacity>

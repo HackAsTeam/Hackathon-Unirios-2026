@@ -2,8 +2,10 @@ import { router } from 'expo-router';
 import { apiFetch } from './api';
 import { speak } from './tts';
 import { signOutFromGoogle } from './googleAuth';
+import { landingRouteForRole } from './routes';
 import { useAccessibilityStore } from '../store/acessibility';
 import { useAuthStore } from '../store/auth';
+import { useOnboardingStore } from '../store/onboarding';
 import { useVoiceCommandStore } from '../store/voiceCommand';
 import type { ScreenContext, VoiceCommandResponse } from '../store/voiceCommand';
 
@@ -15,7 +17,10 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     // Must be before GO_BACK so "voltar para o início" routes to home, not back
     pattern: /\b(início|inicio|home|tela inicial)\b/i,
     handler: () => {
-      router.push('/(app)/(tabs)');
+      const onboardingRole = useOnboardingStore.getState().role;
+      const authRole = useAuthStore.getState().role;
+      const role = onboardingRole ?? authRole;
+      router.push(landingRouteForRole(role));
       return { type: 'COMMAND', command: 'GO_HOME', speak: 'Indo para o início.' };
     },
   },
@@ -68,8 +73,11 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
     // Anchored so action phrases like "criar turma chamada X" fall through to tier2
     pattern: /^(?:(?:ver|abrir?|mostrar?|ir para|acessar?|listar?)\s+)?(?:as\s+|minhas\s+)?turmas?$|^sala de aula$/i,
     handler: () => {
-      router.push('/(app)/(tabs)');
-      return { type: 'COMMAND', command: 'GO_HOME', speak: 'Abrindo turmas.' };
+      const onboardingRole = useOnboardingStore.getState().role;
+      const authRole = useAuthStore.getState().role;
+      const role = onboardingRole ?? authRole;
+      router.push(landingRouteForRole(role));
+      return { type: 'COMMAND', command: 'GO_HOME', speak: 'Indo para o início.' };
     },
   },
 
@@ -282,9 +290,13 @@ function postProcessAI(
     case 'GO_BACK':
       router.back();
       break;
-    case 'GO_HOME':
-      router.push('/(app)/(tabs)');
+    case 'GO_HOME': {
+      const onboardingRole = useOnboardingStore.getState().role;
+      const authRole = useAuthStore.getState().role;
+      const role = onboardingRole ?? authRole;
+      router.push(landingRouteForRole(role));
       break;
+    }
     case 'NAVIGATE_TO': {
       const route = result.payload?.route as string | undefined;
       if (route) router.push(route as Parameters<typeof router.push>[0]);

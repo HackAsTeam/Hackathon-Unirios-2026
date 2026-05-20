@@ -185,7 +185,7 @@ export default function TextResponseScreen() {
             Sua resposta em texto foi registrada.
           </Text>
           <TouchableOpacity
-            onPress={() => exam?.subjectId ? router.replace(`/subject/${exam.subjectId}`) : router.back()}
+            onPress={() => router.replace('/(app)/(tabs)/pendencias')}
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40 }}
           >
             <Text style={{ fontSize: scale(16), fontWeight: '700', color: '#fff' }}>Voltar</Text>

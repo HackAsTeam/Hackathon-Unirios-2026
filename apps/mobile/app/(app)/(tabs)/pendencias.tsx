@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +8,12 @@ import { useScale } from '@/hooks/useScale';
 import { useTeacherPendingAttempts } from '@/hooks/useTeacherPendingAttempts';
 import { useStudentActivityStatuses } from '@/hooks/useStudentActivityStatuses';
 import { useOnboardingStore } from '@/store/onboarding';
+import { useAuthStore } from '@/store/auth';
+import { useVoiceCommandStore } from '@/store/voiceCommand';
 import { AttemptStatusBadge } from '@/components/student/AttemptStatusBadge';
+import { JoinClassroomSheet } from '@/components/student/JoinClassroomSheet';
+import { speak } from '@/lib/tts';
+import { normalizeStr } from '@/lib/normalize';
 import type { PendingAttemptItem, StudentActivityStatus } from '@/types/pending';
 import type { AttemptStatus } from '@/types/attempt';
 
@@ -128,11 +133,18 @@ function TeacherPendencias() {
   );
 }
 
-function StudentPendencias() {
+function StudentPendencias({
+  onOpenJoin,
+  joinedClassroom,
+}: {
+  onOpenJoin: () => void;
+  joinedClassroom: string | null;
+}) {
   useScreenContext({ screen: 'student-pendencias', role: 'student' });
   const router = useRouter();
   const c = useColors();
   const scale = useScale();
+  const lastCommand = useVoiceCommandStore((s) => s.lastCommand);
   const { data, isLoading, isError } = useStudentActivityStatuses();
 
   const grouped = useMemo(() => {
@@ -147,6 +159,25 @@ function StudentPendencias() {
     }
     return map;
   }, [data]);
+
+  useEffect(() => {
+    if (!lastCommand) return;
+    if (lastCommand.command === 'OPEN_JOIN_MODAL') {
+      onOpenJoin();
+    } else if (lastCommand.command === 'NAVIGATE_TO_SUBJECT' && lastCommand.payload?.name) {
+      const query = normalizeStr(lastCommand.payload.name as string);
+      const found = [...grouped.entries()].find(
+        ([, group]) =>
+          normalizeStr(group.subjectName).includes(query) ||
+          query.includes(normalizeStr(group.subjectName))
+      );
+      if (found) {
+        speak(`Mostrando ${found[1].subjectName}.`);
+      } else {
+        speak(`Não encontrei a matéria ${lastCommand.payload.name}.`);
+      }
+    }
+  }, [lastCommand]);
 
   if (isLoading) {
     return (
@@ -177,6 +208,22 @@ function StudentPendencias() {
         <Text style={{ fontSize: scale(14), color: c.text.secondary, textAlign: 'center' }}>
           Você não tem atividades para responder no momento.
         </Text>
+        <TouchableOpacity
+          onPress={onOpenJoin}
+          accessibilityLabel="Entrar em uma turma"
+          accessibilityRole="button"
+          style={{
+            marginTop: 8,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            backgroundColor: c.primary,
+            borderRadius: 12,
+          }}
+        >
+          <Text style={{ fontSize: scale(14), fontWeight: '600', color: '#fff' }}>
+            Entrar em uma turma
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -241,9 +288,20 @@ function StudentPendencias() {
 }
 
 export default function PendenciasTab() {
-  const role = useOnboardingStore((s) => s.role);
+  const onboardingRole = useOnboardingStore((s) => s.role);
+  const authRole = useAuthStore((s) => s.role);
+  const role = onboardingRole ?? authRole;
   const c = useColors();
   const scale = useScale();
+  const [showJoin, setShowJoin] = useState(false);
+  const [joinedClassroom, setJoinedClassroom] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (joinedClassroom) {
+      const timer = setTimeout(() => setJoinedClassroom(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [joinedClassroom]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -255,13 +313,67 @@ export default function PendenciasTab() {
           backgroundColor: c.surface,
           borderBottomWidth: 1,
           borderBottomColor: c.borderLight,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <Text style={{ fontSize: scale(26), fontWeight: '800', color: c.text.primary, letterSpacing: -0.5 }}>
           Pendências
         </Text>
+        {role !== 'teacher' && (
+          <TouchableOpacity
+            onPress={() => setShowJoin(true)}
+            accessibilityLabel="Entrar em uma turma"
+            accessibilityRole="button"
+            accessibilityHint="Abre a folha para ingressar em uma turma com código de convite"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: c.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontSize: scale(24), fontWeight: '600', color: '#fff' }}>+</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      {role === 'teacher' ? <TeacherPendencias /> : <StudentPendencias />}
+
+      {joinedClassroom && (
+        <View
+          style={{
+            backgroundColor: c.successLight,
+            marginHorizontal: 20,
+            marginTop: 8,
+            borderRadius: 12,
+            padding: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+          }}
+          accessibilityLiveRegion="polite"
+        >
+          <Ionicons name="checkmark-circle" size={18} color={c.success} />
+          <Text style={{ fontSize: scale(14), color: c.primaryDark, fontWeight: '600', flex: 1 }}>
+            Você entrou em "{joinedClassroom}"!
+          </Text>
+        </View>
+      )}
+
+      {role === 'teacher' ? (
+        <TeacherPendencias />
+      ) : (
+        <>
+          <StudentPendencias onOpenJoin={() => setShowJoin(true)} joinedClassroom={joinedClassroom} />
+          <JoinClassroomSheet
+            visible={showJoin}
+            onClose={() => setShowJoin(false)}
+            onJoined={(title) => setJoinedClassroom(title)}
+          />
+        </>
+      )}
     </View>
   );
 }

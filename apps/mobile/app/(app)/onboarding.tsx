@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useAuthStore } from '@/store/auth';
 import { apiFetch } from '@/lib/api';
+import { landingRouteForRole } from '@/lib/routes';
 
 interface AuthResponse {
   userId: string;
@@ -68,7 +69,9 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     if (completed) {
-      router.replace('/(app)/(tabs)');
+      const { role } = useOnboardingStore.getState();
+      const authRole = useAuthStore.getState().role;
+      router.replace(landingRouteForRole(role ?? authRole));
     }
   }, [completed]);
 
@@ -112,7 +115,7 @@ export default function OnboardingScreen() {
         data.role,
       );
       await setRole(role);
-      router.replace('/(app)/(tabs)');
+      router.replace(landingRouteForRole(role));
     } catch {
       setError('Erro ao salvar perfil. Tente novamente.');
     } finally {

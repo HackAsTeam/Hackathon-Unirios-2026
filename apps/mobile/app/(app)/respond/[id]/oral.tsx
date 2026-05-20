@@ -208,7 +208,7 @@ export default function OralResponseScreen() {
             Sua resposta oral foi registrada com sucesso.
           </Text>
           <TouchableOpacity
-            onPress={() => exam?.subjectId ? router.replace(`/subject/${exam.subjectId}`) : router.back()}
+            onPress={() => router.replace('/(app)/(tabs)/pendencias')}
             accessibilityLabel="Voltar"
             accessibilityRole="button"
             style={{ marginTop: 32, backgroundColor: accentColor, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 40 }}
