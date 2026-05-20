@@ -29,6 +29,10 @@ internal static class VoiceCommandPromptBuilder
             - OPEN_JOIN_MODAL: Abre modal para ingressar em turma (tela home-student)
             - START_ACTIVITY: Inicia a atividade atual (tela student-activity)
             - SUBMIT_ANSWER: Envia a resposta atual (telas respond-text, respond-audio, respond-oral)
+            - NAVIGATE_TO_ACTIVITY: Navega para uma atividade pelo nome. Disponível em qualquer tela do aluno.
+              Parâmetro: name (o título da atividade OU o nome da matéria que o aluno mencionou)
+              Retorne APENAS o nome ouvido — não tente adivinhar qual atividade abrir; o app resolve isso.
+              Use quando o aluno disser "abrir atividade X", "entrar na atividade de X", "ir para a tarefa de X", etc.
 
             Ações de professor (disponíveis em qualquer tela quando o papel do usuário for professor):
             - CREATE_CLASSROOM: Cria uma nova turma. Parâmetros: title (obrigatório), description (opcional)
@@ -42,7 +46,8 @@ internal static class VoiceCommandPromptBuilder
               Exemplo: "criar link de convite para turma de matemática" → {"action":"NAVIGATE_TO_CLASSROOM_AND_INVITE","parameters":{"classroomName":"matemática"},"spokenFeedback":"Indo para a turma de matemática e gerando o convite.","confidence":0.95}
 
             Informação/Leitura:
-            - LIST_PENDING_ACTIVITIES: Lista atividades pendentes do aluno
+            - LIST_PENDING_ACTIVITIES: Lista atividades pendentes do aluno.
+              Parâmetro opcional: subjectName (quando o aluno pedir as pendências de uma matéria específica, ex.: "listar pendências de matemática")
             - LIST_CLASSROOMS: Lista turmas do usuário
             - LIST_ATTEMPTS: Lista tentativas/resultados do aluno
             - READ_ALOUD: Lê o enunciado da questão em voz alta.
@@ -67,12 +72,14 @@ internal static class VoiceCommandPromptBuilder
             9. Se o professor pedir para gerar/criar link de convite mencionando o nome de uma turma e não estiver na tela teacher-classroom, use SEMPRE NAVIGATE_TO_CLASSROOM_AND_INVITE — nunca retorne UNKNOWN nesse caso.
             10. SELECT_ALTERNATIVE só deve ser usado na tela respond-text. Em qualquer outra tela, retorne UNKNOWN.
             11. READ_ALOUD só deve ser usado nas telas respond-text e respond-oral. Em qualquer outra tela, retorne UNKNOWN.
+            12. Para NAVIGATE_TO_ACTIVITY, coloque em "name" o nome exatamente como o aluno falou (título ou matéria). Não invente nomes nem IDs; o app resolve a atividade.
+            13. Para LIST_PENDING_ACTIVITIES com matéria específica, coloque a matéria em "subjectName".
 
             === COMANDO DO USUÁRIO ===
             "{{transcript}}"
 
             Retorne exatamente este formato JSON:
-            {"action":"<ação>","parameters":{"route":"","title":"","description":"","name":"","text":"","questionId":"","optionLetter":"","questionIndex":0,"answerText":""},"spokenFeedback":"<texto em português>","confidence":0.9}
+            {"action":"<ação>","parameters":{"route":"","title":"","description":"","name":"","subjectName":"","text":"","questionId":"","optionLetter":"","questionIndex":0,"answerText":""},"spokenFeedback":"<texto em português>","confidence":0.9}
             """;
     }
 }

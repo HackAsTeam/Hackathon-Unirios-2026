@@ -20,17 +20,24 @@ export interface VoiceCommandResponse {
   speak: string;
 }
 
+export interface PendingActivityCandidate {
+  activityId: string;
+  activityTitle: string;
+}
+
 interface VoiceCommandState {
   status: VoiceCommandStatus;
   transcript: string;
   lastCommand: VoiceCommandResponse | null;
   currentContext: ScreenContext | null;
   pendingConfirmAction: string | null;
+  pendingActivityPick: PendingActivityCandidate[] | null;
   setStatus: (status: VoiceCommandStatus) => void;
   setTranscript: (transcript: string) => void;
   setLastCommand: (cmd: VoiceCommandResponse | null) => void;
   setContext: (ctx: ScreenContext | null) => void;
   setPendingConfirmAction: (action: string | null) => void;
+  setPendingActivityPick: (candidates: PendingActivityCandidate[] | null) => void;
   reset: () => void;
 }
 
@@ -40,10 +47,15 @@ export const useVoiceCommandStore = create<VoiceCommandState>((set) => ({
   lastCommand: null,
   currentContext: null,
   pendingConfirmAction: null,
+  pendingActivityPick: null,
   setStatus: (status) => set({ status }),
   setTranscript: (transcript) => set({ transcript }),
   setLastCommand: (lastCommand) => set({ lastCommand }),
   setContext: (currentContext) => set({ currentContext }),
   setPendingConfirmAction: (pendingConfirmAction) => set({ pendingConfirmAction }),
+  setPendingActivityPick: (pendingActivityPick) => set({ pendingActivityPick }),
+  // `pendingActivityPick` é deliberadamente preservado: o overlay chama reset()
+  // antes de re-escutar numa resposta CONFIRM (a desambiguação de atividade).
+  // O dispatcher limpa o pick explicitamente ao resolvê-lo ou descartá-lo.
   reset: () => set({ status: 'idle', transcript: '', lastCommand: null }),
 }));

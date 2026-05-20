@@ -8,6 +8,7 @@ import {
   Modal,
   Pressable,
   Platform,
+  Image,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -30,23 +31,20 @@ import { useColors } from '../../../hooks/useColors';
 import { useScale } from '../../../hooks/useScale';
 import { AccessibilityPanel } from '../../../components/accessibility/AccessibilityPanel';
 import { AttemptStatusBadge } from '../../../components/student/AttemptStatusBadge';
+import { VoiceAssistantOverlay } from '../../../components/voice/VoiceAssistantOverlay';
 import type { ExamDetail } from '../../../types/classroom';
 import type { ResponseFormat } from '../../../types/activity';
 import type { AttemptSummary } from '../../../types/attempt';
 
-type AvailableFormat = 'quiz' | 'text' | 'audio';
-const AVAILABLE_FORMATS: AvailableFormat[] = ['quiz', 'text', 'audio'];
+const diloImage = require('../../../assets/dillo-assistant-image.png');
 
-const FORMAT_ICONS: Record<ResponseFormat, keyof typeof Ionicons.glyphMap> = {
+type AvailableFormat = 'text' | 'audio' | 'libras';
+const AVAILABLE_FORMATS: AvailableFormat[] = ['text', 'audio', 'libras'];
+
+const FORMAT_ICONS: Record<AvailableFormat, keyof typeof Ionicons.glyphMap> = {
   text: 'document-text-outline',
   audio: 'mic-outline',
-  video: 'videocam-outline',
-  drawing: 'brush-outline',
-  mindmap: 'git-network-outline',
-  presentation: 'easel-outline',
-  quiz: 'help-circle-outline',
-  podcast: 'radio-outline',
-  oral: 'chatbubble-ellipses-outline',
+  libras: 'hand-left-outline',
 };
 
 export default function ActivityScreen() {
@@ -81,7 +79,19 @@ export default function ActivityScreen() {
       });
       speak(parts.join('. '));
     }
-  }, [lastCommand, exam]);
+
+    if (lastCommand.command === 'CHOOSE_RESPONSE_FORMAT') {
+      const fmt = lastCommand.payload?.format;
+      if (typeof fmt !== 'string' || (fmt !== 'text' && fmt !== 'audio')) return;
+      
+      useAccessibilityStore.getState().setDefaultResponseFormat(fmt);
+      
+      if (showFormats) {
+        setShowFormats(false);
+        router.push(`/respond/${id}/${fmt}`);
+      }
+    }
+  }, [lastCommand, exam, showFormats]);
 
   const { data: exam, isLoading, isError } = useQuery({
     queryKey: ['exam', id],
@@ -338,9 +348,9 @@ export default function ActivityScreen() {
         defaultFormat={defaultResponseFormat as AvailableFormat}
         onClose={() => setShowFormats(false)}
         onSelect={(fmt) => {
+          if (fmt === 'libras') return;
           setShowFormats(false);
-          const route = fmt === 'quiz' ? 'text' : fmt;
-          router.push(`/respond/${id}/${route}`);
+          router.push(`/respond/${id}/${fmt}`);
         }}
       />
 
@@ -363,6 +373,11 @@ function FormatModal({
   const c = useColors();
   const scale = useScale();
   const { reducedMotion } = useAccessibilityStore();
+  const [voiceOverlayVisible, setVoiceOverlayVisible] = useState(false);
+
+  useEffect(() => {
+    if (visible) speak('Como você quer responder? Diga: texto ou áudio. Libras em breve.');
+  }, [visible]);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -396,11 +411,25 @@ function FormatModal({
                 isDefault={fmt === defaultFormat}
                 onSelect={onSelect}
                 reducedMotion={reducedMotion}
+                disabled={fmt === 'libras'}
               />
             ))}
+            <TouchableOpacity
+              onPress={() => setVoiceOverlayVisible(true)}
+              accessibilityLabel="Abrir Dilo por voz"
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10 }}
+            >
+              <Image source={diloImage} style={{ width: 28, height: 28 }} />
+              <Text style={{ color: c.text.secondary, fontSize: scale(13) }}>Responder com Dilo</Text>
+            </TouchableOpacity>
           </View>
         </Pressable>
       </Pressable>
+
+      <VoiceAssistantOverlay
+        visible={voiceOverlayVisible}
+        onClose={() => setVoiceOverlayVisible(false)}
+      />
     </Modal>
   );
 }
@@ -411,12 +440,14 @@ function FormatCard({
   isDefault,
   onSelect,
   reducedMotion,
+  disabled,
 }: {
   format: AvailableFormat;
   index: number;
   isDefault: boolean;
   onSelect: (f: AvailableFormat) => void;
   reducedMotion: boolean;
+  disabled?: boolean;
 }) {
   const c = useColors();
   const scale = useScale();
@@ -429,6 +460,10 @@ function FormatCard({
   }));
 
   function handlePress() {
+    if (disabled) {
+      speak('Libras ainda não está disponível.');
+      return;
+    }
     if (!reducedMotion) {
       animScale.value = withSpring(0.96, { damping: 15 }, () => {
         animScale.value = withSpring(1);
@@ -445,7 +480,7 @@ function FormatCard({
       <TouchableOpacity
         onPress={handlePress}
         activeOpacity={0.85}
-        accessibilityLabel={`${formatLabels[format]}: ${formatDescriptions[format]}${isDefault ? ' (preferência padrão)' : ''}`}
+        accessibilityLabel={`${formatLabels[format]}: ${formatDescriptions[format]}${isDefault ? ' (preferência padrão)' : ''}${disabled ? ' (em breve)' : ''}`}
         accessibilityRole="button"
         style={{
           backgroundColor: lightColor,
@@ -456,6 +491,7 @@ function FormatCard({
           gap: 16,
           borderWidth: isDefault ? 2.5 : 1.5,
           borderColor: isDefault ? color : color + '35',
+          ...(disabled && { opacity: 0.55 }),
         }}
       >
         <View style={{
@@ -473,17 +509,21 @@ function FormatCard({
             <Text style={{ fontSize: scale(17), fontWeight: '700', color: c.text.primary, letterSpacing: -0.2 }}>
               {formatLabels[format]}
             </Text>
-            {isDefault && (
+            {disabled ? (
+              <View style={{ backgroundColor: c.text.tertiary + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+                <Text style={{ fontSize: scale(10), fontWeight: '700', color: c.text.tertiary }}>{`Em breve`}</Text>
+              </View>
+            ) : isDefault ? (
               <View style={{ backgroundColor: color + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
                 <Text style={{ fontSize: scale(10), fontWeight: '700', color }}>{`Padrão`}</Text>
               </View>
-            )}
+            ) : null}
           </View>
           <Text style={{ fontSize: scale(13), color, fontWeight: '500' }}>
             {formatMotivations[format]}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={color} />
+        {!disabled && <Ionicons name="chevron-forward" size={18} color={color} />}
       </TouchableOpacity>
     </Animated.View>
   );

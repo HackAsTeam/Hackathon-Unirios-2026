@@ -30,8 +30,20 @@ export default function TabsLayout() {
           title: "Home",
           tabBarLabel: "Home",
           tabBarAccessibilityLabel: "Início",
+          href: role === 'student' ? null : undefined,
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pendencias"
+        options={{
+          title: 'Pendências',
+          tabBarLabel: 'Pendências',
+          tabBarAccessibilityLabel: 'Minhas pendências',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="alert-circle-outline" size={size} color={color} />
           ),
         }}
       />
@@ -44,17 +56,6 @@ export default function TabsLayout() {
           href: role === 'student' ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-done-circle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="pendencias"
-        options={{
-          title: 'Pendências',
-          tabBarLabel: 'Pendências',
-          tabBarAccessibilityLabel: 'Minhas pendências',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="alert-circle-outline" size={size} color={color} />
           ),
         }}
       />

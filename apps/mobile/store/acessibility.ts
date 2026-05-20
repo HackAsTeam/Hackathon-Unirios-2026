@@ -5,7 +5,7 @@ import { AccessibilityPreferences } from '../types/activity';
 
 const ACCESSIBILITY_KEY = 'hackathon.accessibility';
 
-export type DefaultResponseFormat = 'quiz' | 'text' | 'audio';
+export type DefaultResponseFormat = 'text' | 'audio';
 
 interface AccessibilityState extends AccessibilityPreferences {
   defaultResponseFormat: DefaultResponseFormat;
@@ -77,6 +77,9 @@ export const useAccessibilityStore = create<AccessibilityState>((set, get) => ({
     if (raw) {
       try {
         const data = JSON.parse(raw) as Partial<PersistedFields>;
+        if ((data.defaultResponseFormat as string) === 'quiz') {
+          data.defaultResponseFormat = 'text';
+        }
         set({ ...defaults, ...data });
       } catch {}
     }
