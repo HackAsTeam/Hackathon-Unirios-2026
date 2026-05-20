@@ -519,8 +519,6 @@ export async function dispatch(
   });
   const final = override ?? result;
 
-  if (!delegatedToScreen) {
-    speak(final.speak);
-  }
+  speak(final.speak);
   return final;
 }

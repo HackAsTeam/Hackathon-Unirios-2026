@@ -5,6 +5,7 @@ import soundfile as sf
 import numpy as np
 import threading
 import asyncio
+import time
 import os
 import re
 import io
@@ -54,16 +55,30 @@ def _predict_wakeword(audio_bytes: bytes) -> list:
     return [k for k, v in preds.items() if v >= 0.5]
 
 
+_ACTIVATION_COOLDOWN = 2.0  # seconds between activations (per connection)
+
+
+def _reset_oww_buffers():
+    model = _get_oww_model()
+    with _oww_lock:
+        for buf in model.prediction_buffer.values():
+            buf.clear()
+
+
 @app.websocket('/ws/wakeword')
 async def wakeword_ws(websocket: WebSocket):
     await websocket.accept()
     loop = asyncio.get_event_loop()
+    last_activation = 0.0
     try:
         while True:
             data = await websocket.receive_bytes()
             activations = await loop.run_in_executor(None, _predict_wakeword, data)
-            if activations:
+            now = time.monotonic()
+            if activations and (now - last_activation) >= _ACTIVATION_COOLDOWN:
+                last_activation = now
                 await websocket.send_json({'activations': activations})
+                await loop.run_in_executor(None, _reset_oww_buffers)
     except WebSocketDisconnect:
         pass
     except Exception as e:

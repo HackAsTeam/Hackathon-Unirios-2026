@@ -12,8 +12,11 @@ import Animated, {
 import { VoiceAssistantOverlay } from './VoiceAssistantOverlay';
 import { useVoiceCommandStore, type VoiceCommandResponse } from '../../store/voiceCommand';
 import { useAccessibilityStore } from '../../store/acessibility';
+import { useAuthStore } from '../../store/auth';
 import { startWakeWordDetection, stopWakeWordDetection } from '../../lib/wakeWord';
+import { startListening } from '../../lib/stt';
 import { speak, isSpeaking } from '../../lib/tts';
+import { dispatch } from '../../lib/voiceCommandDispatcher';
 import { colors } from '../../lib/colors';
 const diloAssistantImage = require('../../assets/dillo-assistant-image.png');
 
@@ -27,10 +30,16 @@ interface Props {
 export function VoiceAssistantButton({ onScreenAction }: Props) {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [wakeWordActive, setWakeWordActive] = useState(false);
+  const [inlineActive, setInlineActive] = useState(false);
   const [isForegrounded, setIsForegrounded] = useState(true);
   const isForegoundedRef = useRef(true);
+  const inlineTranscriptRef = useRef('');
+  const stopInlineSTTRef = useRef<(() => void) | null>(null);
+  // Ref mantém a função sempre atualizada sem invalidar useCallback abaixo
+  const startInlineListeningRef = useRef<() => void>(() => {});
   const {highContrast} = useAccessibilityStore();
 
+  const token = useAuthStore((s) => s.token);
   const status = useVoiceCommandStore((s) => s.status);
   const { reducedMotion, wakeWordEnabled } = useAccessibilityStore();
 
@@ -47,16 +56,64 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
     return () => sub.remove();
   }, []);
 
+  // ─── Inline STT (atualizado a cada render para capturar token/onScreenAction frescos) ───
+  startInlineListeningRef.current = () => {
+    setInlineActive(true);
+    inlineTranscriptRef.current = '';
+    console.log('[WakeWord] STT inline aguardando liberação do mic...');
+
+    // 150ms para o AudioRecorder liberar o mic antes do STT tentar abrir
+    setTimeout(() => {
+      console.log('[WakeWord] STT inline iniciado — fale o comando');
+      stopInlineSTTRef.current = startListening(
+        ({ transcript }) => { inlineTranscriptRef.current = transcript; },
+        async () => {
+          stopInlineSTTRef.current = null;
+          const text = inlineTranscriptRef.current.trim();
+          console.log(`[WakeWord] STT inline encerrado — "${text}"`);
+          if (text) {
+            const { currentContext } = useVoiceCommandStore.getState();
+            // dispatch já chama speak() internamente — não chamar de novo
+            await dispatch(text, currentContext, token ?? null, onScreenAction);
+            // aguarda TTS iniciar (300ms) e terminar antes de rearmar ONNX
+            await new Promise<void>((r) => setTimeout(r, 300));
+            const deadline = Date.now() + 15_000;
+            while (Date.now() < deadline) {
+              if (!isSpeaking()) break;
+              await new Promise<void>((r) => setTimeout(r, 200));
+            }
+          }
+          setInlineActive(false);
+        },
+        (err) => {
+          stopInlineSTTRef.current = null;
+          if (err !== 'no-speech') console.warn(`[WakeWord] STT inline erro: ${err}`);
+          setInlineActive(false);
+        },
+      );
+    }, 150);
+  };
+
   // ─── Wake word callback ───────────────────────────────────────────────────
   const handleWakeWordDetected = useCallback(() => {
     setWakeWordActive(false);
-    if (isForegoundedRef.current) speak('Sim?');
-    setTimeout(() => setOverlayVisible(true), 400);
+    console.log('[WakeWord] ONNX disparou → STT inline');
+    startInlineListeningRef.current();
   }, []);
+
+  // Callback para o modo STT fallback (sem ONNX)
+  const handleInlineCommand = useCallback(async (transcript: string) => {
+    setWakeWordActive(false);
+    console.log(`[WakeWord] STT fallback inline: "${transcript}"`);
+    const { currentContext } = useVoiceCommandStore.getState();
+    // dispatch já chama speak() internamente
+    await dispatch(transcript, currentContext, token ?? null, onScreenAction);
+  }, [token, onScreenAction]);
 
   // ─── Single effect — única fonte de verdade para o ciclo de wake word ────
   useEffect(() => {
-    const shouldRun = wakeWordEnabled && !overlayVisible && isForegrounded;
+    // inlineActive=true significa que o STT inline está capturando — não re-armar ONNX
+    const shouldRun = wakeWordEnabled && !overlayVisible && isForegrounded && !inlineActive;
 
     if (!shouldRun) {
       stopWakeWordDetection();
@@ -76,7 +133,7 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
       if (cancelled) return;
       await new Promise<void>((r) => setTimeout(r, 500));
       if (cancelled) return;
-      const ok = await startWakeWordDetection(handleWakeWordDetected);
+      const ok = await startWakeWordDetection(handleWakeWordDetected, handleInlineCommand);
       if (!cancelled) setWakeWordActive(ok);
     }
 
@@ -86,9 +143,11 @@ export function VoiceAssistantButton({ onScreenAction }: Props) {
       cancelled = true;
       clearTimeout(startTimer);
       stopWakeWordDetection();
+      stopInlineSTTRef.current?.();
+      stopInlineSTTRef.current = null;
       setWakeWordActive(false);
     };
-  }, [wakeWordEnabled, overlayVisible, isForegrounded, handleWakeWordDetected]);
+  }, [wakeWordEnabled, overlayVisible, isForegrounded, inlineActive, handleWakeWordDetected, handleInlineCommand]);
 
   // ─── Dot animation ────────────────────────────────────────────────────────
   useEffect(() => {

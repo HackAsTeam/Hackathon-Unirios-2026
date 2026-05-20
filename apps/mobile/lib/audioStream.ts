@@ -23,4 +23,5 @@ export function stopStream(): void {
   _recorder?.clearOnAudioReady();
   _recorder?.stop();
   _recorder = null;
+  AudioManager.setAudioSessionActivity(false).catch(() => {});
 }
