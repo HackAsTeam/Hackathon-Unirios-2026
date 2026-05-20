@@ -7,11 +7,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --no-deps openwakeword==0.6.0 \
+    && pip install --no-cache-dir onnxruntime tqdm scipy scikit-learn requests
 
-# Pre-download model weights at build time so startup is instant
+# Pre-download Kokoro weights at build time so startup is instant
 RUN python -c "from kokoro import KPipeline; KPipeline(lang_code='p')"
 
+COPY models/ models/
 COPY main.py .
 
 EXPOSE 8090

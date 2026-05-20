@@ -10,8 +10,9 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInRight, FadeInLeft, FadeInDown } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
@@ -38,7 +39,10 @@ export default function TextResponseScreen() {
   const queryClient = useQueryClient();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [mcAnswers, setMcAnswers] = useState<Record<string, string>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [slideDir, setSlideDir] = useState<'forward' | 'back'>('forward');
   const [done, setDone] = useState(false);
+  const isFocused = useIsFocused();
 
   const { data: exam, isLoading } = useQuery({
     queryKey: ['exam', id],
@@ -81,8 +85,40 @@ export default function TextResponseScreen() {
     onError: () => Alert.alert('Erro', 'Não foi possível enviar.'),
   });
 
+  const questions = exam?.questions ?? [];
+  const totalQuestions = questions.length;
+  const currentQuestion = questions[currentIndex];
+  const isLastQuestion = currentIndex === totalQuestions - 1;
+  const isFirstQuestion = currentIndex === 0;
+
+  function isCurrentAnswered() {
+    if (!currentQuestion) return false;
+    if (currentQuestion.options.length > 0) return !!mcAnswers[currentQuestion.id];
+    return (answers[currentQuestion.id] ?? '').trim().length > 0;
+  }
+
+  const allAnswered = questions.every((q) =>
+    q.options.length > 0
+      ? !!mcAnswers[q.id]
+      : (answers[q.id] ?? '').trim().length > 0
+  );
+
+  function goNext() {
+    if (currentIndex < totalQuestions - 1) {
+      setSlideDir('forward');
+      setCurrentIndex((i) => i + 1);
+    }
+  }
+
+  function goBack() {
+    if (currentIndex > 0) {
+      setSlideDir('back');
+      setCurrentIndex((i) => i - 1);
+    }
+  }
+
   useEffect(() => {
-    if (!lastCommand) return;
+    if (!lastCommand || !isFocused) return;
 
     if (lastCommand.command === 'SUBMIT_ANSWER' && !done && !submitMutation.isPending) {
       if (allAnswered) {
@@ -92,49 +128,50 @@ export default function TextResponseScreen() {
       }
     }
 
-    if (lastCommand.command === 'SELECT_ALTERNATIVE' && exam) {
+    if (lastCommand.command === 'SELECT_ALTERNATIVE' && currentQuestion) {
       const letter = (lastCommand.payload?.optionLetter as string | undefined)?.toUpperCase();
-      const qIdx = (lastCommand.payload?.questionIndex as number | undefined) ?? 0;
       const letterMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
       const optIndex = letter !== undefined ? letterMap[letter] : undefined;
-      if (optIndex !== undefined) {
-        const mcqQuestions = exam.questions.filter((q) => q.options.length > 0);
-        const targetQ = mcqQuestions[qIdx] ?? mcqQuestions[0];
-        if (targetQ) {
-          const sorted = [...targetQ.options].sort((a, b) => a.orderIndex - b.orderIndex);
-          const option = sorted[optIndex];
-          if (option) {
-            setMcAnswers((prev) => ({ ...prev, [targetQ.id]: option.id }));
-            speak(`Alternativa ${letter} selecionada.`);
-          } else {
-            speak(`Esta questão não tem alternativa ${letter}.`);
-          }
+      if (optIndex !== undefined && currentQuestion.options.length > 0) {
+        const sorted = [...currentQuestion.options].sort((a, b) => a.orderIndex - b.orderIndex);
+        const option = sorted[optIndex];
+        if (option) {
+          setMcAnswers((prev) => ({ ...prev, [currentQuestion.id]: option.id }));
+        } else {
+          speak(`Esta questão não tem alternativa ${letter}.`);
         }
       }
     }
 
-    if (lastCommand.command === 'READ_ALOUD' && exam) {
-      const letters = ['A', 'B', 'C', 'D'];
-      const parts: string[] = [];
-      exam.questions.forEach((q, i) => {
-        parts.push(`Questão ${i + 1}: ${q.text}`);
-        if (q.options.length > 0) {
-          const sorted = [...q.options].sort((a, b) => a.orderIndex - b.orderIndex);
-          sorted.forEach((opt, j) => parts.push(`${letters[j] ?? j + 1}: ${opt.text}`));
-        }
-      });
+    if (lastCommand.command === 'NEXT_QUESTION') {
+      if (!isLastQuestion) {
+        goNext();
+      } else {
+        speak('Esta é a última questão.');
+      }
+    }
+
+    if (lastCommand.command === 'PREV_QUESTION') {
+      if (!isFirstQuestion) {
+        goBack();
+      } else {
+        speak('Esta é a primeira questão.');
+      }
+    }
+
+    if (lastCommand.command === 'READ_ALOUD' && currentQuestion) {
+      const parts = [`Questão ${currentIndex + 1}: ${currentQuestion.text}`];
+      if (currentQuestion.options.length > 0) {
+        const letters = ['A', 'B', 'C', 'D'];
+        const sorted = [...currentQuestion.options].sort((a, b) => a.orderIndex - b.orderIndex);
+        sorted.forEach((opt, j) => parts.push(`${letters[j] ?? j + 1}: ${opt.text}`));
+      }
       speak(parts.join('. '));
     }
   }, [lastCommand]);
 
   const accentColor = c.formats.text;
   const textFs = scale(15);
-
-  const allAnswered = (exam?.questions ?? []).every((q) =>
-    q.options.length > 0
-      ? !!mcAnswers[q.id]
-      : (answers[q.id] ?? '').trim().length > 0
-  );
 
   if (done) {
     return (
@@ -174,7 +211,7 @@ export default function TextResponseScreen() {
 
         <Animated.View
           entering={reducedMotion ? undefined : FadeInDown.duration(400)}
-          style={{ gap: 8, marginBottom: 28 }}
+          style={{ gap: 8, marginBottom: 24 }}
         >
           <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: accentColor + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
             <Ionicons name="document-text-outline" size={28} color={accentColor} />
@@ -191,37 +228,71 @@ export default function TextResponseScreen() {
 
         {isLoading && <ActivityIndicator color={accentColor} size="large" style={{ marginTop: 40 }} />}
 
-        {exam && (
-          <View style={{ gap: 24 }}>
-            {exam.questions.map((q, i) => (
-              <Animated.View
-                key={q.id}
-                entering={reducedMotion ? undefined : FadeInDown.delay(i * 80).duration(350)}
-              >
-                <View style={{
-                  backgroundColor: c.surfaceAlt,
-                  borderRadius: 16,
-                  padding: 16,
-                  marginBottom: 10,
-                  borderWidth: 1,
-                  borderColor: accentColor + '20',
-                }}>
-                  <Text style={{ fontSize: scale(13), color: accentColor, fontWeight: '600', marginBottom: 4 }}>
-                    Pergunta {i + 1}
-                  </Text>
-                  <Text style={{ fontSize: textFs, color: c.text.primary, lineHeight: textFs * 1.55 }}>
-                    {q.text}
-                  </Text>
-                </View>
+        {exam && totalQuestions > 0 && (
+          <>
+            <View style={{ marginBottom: 16, gap: 8 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontSize: scale(13), color: c.text.secondary, fontWeight: '600' }}>
+                  Pergunta {currentIndex + 1} de {totalQuestions}
+                </Text>
+                <Text style={{ fontSize: scale(13), color: accentColor, fontWeight: '600' }}>
+                  {questions.filter((q) =>
+                    q.options.length > 0 ? !!mcAnswers[q.id] : (answers[q.id] ?? '').trim().length > 0
+                  ).length}/{totalQuestions} respondidas
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                {questions.map((q, i) => {
+                  const answered = q.options.length > 0 ? !!mcAnswers[q.id] : (answers[q.id] ?? '').trim().length > 0;
+                  return (
+                    <View
+                      key={q.id}
+                      style={{
+                        flex: 1,
+                        height: 4,
+                        borderRadius: 2,
+                        backgroundColor: i === currentIndex
+                          ? accentColor
+                          : answered
+                            ? accentColor + '60'
+                            : c.borderLight,
+                      }}
+                    />
+                  );
+                })}
+              </View>
+            </View>
 
-                {q.options.length > 0 ? (
-                  <View style={{ gap: 8 }}>
-                    {[...q.options].sort((a, b) => a.orderIndex - b.orderIndex).map((opt) => {
-                      const selected = mcAnswers[q.id] === opt.id;
+            <Animated.View
+              key={currentIndex}
+              entering={reducedMotion ? undefined : (slideDir === 'forward' ? FadeInRight : FadeInLeft).duration(280)}
+              style={{ gap: 16 }}
+            >
+              <View style={{
+                backgroundColor: c.surfaceAlt,
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: accentColor + '20',
+              }}>
+                <Text style={{ fontSize: scale(13), color: accentColor, fontWeight: '600', marginBottom: 4 }}>
+                  Pergunta {currentIndex + 1}
+                </Text>
+                <Text style={{ fontSize: textFs, color: c.text.primary, lineHeight: textFs * 1.55 }}>
+                  {currentQuestion?.text}
+                </Text>
+              </View>
+
+              {currentQuestion && currentQuestion.options.length > 0 ? (
+                <View style={{ gap: 8 }}>
+                  {[...currentQuestion.options]
+                    .sort((a, b) => a.orderIndex - b.orderIndex)
+                    .map((opt) => {
+                      const selected = mcAnswers[currentQuestion.id] === opt.id;
                       return (
                         <TouchableOpacity
                           key={opt.id}
-                          onPress={() => setMcAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                          onPress={() => setMcAnswers((prev) => ({ ...prev, [currentQuestion.id]: opt.id }))}
                           style={{
                             backgroundColor: selected ? accentColor + '15' : c.surface,
                             borderRadius: 12,
@@ -247,37 +318,36 @@ export default function TextResponseScreen() {
                         </TouchableOpacity>
                       );
                     })}
-                  </View>
-                ) : (
-                  <>
-                    <TextInput
-                      value={answers[q.id] ?? ''}
-                      onChangeText={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-                      multiline
-                      textAlignVertical="top"
-                      placeholder="Digite sua resposta aqui…"
-                      placeholderTextColor={c.text.tertiary}
-                      accessibilityLabel={`Resposta para pergunta ${i + 1}`}
-                      style={{
-                        backgroundColor: c.surface,
-                        borderRadius: 16,
-                        padding: 18,
-                        borderWidth: 1.5,
-                        borderColor: (answers[q.id] ?? '').trim() ? accentColor + '50' : c.border,
-                        fontSize: textFs,
-                        color: c.text.primary,
-                        lineHeight: textFs * 1.6,
-                        minHeight: 120,
-                      }}
-                    />
-                    <Text style={{ fontSize: scale(12), color: c.text.secondary, textAlign: 'right', marginTop: 4 }}>
-                      {(answers[q.id] ?? '').length} caracteres
-                    </Text>
-                  </>
-                )}
-              </Animated.View>
-            ))}
-          </View>
+                </View>
+              ) : currentQuestion ? (
+                <>
+                  <TextInput
+                    value={answers[currentQuestion.id] ?? ''}
+                    onChangeText={(v) => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: v }))}
+                    multiline
+                    textAlignVertical="top"
+                    placeholder="Digite sua resposta aqui…"
+                    placeholderTextColor={c.text.tertiary}
+                    accessibilityLabel={`Resposta para pergunta ${currentIndex + 1}`}
+                    style={{
+                      backgroundColor: c.surface,
+                      borderRadius: 16,
+                      padding: 18,
+                      borderWidth: 1.5,
+                      borderColor: (answers[currentQuestion.id] ?? '').trim() ? accentColor + '50' : c.border,
+                      fontSize: textFs,
+                      color: c.text.primary,
+                      lineHeight: textFs * 1.6,
+                      minHeight: 160,
+                    }}
+                  />
+                  <Text style={{ fontSize: scale(12), color: c.text.secondary, textAlign: 'right', marginTop: -8 }}>
+                    {(answers[currentQuestion.id] ?? '').length} caracteres
+                  </Text>
+                </>
+              ) : null}
+            </Animated.View>
+          </>
         )}
       </ScrollView>
 
@@ -285,38 +355,82 @@ export default function TextResponseScreen() {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20,
         backgroundColor: c.background, borderTopWidth: 1, borderTopColor: c.borderLight,
+        flexDirection: 'row', gap: 12,
       }}>
-        <TouchableOpacity
-          onPress={() => submitMutation.mutate()}
-          disabled={submitMutation.isPending || !allAnswered}
-          accessibilityLabel="Enviar resposta"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: submitMutation.isPending || !allAnswered }}
-          style={{
-            backgroundColor: accentColor,
-            borderRadius: 18,
-            paddingVertical: 18,
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 8,
-            opacity: (submitMutation.isPending || !allAnswered) ? 0.55 : 1,
-            shadowColor: accentColor,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 8,
-          }}
-        >
-          {submitMutation.isPending ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <>
-              <Ionicons name="send-outline" size={20} color="#fff" />
-              <Text style={{ fontSize: scale(17), fontWeight: '700', color: '#fff' }}>Enviar resposta</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {!isFirstQuestion && (
+          <TouchableOpacity
+            onPress={goBack}
+            accessibilityLabel="Pergunta anterior"
+            accessibilityRole="button"
+            style={{
+              paddingVertical: 18,
+              paddingHorizontal: 20,
+              borderRadius: 18,
+              borderWidth: 1.5,
+              borderColor: c.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="arrow-back" size={20} color={c.text.secondary} />
+          </TouchableOpacity>
+        )}
+
+        {!isLastQuestion ? (
+          <TouchableOpacity
+            onPress={goNext}
+            disabled={!isCurrentAnswered()}
+            accessibilityLabel="Próxima pergunta"
+            accessibilityRole="button"
+            style={{
+              flex: 1,
+              backgroundColor: accentColor,
+              borderRadius: 18,
+              paddingVertical: 18,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: isCurrentAnswered() ? 1 : 0.45,
+            }}
+          >
+            <Text style={{ fontSize: scale(17), fontWeight: '700', color: '#fff' }}>Próxima</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => submitMutation.mutate()}
+            disabled={submitMutation.isPending || !allAnswered}
+            accessibilityLabel="Enviar resposta"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: submitMutation.isPending || !allAnswered }}
+            style={{
+              flex: 1,
+              backgroundColor: accentColor,
+              borderRadius: 18,
+              paddingVertical: 18,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: (submitMutation.isPending || !allAnswered) ? 0.55 : 1,
+              shadowColor: accentColor,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            {submitMutation.isPending ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="send-outline" size={20} color="#fff" />
+                <Text style={{ fontSize: scale(17), fontWeight: '700', color: '#fff' }}>Enviar resposta</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
       <AccessibilityPanel />
