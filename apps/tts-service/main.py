@@ -23,10 +23,10 @@ async def _startup():
 # ─── Wake word ────────────────────────────────────────────────────────────────
 
 _MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
-_WAKEWORD_MODEL_PATH = os.environ.get(
-    'WAKEWORD_MODEL_PATH',
-    os.path.join(_MODELS_DIR, 'Hey_dilo.onnx')
-)
+_WAKEWORD_MODEL_PATHS = [
+    os.path.join(_MODELS_DIR, 'Hey_dilo.onnx'),
+    os.path.join(_MODELS_DIR, 'dilo.onnx'),
+]
 _oww_model = None
 _oww_lock = threading.Lock()
 
@@ -37,7 +37,7 @@ def _get_oww_model():
         if _oww_model is None:
             from openwakeword.model import Model
             _oww_model = Model(
-                wakeword_models=[_WAKEWORD_MODEL_PATH],
+                wakeword_models=_WAKEWORD_MODEL_PATHS,
                 inference_framework='onnx',
                 melspec_model_path=os.path.join(_MODELS_DIR, 'melspectrogram.onnx'),
                 embedding_model_path=os.path.join(_MODELS_DIR, 'embedding_model.onnx'),
