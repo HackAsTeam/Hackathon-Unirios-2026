@@ -124,7 +124,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // Anchored so action phrases like "listar atividades pendentes" fall through to tier2
-    pattern: /^(?:(?:ir\s+para|abrir?|ver|acessar?|mostrar?)\s+)?(?:(?:as\s+|minhas\s+)?(?:pendências?|pendencias?)|atividades?\s+pendentes?)$/i,
+    pattern: /^(?:(?:ir\s+para|navegu[e]?\s+(?:para\s+)?|abrir?|ver|acessar?|mostrar?)\s+)?(?:(?:as\s+|minhas\s+)?(?:pendências?|pendencias?)|atividades?\s+pendentes?)$/i,
     handler: () => {
       router.push('/(app)/(tabs)/pendencias');
       return { type: 'COMMAND', command: 'NAVIGATE_TO', speak: 'Abrindo pendências.' };
@@ -142,7 +142,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // "entra na matéria de X" / "abrir matéria X" / "ir para matéria X" — navigates by name inside a classroom
-    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)mat[eé]ria\s+(?:de\s+)?(.+)/i,
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)mat[eé]ria\s+(?:de\s+)?(.+)/i,
     handler: (match) => {
       const name = match[1].trim();
       // Pendências is the only screen that hosts the subject sections to scroll to.
@@ -152,7 +152,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // "entra na turma X" / "abrir turma X" / "ir para turma X" / "ver turma X" — navigates by name
-    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)turma\s+(.+)/i,
+    pattern: /\b(?:entr[ae]r?\s+(?:na|em)\s+|abrir?\s+(?:a\s+)?|ir\s+para\s+(?:a\s+)?|navegu[e]?\s+para\s+(?:a\s+)?|ver\s+(?:a\s+)?|acessar?\s+(?:a\s+)?)turma\s+(.+)/i,
     handler: (match) => {
       const name = match[1].trim();
       // Students no longer browse by classroom (refactor removed StudentHome's
@@ -167,7 +167,7 @@ const LOCAL_PATTERNS: Array<{ pattern: RegExp; handler: (match: RegExpMatchArray
   },
   {
     // Anchored so action phrases like "criar turma chamada X" fall through to tier2
-    pattern: /^(?:(?:ver|abrir?|mostrar?|ir para|acessar?|listar?)\s+)?(?:as\s+|minhas\s+)?turmas?$|^sala de aula$/i,
+    pattern: /^(?:(?:ver|abrir?|mostrar?|ir\s+para|navegu[e]?\s+(?:para\s+)?|acessar?|listar?)\s+)?(?:as\s+|minhas\s+)?turmas?$|^sala de aula$/i,
     handler: () => {
       const onboardingRole = useOnboardingStore.getState().role;
       const authRole = useAuthStore.getState().role;
