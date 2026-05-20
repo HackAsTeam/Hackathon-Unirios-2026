@@ -40,7 +40,8 @@
         {
           "microphonePermission": "Permita o acesso ao microfone para gravar suas respostas."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

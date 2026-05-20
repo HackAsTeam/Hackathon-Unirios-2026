@@ -7,7 +7,6 @@ module.exports = function (api) {
     ],
     plugins: [
       '@tamagui/babel-plugin',
-      'react-native-worklets/plugin',
     ],
   };
 };

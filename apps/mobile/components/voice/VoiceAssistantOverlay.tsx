@@ -42,6 +42,7 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
   const stopSTTRef = useRef<(() => void) | null>(null);
+  const isFinishingRef = useRef(false);
   const dot1 = useSharedValue(0.3);
   const dot2 = useSharedValue(0.3);
   const dot3 = useSharedValue(0.3);
@@ -79,6 +80,7 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
   }
 
   async function startSession() {
+    isFinishingRef.current = false;
     reset();
     const granted = await requestSTTPermission();
     if (!granted) {
@@ -97,6 +99,8 @@ export function VoiceAssistantOverlay({ visible, onClose, onScreenAction }: Prop
   }
 
   async function finishListening() {
+    if (isFinishingRef.current) return;
+    isFinishingRef.current = true;
     stopDotAnimation();
     const currentTranscript = useVoiceCommandStore.getState().transcript;
 

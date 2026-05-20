@@ -23,6 +23,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../store/auth';
@@ -57,6 +58,7 @@ export default function OralResponseScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
 
+  const isFocused = useIsFocused();
   const dot1 = useSharedValue(0.3);
   const dot2 = useSharedValue(0.3);
   const dot3 = useSharedValue(0.3);
@@ -101,7 +103,7 @@ export default function OralResponseScreen() {
   }, []);
 
   useEffect(() => {
-    if (!lastCommand) return;
+    if (!lastCommand || !isFocused) return;
 
     if (lastCommand.command === 'SUBMIT_ANSWER' && stage === 'editing' && transcript.trim() && !submitMutation.isPending) {
       submitMutation.mutate();
