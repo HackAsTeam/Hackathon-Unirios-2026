@@ -34,19 +34,13 @@ import type { ExamDetail } from '../../../types/classroom';
 import type { ResponseFormat } from '../../../types/activity';
 import type { AttemptSummary } from '../../../types/attempt';
 
-type AvailableFormat = 'quiz' | 'text' | 'audio';
-const AVAILABLE_FORMATS: AvailableFormat[] = ['quiz', 'text', 'audio'];
+type AvailableFormat = 'text' | 'audio' | 'libras';
+const AVAILABLE_FORMATS: AvailableFormat[] = ['text', 'audio', 'libras'];
 
-const FORMAT_ICONS: Record<ResponseFormat, keyof typeof Ionicons.glyphMap> = {
+const FORMAT_ICONS: Record<AvailableFormat, keyof typeof Ionicons.glyphMap> = {
   text: 'document-text-outline',
   audio: 'mic-outline',
-  video: 'videocam-outline',
-  drawing: 'brush-outline',
-  mindmap: 'git-network-outline',
-  presentation: 'easel-outline',
-  quiz: 'help-circle-outline',
-  podcast: 'radio-outline',
-  oral: 'chatbubble-ellipses-outline',
+  libras: 'hand-left-outline',
 };
 
 export default function ActivityScreen() {
@@ -338,9 +332,9 @@ export default function ActivityScreen() {
         defaultFormat={defaultResponseFormat as AvailableFormat}
         onClose={() => setShowFormats(false)}
         onSelect={(fmt) => {
+          if (fmt === 'libras') return;
           setShowFormats(false);
-          const route = fmt === 'quiz' ? 'text' : fmt;
-          router.push(`/respond/${id}/${route}`);
+          router.push(`/respond/${id}/${fmt}`);
         }}
       />
 
@@ -396,6 +390,7 @@ function FormatModal({
                 isDefault={fmt === defaultFormat}
                 onSelect={onSelect}
                 reducedMotion={reducedMotion}
+                disabled={fmt === 'libras'}
               />
             ))}
           </View>
@@ -411,12 +406,14 @@ function FormatCard({
   isDefault,
   onSelect,
   reducedMotion,
+  disabled,
 }: {
   format: AvailableFormat;
   index: number;
   isDefault: boolean;
   onSelect: (f: AvailableFormat) => void;
   reducedMotion: boolean;
+  disabled?: boolean;
 }) {
   const c = useColors();
   const scale = useScale();
@@ -429,6 +426,10 @@ function FormatCard({
   }));
 
   function handlePress() {
+    if (disabled) {
+      speak('Libras ainda não está disponível.');
+      return;
+    }
     if (!reducedMotion) {
       animScale.value = withSpring(0.96, { damping: 15 }, () => {
         animScale.value = withSpring(1);
@@ -445,7 +446,7 @@ function FormatCard({
       <TouchableOpacity
         onPress={handlePress}
         activeOpacity={0.85}
-        accessibilityLabel={`${formatLabels[format]}: ${formatDescriptions[format]}${isDefault ? ' (preferência padrão)' : ''}`}
+        accessibilityLabel={`${formatLabels[format]}: ${formatDescriptions[format]}${isDefault ? ' (preferência padrão)' : ''}${disabled ? ' (em breve)' : ''}`}
         accessibilityRole="button"
         style={{
           backgroundColor: lightColor,
@@ -456,6 +457,7 @@ function FormatCard({
           gap: 16,
           borderWidth: isDefault ? 2.5 : 1.5,
           borderColor: isDefault ? color : color + '35',
+          ...(disabled && { opacity: 0.55 }),
         }}
       >
         <View style={{
@@ -473,17 +475,21 @@ function FormatCard({
             <Text style={{ fontSize: scale(17), fontWeight: '700', color: c.text.primary, letterSpacing: -0.2 }}>
               {formatLabels[format]}
             </Text>
-            {isDefault && (
+            {disabled ? (
+              <View style={{ backgroundColor: c.text.tertiary + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+                <Text style={{ fontSize: scale(10), fontWeight: '700', color: c.text.tertiary }}>{`Em breve`}</Text>
+              </View>
+            ) : isDefault ? (
               <View style={{ backgroundColor: color + '20', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
                 <Text style={{ fontSize: scale(10), fontWeight: '700', color }}>{`Padrão`}</Text>
               </View>
-            )}
+            ) : null}
           </View>
           <Text style={{ fontSize: scale(13), color, fontWeight: '500' }}>
             {formatMotivations[format]}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={color} />
+        {!disabled && <Ionicons name="chevron-forward" size={18} color={color} />}
       </TouchableOpacity>
     </Animated.View>
   );
